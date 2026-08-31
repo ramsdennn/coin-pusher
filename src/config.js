@@ -1,55 +1,105 @@
 /* ============================================================================
-   COIN PUSHER — HOST CONFIG
+   COIN PUSHER - HOST CONFIG
    This is the only file you should need to edit before a quiz night.
    ========================================================================= */
 
 window.COIN_PUSHER_CONFIG = {
 
   /* --------------------------------------------------------------------
-     ITEM TYPES
-     Every object on the shelf is an "item". Each one has a look and a value.
+     SCALE
+     Everything else in the machine is derived from these. The world is
+     modelled at 10x real size (a 24mm coin becomes 0.24 units) because
+     Rapier's contact tolerances are tuned for roughly human-scale objects
+     and behave poorly down at millimetre scale.
 
-       image:  filename inside the assets/ folder, e.g. 'chocolate.png'
-               (use null to fall back to a plain coloured disc)
+     coinsAcrossWidth is the number that decides how the machine FEELS.
+     It sets how much one added coin advances the pile. Measured off the
+     reference photo at about 10.
+     -------------------------------------------------------------------- */
+  scale: {
+    coinDiameter:  0.24,
+    coinThickness: 0.02,
+
+    coinsAcrossWidth: 10,   // machine width, in coins
+    coinsDeepPerTier:  6,   // depth of each tier, in coins
+
+    /* Of a tier's depth, how much is fixed floor at the front. The rest is
+       the moving shelf, at the back. Reference photos read as a third to
+       a half. */
+    fixedFloorFraction: 0.4,
+
+    /* How much of the shelf withdraws into the cabinet on the back stroke.
+       0.5 = about half of it disappears, which is what the machine does. */
+    shelfStrokeFraction: 0.5,
+
+    /* Height from the top tier's surface down to the bottom tier's. */
+    tierDropInCoins: 1.6
+  },
+
+  /* --------------------------------------------------------------------
+     ITEM TYPES
+     Every object on the shelf is an "item".
+
+       shape:  'disc' or 'box'
+       size:   for a disc, { diameter, thickness }
+               for a box,  { width, height, depth }
+               ALL SIZES ARE IN COIN DIAMETERS, so 1.0 = exactly one coin
+               across. This keeps the config valid if the scale changes.
+       image:  filename inside assets/, or null for a plain coloured shape
        color:  fallback colour, also used for the prize-log dot
-       radius: physics size in px. 16 = standard coin. Bigger = harder to shift.
+       density: 1.0 is a coin. Higher = heavier for its size, harder to shove
        value:  { type: 'points', amount: 10 }
             or { type: 'prize',  label: 'Chocolate bar' }
+
+     A box dams the pile very differently from a disc - it will not roll or
+     slide sideways, and it holds back everything behind it. That is a fair
+     way to make a big prize feel hard-won, but do not fill the shelf with
+     them.
      -------------------------------------------------------------------- */
   itemTypes: {
     coin: {
       label: 'Coin',
       image: null,
       color: 0xE8C24A,
-      radius: 16,
+      shape: 'disc',
+      size: { diameter: 1.0, thickness: 0.085 },
+      density: 1.0,
       value: { type: 'points', amount: 10 }
     },
     token50: {
       label: '50 Token',
       image: null,
       color: 0x4FD6C0,
-      radius: 17,
+      shape: 'disc',
+      size: { diameter: 1.15, thickness: 0.09 },
+      density: 1.0,
       value: { type: 'points', amount: 50 }
     },
     token100: {
       label: '100 Token',
       image: null,
       color: 0xE0603F,
-      radius: 17,
+      shape: 'disc',
+      size: { diameter: 1.15, thickness: 0.09 },
+      density: 1.0,
       value: { type: 'points', amount: 100 }
     },
     chocolate: {
       label: 'Chocolate bar',
       image: null,
       color: 0x8B4A2B,
-      radius: 17,
+      shape: 'box',
+      size: { width: 1.7, height: 0.3, depth: 0.75 },
+      density: 0.6,
       value: { type: 'prize', label: 'Chocolate bar' }
     },
     voucher: {
       label: 'Cinema voucher',
       image: null,
       color: 0xB05FD6,
-      radius: 17,
+      shape: 'box',
+      size: { width: 1.3, height: 0.16, depth: 0.9 },
+      density: 0.4,
       value: { type: 'prize', label: 'Cinema voucher' }
     }
   },
@@ -58,8 +108,9 @@ window.COIN_PUSHER_CONFIG = {
   dropItem: 'coin',
 
   /* --------------------------------------------------------------------
-     STARTING SHELF (Random mode)
+     STARTING SHELF
      Scattered across the shelf at setup. tier: 1 = top, 2 = bottom.
+     Loaded from the front lip backwards, so the machine starts primed.
      -------------------------------------------------------------------- */
   startingLayout: [
     { type: 'coin',      count: 40, tier: 1 },
@@ -71,55 +122,80 @@ window.COIN_PUSHER_CONFIG = {
   ],
 
   /* --------------------------------------------------------------------
-     FEEL / TUNING — the knobs worth playing with
+     PHYSICS
+     Tune these. Do not add rules - that was what sank the 2D attempt.
      -------------------------------------------------------------------- */
-  tuning: {
-    /* --- the shelf ------------------------------------------------------ */
-    pusherPeriodMs:   2600,  // one full back-and-forth stroke. Higher = slower.
-    pusherAmplitude:  42,    // how far the shelf slides each stroke (px)
-    shelfLength:      34,    // length of the shelf when fully withdrawn into
-                             // its slot. It extends by pusherAmplitude on top
-                             // of this. Coins on it are carried forward, and
-                             // are left behind when it withdraws.
-    shelfGrip:        0.2,  // how firmly the moving shelf drags its coins.
-                             // Low = coins slip and the shelf slides under the
-                             // pile. High = the shelf shoves everything hard.
+  physics: {
+    gravity:          -9.81,
+    timestep:         1 / 60,
+    solverIterations: 8,
 
-    /* --- the drop chute -------------------------------------------------- */
-    chuteGravity:     0.03,  // downward pull on a coin falling through the pegs.
-                             // Lower = a slower fall, which both scatters the
-                             // coin more and widens the window to time a drop.
-    chuteEntrySpeed:  0.6,   // how fast it enters at the top
-    chuteMaxSpeed:    2.4,   // terminal speed, so it rattles instead of diving
-    chuteTimeoutMs:   6000,  // safety: force a coin to land if it wedges
-    pegRadius:        5,
-    pegSpacing:       56,    // must stay wider than a coin, or nothing gets through
-    pegRows:          3,     // rows must sit further apart than a coin is wide,
-                             // or coins jam between two rows at once
-    pegBounce:        0.8,   // how lively the pegs are
+    /* A disc's collider is a many-sided prism, not a mathematical
+       cylinder. Rapier's cylinder-vs-cylinder contacts collapse to a
+       single point and the pile never stops shivering; flat facets give
+       it a proper multi-point manifold. 16 sides is visually identical.
+       Set to 0 to go back to a true cylinder and see the difference. */
+    discColliderSides: 16,
 
-    /* --- how coins behave on the shelf ---------------------------------- */
-    floorFriction:    0.002, // coins slide on a shelf: flat speed lost per step.
-                             // Higher = shorter, heavier shoves.
-    stopThreshold:    0.0008, // below this speed an item is treated as at rest
-    itemFrictionAir:  0.005, // near zero - floorFriction does the real work
-    itemFriction:     0.02,  // coin-on-coin grip. Keep low - a high value
-                             // locks the pile into a rigid raft that no
-                             // amount of pushing will shift.
-    edgeTip:          0.6,   // shove given to a coin overhanging the lip
-    tipOverhang:      0.35,  // how far over the lip a coin must be before it
-                             // tips. The starting pile is loaded to just
-                             // behind this line, so the machine begins primed
-                             // without spilling on its own.
-    itemFrictionStatic: 0.01,
-    itemRestitution:  0.05,  // bounciness. Keep low for a weighty feel
-    itemDensity:      0.002,
-    rowGap:           1,     // slack between rows of the starting pile. This is
-                             // what stops the pile being a rigid incompressible
-                             // block - drops take up the slack, then things fall.
+    /* Damping stands in for the spin friction a real coin gets from its
+       contact patch, which a point-contact solver does not model at all:
+       without it a coin spinning on its own axis never slows down. Too
+       high and coins get sluggish about tipping over the lip, so this is
+       a knob to revisit once the shelf is moving. */
+    linearDamping:  0.20,
+    angularDamping: 3.50,
 
-    /* --- look ------------------------------------------------------------ */
-    spawnJitterPx:    9,     // random wobble on where a coin enters the chute
-    flattenY:         0.72   // 1.0 = circles, lower = flatter perspective discs
+    itemFriction:    0.32,  // coin on coin. Too high and the pile locks up
+    itemRestitution: 0.04,  // keep low for a weighty feel
+    shelfFriction:   1.00,  // the moving deck needs grip to carry its coins
+    floorFriction:   0.30,  // fixed floor ahead of the shelf
+    wallFriction:    0.08,
+
+    /* The starting pile is dropped in from a stagger of heights so it
+       lands jumbled rather than in a tidy grid, and that takes a good
+       few seconds to come to rest. Run those steps before the first
+       frame is drawn, so the machine is already settled when the host
+       sees it. Costs about a second at startup. */
+    presettleMaxSteps: 2400,
+    presettleAngularDamping: 12.0,
+    presettleLinearDamping:   2.0,
+
+    /* Let the pile fall asleep when it settles. Rapier will need waking
+       once the shelf starts moving - that is a later problem, and a known
+       one. */
+    allowSleep: true
+  },
+
+  /* One full back-and-forth stroke. Constant - no speed-ups, no pauses. */
+  shelf: { periodMs: 2600 },
+
+  /* --------------------------------------------------------------------
+     CAMERA
+     Fixed. Frontal and symmetric so all four drop panels are equally
+     clickable, elevated enough to judge how far forward the pile has crept.
+     -------------------------------------------------------------------- */
+  camera: {
+    elevationDeg: 30,     // degrees off horizontal
+    distance:     4.6,    // how far back from the point it looks at
+    fovDeg:       38,
+    lookAt: {
+      y:         0.50,    // world height the camera is aimed at
+      zFraction: 0.45     // how far into the playfield, 0 = back, 1 = front lip
+    }
+  },
+
+  /* Plain-shape colours for this pass. Art is a later phase. The deck is
+     red and the fixed floor white, matching the reference machine, so the
+     shelf's travel is readable while tuning. */
+  palette: {
+    background: 0x0B0616,
+    deck:       0xD8232A,
+    fixedFloor: 0xF2F0EE,
+    wall:       0xB9A9C9,
+    cabinet:    0x2A1B3D,
+    panel:      0xF6F2F4,
+    panelEdge:  0xB9A9C9,
+    peg:        0x54455F,
+    tray:       0x1A1030
   }
 };

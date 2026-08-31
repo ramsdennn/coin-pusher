@@ -52,15 +52,34 @@
 
 <div id="game"></div>
 
-<script src="vendor/phaser.min.js"></script>
 <script>
-  /* config.js and game.js are loaded with a cache-buster on the end. Without it
+  /* Every file under src/ is loaded with a cache-buster on the end. Without it
      the browser happily serves you a stale copy, so you edit config.js, reload,
-     and none of your changes appear. Phaser itself never changes, so it stays
-     cached normally. */
+     and none of your changes appear. This already cost a real debugging detour
+     once - do not drop it.
+
+     The awkward part is that a static import inside a module cannot carry a
+     stamp, so the stamp goes in an import map instead, which is built here and
+     injected before anything else loads. Modules then import each other by
+     name ('@app/machine') and the map decides which stamped URL that means.
+     Three.js and Rapier never change, so they stay cached normally. */
   const startBtn = document.getElementById('start');
   const setup    = document.getElementById('setup');
   const stamp    = Date.now();
+
+  const importMap = document.createElement('script');
+  importMap.type = 'importmap';
+  importMap.textContent = JSON.stringify({
+    imports: {
+      'three':        './vendor/three/three.module.js',
+      'rapier':       './vendor/rapier/rapier.mjs',
+      '@app/dims':    './src/dims.js?v=' + stamp,
+      '@app/machine': './src/machine.js?v=' + stamp,
+      '@app/items':   './src/items.js?v=' + stamp,
+      '@app/game':    './src/game.js?v=' + stamp
+    }
+  });
+  document.head.appendChild(importMap);
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -76,7 +95,7 @@
   startBtn.textContent = 'LOADING...';
 
   loadScript('src/config.js')
-    .then(() => loadScript('src/game.js'))
+    .then(() => import('@app/game'))
     .then(() => { startBtn.disabled = false; startBtn.textContent = 'START'; })
     .catch(err => {
       startBtn.textContent = 'FAILED TO LOAD';
