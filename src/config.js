@@ -21,7 +21,7 @@ window.COIN_PUSHER_CONFIG = {
     coinThickness: 0.02,
 
     coinsAcrossWidth: 10,   // machine width, in coins
-    coinsDeepPerTier:  9,   // depth of each tier, in coins
+    coinsDeepPerTier:  6,   // depth of each tier, in coins
 
     /* How many tiers the machine has.
 
@@ -37,7 +37,7 @@ window.COIN_PUSHER_CONFIG = {
     /* Of a tier's depth, how much is fixed floor at the front. The rest is
        the moving shelf, at the back. Reference photos read as a third to
        a half. */
-    fixedFloorFraction: 0.55,
+    fixedFloorFraction: 0.45,
 
     /* How much of the shelf withdraws into the cabinet on the back stroke.
        0.5 = about half of it disappears, which is what the machine does. */
@@ -138,7 +138,7 @@ window.COIN_PUSHER_CONFIG = {
      Loaded from the front lip backwards, so the machine starts primed.
      -------------------------------------------------------------------- */
   startingLayout: [
-    { type: 'coin',      count: 68, tier: 1 },
+    { type: 'coin',      count: 42, tier: 1 },
     { type: 'token50',   count: 2,  tier: 1 },
     { type: 'token100',  count: 1,  tier: 1 },
     { type: 'chocolate', count: 1,  tier: 1 },
@@ -221,10 +221,10 @@ window.COIN_PUSHER_CONFIG = {
      -------------------------------------------------------------------- */
   camera: {
     elevationDeg: 30,     // degrees off horizontal
-    distance:     3.75,    // how far back from the point it looks at
+    distance:     3.45,    // how far back from the point it looks at
     fovDeg:       38,
     lookAt: {
-      y:         0.24,    // world height the camera is aimed at
+      y:         0.38,    // world height the camera is aimed at
       zFraction: 0.45     // how far into the playfield, 0 = back, 1 = front lip
     }
   },
