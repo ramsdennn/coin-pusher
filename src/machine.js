@@ -215,14 +215,20 @@ export function buildMachine(ctx) {
         .setFriction(PHY.wallFriction), b
     );
   }
-  backWall(TIERS[0].y + DIMS.wallHeight, TIERS[0].y + DIMS.deckStep, 0);
-  backWall(TIERS[0].y, TIERS[1].y + DIMS.deckStep, DIMS.tierDepth);
+  /* One back wall per tier. The topmost runs full height; any lower tier's
+     wall runs up to the underside of the tier above, so items tipping off
+     that tier land just in front of it. Each starts at deck level so the
+     shelf slides beneath it and half of it disappears from view. */
+  TIERS.forEach(function (tier, k) {
+    const top = k === 0 ? tier.y + DIMS.wallHeight : TIERS[k - 1].y;
+    backWall(top, tier.y + DIMS.deckStep, tier.backZ);
+  });
 
   /* Side walls, spanning both tiers and the full depth. Kept translucent so
      they do not hide the pile from a front camera. */
   [-1, 1].forEach(function (sx) {
     const x = sx * (width / 2 + DIMS.wallThick / 2);
-    const h = TIERS[0].y + DIMS.wallHeight - DIMS.trayY;
+    const h = DIMS.tierTop.y + DIMS.wallHeight - DIMS.trayY;
     const cy = DIMS.trayY + h / 2, cz = DIMS.playDepth / 2;
     const m = new THREE.Mesh(
       new THREE.BoxGeometry(DIMS.wallThick, h, DIMS.playDepth),
@@ -242,7 +248,7 @@ export function buildMachine(ctx) {
   /* Tray. Nothing scores yet - this just catches what falls so it does not
      drop forever and quietly eat frame time. */
   staticBox(ctx, {
-    top: DIMS.trayY, z0: TIERS[1].lipZ - D * 0.5, z1: TIERS[1].lipZ + D * 3,
+    top: DIMS.trayY, z0: DIMS.tierLast.lipZ - D * 0.5, z1: DIMS.tierLast.lipZ + D * 3,
     width: width, thickness: deckThick * 2, color: P.tray
   });
 
@@ -257,7 +263,7 @@ export function buildMachine(ctx) {
       new THREE.PlaneGeometry(DIMS.zoneWidth * 0.94, DIMS.panelHeight),
       mat(P.panel, { roughness: 0.35 })
     );
-    pane.position.set(cx, TIERS[0].y + DIMS.panelHeight / 2, DIMS.panelZ);
+    pane.position.set(cx, DIMS.tierTop.y + DIMS.panelHeight / 2, DIMS.panelZ);
     ctx.scene.add(pane);
     parts.panels.push(pane);
 
@@ -266,7 +272,7 @@ export function buildMachine(ctx) {
         const peg = new THREE.Mesh(pegGeo, pegMat);
         peg.position.set(
           cx + (c - 1) * DIMS.zoneWidth * 0.26,
-          TIERS[0].y + DIMS.panelHeight * (0.18 + r * 0.21),
+          DIMS.tierTop.y + DIMS.panelHeight * (0.18 + r * 0.21),
           DIMS.panelZ + D * 0.06
         );
         ctx.scene.add(peg);
@@ -282,7 +288,7 @@ export function buildMachine(ctx) {
     );
     m.position.set(
       -width / 2 + i * DIMS.zoneWidth,
-      TIERS[0].y + DIMS.panelHeight / 2,
+      DIMS.tierTop.y + DIMS.panelHeight / 2,
       DIMS.panelZ
     );
     ctx.scene.add(m);

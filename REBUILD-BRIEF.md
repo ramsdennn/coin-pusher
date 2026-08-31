@@ -65,8 +65,12 @@ Consequence: the drop zone is not an aiming device. It biases where the coin
 lands; it does not choose it.
 
 ### The shelf
-There is **one shelf mechanism**, driving both tiers together. Constant speed
-and rhythm — no speed-ups, no pauses.
+There is **one shelf**. Constant speed and rhythm — no speed-ups, no pauses.
+
+> CORRECTED 2026-08-31. An earlier draft said one mechanism "driving both
+> tiers together", which was built as two decks moving in phase. The host has
+> corrected this: there is a single shelf, on a single tier. See the Tiers
+> section below, which is corrected in the same way.
 
 The shelf is a **rigid platform that slides forward and backward**. As it moves
 backward it **retreats into the machine itself** — part of it physically
@@ -86,10 +90,20 @@ noticeable time to come down the chute while the shelf keeps moving, so the
 drop has to be timed. Drop on the wrong beat and the coin lands on top of the
 pile instead of where it would do useful work. This is a feature, not a defect.
 
-### Tiers
-Two tiers. Items falling off the top tier land on the bottom tier. Only items
-falling off the **bottom** tier score. Four drop zones across the top, above the
-top tier only.
+### Tiers — CORRECTED 2026-08-31
+**One tier, not two.** An earlier draft specified two tiers with items falling
+from the upper onto the lower. The host has corrected this. The machine is:
+
+    drop  ->  lands on the shelf  ->  tumbles off the shelf's front edge
+          ->  onto the fixed platform  ->  shoved along  ->  off the front,
+              which scores.  Nothing below that.
+
+The "falls to the next platform" stage is the step down off the shelf's front
+face onto the fixed platform, not a fall between tiers. Four drop zones across
+the top, above the shelf.
+
+Tier count is a config value (`scale.tierCount`), so the two-tier machine can
+be restored, but 1 is what was asked for.
 
 ---
 
@@ -204,9 +218,9 @@ the corresponding open questions above.
   contact tolerances in their comfortable range); gravity -9.81. Playfield
   therefore ~2.4 units wide. Confirm against the built geometry — the starting
   layout of ~40 items per tier should read as roughly half a single layer.
-- **Shelf is flush**, not a raised slab: its deck is coplanar with the fixed
-  floor and coins slide across the seam. Chamfer the leading edge and overlap
-  slightly vertically, or coins catch on the seam every stroke.
+- **Shelf is flush** — *later overturned by measurement, see the corrected
+  note under Open decisions. The shelf is a raised block with a vertical front
+  face. Flush was tried, measured, and produces no output whatsoever.*
 - **Shelf retraction is roughly half**, not full — see the corrected section
   above.
 - **Fixed floor runs underneath the shelf** for the full tier depth, so a coin
@@ -215,10 +229,26 @@ the corresponding open questions above.
 - **Prize items may be discs or boxes.** The config schema needs a per-item
   shape, not just a radius — a box dams the pile very differently from a
   cylinder, and both are wanted.
+- **One tier, one shelf** (added 2026-08-31, see the corrected Tiers section).
+- **Discs are 16-sided prisms in the physics**, not mathematical cylinders.
+  Rapier's cylinder-vs-cylinder contacts collapse to a single point and the
+  pile never stops shivering. Visually identical.
 
-Note: the direction of the push (whether coins advance on the out-stroke or the
-return) is *no longer a design decision*. In 3D, friction decides it. That was
-only ever a question because the 2D version had to hand-write the rule.
+Note — CORRECTED 2026-08-31, by measurement. An earlier draft said the
+direction of the push was no longer a design decision because "in 3D, friction
+decides it". That is not what happens. Friction is **symmetric**: it drags the
+pile back exactly as hard as it pushes it forward. Measured on a flush deck,
+the stroke split was +0.2138 forward and -0.2132 back, and across 60 coins
+dropped over 60 strokes **nothing fell off the machine at all** while the
+population grew from 88 to 148.
+
+What makes a pusher work is a **vertical front face** on the shelf. It pushes
+on the out-stroke and simply separates from the items on the return, and that
+is the one-way element friction cannot supply. With a step of about half a coin
+diameter the same test produced 37 items off the lip and a stable population.
+The shelf is therefore a raised block, not a flush deck. See
+`scale.deckStepInCoins`; setting it to 0 reproduces the flush version and its
+failure.
 
 Note: shelf travel distance is resolved (see Camera and drop-zone interaction,
 above) — roughly half retraction. An earlier draft said full retraction; that

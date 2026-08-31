@@ -111,7 +111,9 @@ export function buildStartingPile(ctx) {
   TIERS.forEach(function (tier, tierIdx) {
     const queue = [];
     CFG.startingLayout.forEach(function (entry) {
-      if (entry.tier !== tierIdx + 1) return;
+      /* Clamp, so a layout written for two tiers still loads onto one. */
+      const want = Math.min(entry.tier, TIERS.length) - 1;
+      if (want !== tierIdx) return;
       for (let i = 0; i < entry.count; i++) queue.push(entry.type);
     });
     shuffle(queue);

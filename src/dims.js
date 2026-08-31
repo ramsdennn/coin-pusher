@@ -5,11 +5,11 @@
 
    Axes:
      x  left/right, 0 at the centre of the machine
-     y  up, 0 at the BOTTOM tier's surface
+     y  up, 0 at the LOWEST tier's surface
      z  depth, 0 at the back wall, increasing TOWARDS the viewer
 
-   So the back of the cabinet is z = 0 and coins score by falling off the
-   largest z.
+   So the back of the cabinet is z = 0 and items score by falling off the
+   largest z, off the front of the lowest tier.
    ========================================================================= */
 
 const CFG = window.COIN_PUSHER_CONFIG;
@@ -21,56 +21,58 @@ const D = S.coinDiameter;
 const width     = S.coinsAcrossWidth * D;
 const tierDepth = S.coinsDeepPerTier * D;
 const tierDrop  = S.tierDropInCoins  * D;
+const tierCount = Math.max(1, S.tierCount | 0);
 
 /* ---- the shelf ---------------------------------------------------------
-   The shelf is FLUSH: its deck top sits level with the fixed floor ahead of
-   it, and coins slide across the seam rather than stepping up onto it. It
-   pushes nothing directly. It carries the coins sitting on it by friction,
-   and those coins shove the ones ahead. That is the whole mechanism.
+   The shelf is a block riding on the fixed floor with a VERTICAL front face,
+   and that face is the entire mechanism. It pushes on the out-stroke and
+   simply separates from the items on the return.
 
-   Its leading edge is chamfered, so that when it returns it wedges under
-   any coin that dropped into the well behind it instead of butting into it.
+   A flush deck was tried and measured: it can only transmit force through
+   friction, friction is symmetric, and it drags the pile back exactly as hard
+   as it pushes it. 60 coins over 60 strokes produced nothing off the lip at
+   all. Set scale.deckStepInCoins to 0 to reproduce that.
+
+   Items riding the shelf tumble off its front edge down onto the fixed
+   platform and cannot climb back on. That one-way step is the "falls to the
+   next platform" stage of the machine.
    ---------------------------------------------------------------------- */
 const shelfDepth  = tierDepth * (1 - S.fixedFloorFraction);
 const fixedDepth  = tierDepth - shelfDepth;
 const stroke      = shelfDepth * S.shelfStrokeFraction;
 const deckThick   = D * 0.12;
-const deckStep    = D * S.deckStepInCoins;   // 0 = flush deck
-const chamfer     = D * 0.18;   // horizontal run of the leading-edge bevel
+const deckStep    = D * S.deckStepInCoins;   // 0 = flush deck (does not work)
+const chamfer     = D * 0.18;                // only used by the flush variant
 
-/* ---- vertical stack ---- */
-const tier2Y = 0;
-const tier1Y = tierDrop;
-const trayY  = -D * 2.2;
-
-/* ---- z spans -----------------------------------------------------------
-   Tier 1 runs from the back wall forward. Tier 2 begins at tier 1's lip and
-   runs forward again, so tier 1 spills onto tier 2's own moving shelf.
+/* ---- tiers -------------------------------------------------------------
+   Built top-down. With tierCount 1 - which is the machine as specified -
+   there is a single shelf, a single fixed platform in front of it, and the
+   front lip. Nothing below.
    ---------------------------------------------------------------------- */
-const tier1 = {
-  y:          tier1Y,
-  backZ:      0,
-  lipZ:       tierDepth,
-  shelfHomeZ: shelfDepth,          // z of the deck's leading edge, fully out
-  fixedBackZ: shelfDepth,
-  fixedLipZ:  tierDepth
-};
+const tiers = [];
+for (let k = 0; k < tierCount; k++) {
+  const backZ = k * tierDepth;
+  tiers.push({
+    index:      k,
+    y:          (tierCount - 1 - k) * tierDrop,
+    backZ:      backZ,
+    lipZ:       backZ + tierDepth,
+    shelfHomeZ: backZ + shelfDepth,
+    fixedBackZ: backZ + shelfDepth,
+    fixedLipZ:  backZ + tierDepth
+  });
+}
 
-const tier2 = {
-  y:          tier2Y,
-  backZ:      tierDepth,
-  lipZ:       tierDepth * 2,
-  shelfHomeZ: tierDepth + shelfDepth,
-  fixedBackZ: tierDepth + shelfDepth,
-  fixedLipZ:  tierDepth * 2
-};
+const tierTop  = tiers[0];
+const tierLast = tiers[tiers.length - 1];      // the one items score off
+const playDepth = tierCount * tierDepth;
 
-const playDepth = tierDepth * 2;
+const trayY = tierLast.y - D * 2.2;
 
 /* ---- cabinet shell ---- */
 const wallThick   = D * 0.35;
 const wallHeight  = tierDrop + D * 3;
-const panelHeight = D * 5.2;        // the four drop panes, above tier 1
+const panelHeight = D * 5.2;        // the four drop panes, above the top tier
 const panelZ      = D * 0.15;       // stood just in front of the back wall
 
 /* ---- drop zones ---- */
@@ -98,20 +100,20 @@ function itemDims(type) {
   const height = t.size.thickness * D;
   return {
     shape: 'disc',
-    radius,
-    height,
+    radius: radius,
+    height: height,
     halfHeight: height / 2,
     footprint: radius * 2
   };
 }
 
 export const DIMS = {
-  D, width, tierDepth, tierDrop, playDepth,
-  shelfDepth, fixedDepth, stroke, deckThick, chamfer, deckStep,
-  tier1, tier2, trayY,
+  D, width, tierDepth, tierDrop, tierCount, playDepth,
+  shelfDepth, fixedDepth, stroke, deckThick, deckStep, chamfer,
+  tiers, tierTop, tierLast, trayY,
   wallThick, wallHeight, panelHeight, panelZ,
   zoneCount, zoneWidth, zoneCentresX,
   itemDims
 };
 
-export const TIERS = [tier1, tier2];
+export const TIERS = tiers;

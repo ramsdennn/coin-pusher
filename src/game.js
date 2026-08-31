@@ -143,17 +143,24 @@ function presettle() {
    Which tier an item is on, by height. The creep metric would be meaningless
    averaged across both tiers at once.
    ------------------------------------------------------------------------- */
-function tierOf(y) { return y > DIMS.tier1.y - DIMS.D * 0.5 ? 0 : 1; }
+function tierOf(y) {
+  for (let k = 0; k < TIERS.length; k++) {
+    if (y > TIERS[k].y - DIMS.D * 0.5) return k;
+  }
+  return TIERS.length - 1;
+}
 
+/* Mean depth of the pile on the scoring tier - the lowest one. */
 function centroidZ() {
-  const sum = [0, 0], n = [0, 0];
+  const last = TIERS.length - 1;
+  let sum = 0, n = 0;
   for (let i = 0; i < ctx.items.length; i++) {
     const t = ctx.items[i].body.translation();
-    if (t.y < DIMS.tier2.y - DIMS.D) continue;      // in the tray, not on a tier
-    const k = tierOf(t.y);
-    sum[k] += t.z; n[k]++;
+    if (t.y < DIMS.tierLast.y - DIMS.D) continue;   // in the tray, not on a tier
+    if (tierOf(t.y) !== last) continue;
+    sum += t.z; n++;
   }
-  return [n[0] ? sum[0] / n[0] : null, n[1] ? sum[1] / n[1] : null];
+  return n ? sum / n : null;
 }
 
 function push(arr, v) { arr.push(v); if (arr.length > 20) arr.shift(); }
@@ -169,7 +176,7 @@ function collectFallen() {
   for (let i = ctx.items.length - 1; i >= 0; i--) {
     const it = ctx.items[i];
     const t = it.body.translation();
-    if (t.y < DIMS.tier2.y - DIMS.D) {
+    if (t.y < DIMS.tierLast.y - DIMS.D) {
       M.fallen++;
       M.fallenByType[it.typeId] = (M.fallenByType[it.typeId] || 0) + 1;
       scene.remove(it.mesh);
@@ -191,8 +198,8 @@ export function dropInto(zone) {
   return createItem(
     ctx, CFG.dropItem,
     x + (Math.random() * 2 - 1) * DIMS.D * 0.15,
-    DIMS.tier1.y + DIMS.D * 2.5,
-    DIMS.tier1.backZ + DIMS.D * 0.9,
+    DIMS.tierTop.y + DIMS.deckStep + DIMS.D * 2.5,
+    DIMS.tierTop.backZ + DIMS.D * 0.9,
     Math.random() * Math.PI * 2
   );
 }
@@ -208,20 +215,20 @@ function physicsStep() {
       for (let i = 0; i < ctx.items.length; i++) ctx.items[i].body.wakeUp();
     }
 
-    if (M.atForward === null) M.atForward = centroidZ()[1];
+    if (M.atForward === null) M.atForward = centroidZ();
 
     /* Sample the pile at each end of the stroke. 0 -> 0.5 is the deck
        withdrawing, 0.5 -> 1 is it advancing. */
     if (prev < 0.5 && phase >= 0.5) {
       const c = centroidZ();
-      if (M.atForward !== null && c[1] !== null) push(M.retract, c[1] - M.atForward);
-      M.atBack = c[1];
+      if (M.atForward !== null && c !== null) push(M.retract, c - M.atForward);
+      M.atBack = c;
     }
     if (phase < prev) {                              // wrapped past 0
       const c = centroidZ();
-      if (M.atBack !== null && c[1] !== null) push(M.extend, c[1] - M.atBack);
-      if (M.atForward !== null && c[1] !== null) push(M.creep, c[1] - M.atForward);
-      M.atForward = c[1];
+      if (M.atBack !== null && c !== null) push(M.extend, c - M.atBack);
+      if (M.atForward !== null && c !== null) push(M.creep, c - M.atForward);
+      M.atForward = c;
       M.strokes++;
     }
   }
