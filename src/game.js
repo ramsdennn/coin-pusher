@@ -72,16 +72,53 @@ function buildScene() {
 /* The one static camera transform. Frontal and symmetric, so all four drop
    panes are equally clickable, and elevated enough to read how far forward
    the pile has crept. */
+function fitPoints() {
+  const hx = DIMS.width / 2 + DIMS.wallThick;
+  const y0 = DIMS.tierLast.y - DIMS.D * 0.3, y1 = DIMS.chuteTop;
+  const z0 = 0, z1 = DIMS.tierLast.lipZ;
+  const pts = [];
+  [-hx, hx].forEach(function (x) {
+    [y0, y1].forEach(function (y) {
+      [z0, z1].forEach(function (z) { pts.push(new THREE.Vector3(x, y, z)); });
+    });
+  });
+  return pts;
+}
+
 function aimCamera() {
   const c = CFG.camera;
   const el = (c.elevationDeg * Math.PI) / 180;
   const target = new THREE.Vector3(0, c.lookAt.y, DIMS.playDepth * c.lookAt.zFraction);
-  camera.position.set(
-    0,
-    target.y + Math.sin(el) * c.distance,
-    target.z + Math.cos(el) * c.distance
-  );
-  camera.lookAt(target);
+
+  function place(d) {
+    camera.position.set(
+      0,
+      target.y + Math.sin(el) * d,
+      target.z + Math.cos(el) * d
+    );
+    camera.lookAt(target);
+    camera.updateMatrixWorld();
+    camera.updateProjectionMatrix();
+  }
+
+  let d = c.distance;
+  place(d);
+  if (!c.autoFit) return;
+
+  /* Pull back until every corner of the machine is inside the frame. A few
+     passes is plenty - moving the camera back shrinks the projection close
+     enough to proportionally for this to converge fast. */
+  const pts = fitPoints();
+  for (let pass = 0; pass < 5; pass++) {
+    let worst = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const v = pts[i].clone().project(camera);
+      worst = Math.max(worst, Math.abs(v.x), Math.abs(v.y));
+    }
+    if (Math.abs(worst - c.fitMargin) < 0.01) break;
+    d = Math.max(0.3, d * (worst / c.fitMargin));
+    place(d);
+  }
 }
 
 function buildWorld() {
@@ -390,6 +427,7 @@ function onResize() {
   camera.aspect = host.clientWidth / host.clientHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(host.clientWidth, host.clientHeight);
+  aimCamera();                       // re-fit: the screen shape just changed
 }
 
 window.startCoinPusher = function (teamA, teamB) {

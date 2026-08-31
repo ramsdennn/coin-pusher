@@ -281,6 +281,14 @@ window.COIN_PUSHER_CONFIG = {
     elevationDeg: 30,     // degrees off horizontal
     distance:     3.45,    // how far back from the point it looks at
     fovDeg:       38,
+
+    /* Pull back until the whole machine is inside the frame, whatever shape
+       the screen is. Without this the framing is tuned for one aspect ratio
+       and a phone held upright crops the machine's sides off, because a
+       perspective camera keeps its VERTICAL angle and narrows horizontally.
+       `distance` above is the starting guess. */
+    autoFit:      true,
+    fitMargin:    0.94,
     lookAt: {
       y:         0.38,    // world height the camera is aimed at
       zFraction: 0.45     // how far into the playfield, 0 = back, 1 = front lip
