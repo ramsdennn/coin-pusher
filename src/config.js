@@ -215,6 +215,64 @@ window.COIN_PUSHER_CONFIG = {
   },
 
   /* --------------------------------------------------------------------
+     THE DROP CHUTE
+     The coin does not drop straight onto the shelf. It goes in at the BACK
+     of the machine, behind glass, and falls through a field of pegs before
+     landing. So a drop zone is not an aiming device - it biases where the
+     coin lands, it does not choose it.
+
+     PEG SPACING IS NOT FREE. A coin is a disc, which means it is exactly one
+     diameter across in every direction, so any gap it falls through has to
+     be wider than a whole coin. A chute 2.5 coins wide has room for at most
+     two such gaps side by side. That is why the dense dot grid in the
+     reference photograph cannot be a peg field the coin passes through - as
+     pegs it would simply be a wall. Rows here alternate instead:
+
+     A PAIR OF PEGS IN ONE ROW IS IMPOSSIBLE HERE, and this was measured the
+     hard way - 39 of 40 coins jammed. Setting the pair wide enough to leave a
+     passable gap against each divider forces the centre gap shut; setting it
+     narrow enough to open the centre gap closes the sides. Either way the
+     coin wedges in a pocket it cannot descend.
+
+     So: ONE peg per row, offset a little from the centreline, alternating
+     side each row. Both gaps stay wider than a coin, and the coin still picks
+     left or right at every row - four rows is sixteen paths. The offset must
+     stay under about 0.17 of a coin or the tighter gap shuts.
+     -------------------------------------------------------------------- */
+  chute: {
+    depthInCoinThicknesses: 2.6,   // front-to-back gap the coin falls down
+    pegRows:                4,
+    /* Where the peg field starts and how far apart the rows are, as
+       fractions of the chute height. The first row has to clear the entry
+       point by more than a coin radius plus a peg radius, or coins are born
+       interpenetrating the first peg and wedge on the spot. */
+    firstRowFraction:       0.32,
+    rowGapFraction:         0.15,
+    entryHeightInCoins:     0.55,  // how far below the top the coin enters
+
+    /* How far ABOVE the deck the chute opens out, in coins. This is not
+       cosmetic. The chute is barely thicker than a coin, so a coin that
+       reaches the bottom still on edge is held upright by the glass and can
+       never topple flat - it just stands there forever. Measured: with the
+       chute running down to deck level, half of all coins stuck standing on
+       edge at the bottom. The chute has to end high enough that the coin
+       leaves it in free air and lands flat. */
+    exitHeightInCoins:      1.3,
+    pegRadiusInCoins:       0.050,
+    rowOffsetInCoins:       0.085, // peg offset from centre, alternating side
+    entryJitterInCoins:     0.30,  // scatter on where the coin enters
+
+    /* The coin does not enter at rest. Dropped dead vertical it lands square
+       on a peg apex and balances there - measured at a third of all drops.
+       A real coin is pushed into the slot and arrives with sideways motion,
+       and that is also what stops the fall being repeatable. Coin diameters
+       per second, random direction. */
+    entrySpeedInCoins:      1.8,
+    entrySpinInCoins:       6.0,
+    glassOpacity:           0.20
+  },
+
+  /* --------------------------------------------------------------------
      CAMERA
      Fixed. Frontal and symmetric so all four drop panels are equally
      clickable, elevated enough to judge how far forward the pile has crept.

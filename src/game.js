@@ -17,7 +17,7 @@ import * as THREE from 'three';
 import * as RAPIER from 'rapier';
 import { DIMS, TIERS } from '@app/dims';
 import { buildMachine, driveShelves } from '@app/machine';
-import { buildStartingPile, createItem } from '@app/items';
+import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
@@ -32,6 +32,11 @@ const M = {
   strokes: 0,
   fallen: 0,
   fallenByType: {},
+  dropped: 0,
+  landed: 0,
+  jammed: 0,
+  fallSteps: [],        // how long a coin takes to come down the chute
+  landX: [],            // where it landed, relative to the chute it went in
   creep: [],            // net advance of the pile per complete stroke
   retract: [],          // of that, how much happened while the deck withdrew
   extend: [],           // and how much while it advanced
@@ -100,6 +105,7 @@ function resetPile() {
   stepCount = 0;
   phase = 0;
   M.strokes = 0; M.fallen = 0; M.fallenByType = {};
+  M.dropped = 0; M.landed = 0; M.jammed = 0; M.fallSteps = []; M.landX = [];
   M.creep = []; M.retract = []; M.extend = [];
   M.atForward = null; M.atBack = null;
   driveShelves(ctx, 0);
@@ -163,7 +169,14 @@ function centroidZ() {
   return n ? sum / n : null;
 }
 
-function push(arr, v) { arr.push(v); if (arr.length > 20) arr.shift(); }
+function push(arr, v) { arr.push(v); if (arr.length > 40) arr.shift(); }
+
+function spread(arr) {
+  const m = mean(arr);
+  let s = 0;
+  for (let i = 0; i < arr.length; i++) s += (arr[i] - m) * (arr[i] - m);
+  return Math.sqrt(s / arr.length);
+}
 function mean(arr) {
   if (!arr.length) return null;
   let s = 0; for (let i = 0; i < arr.length; i++) s += arr[i];
@@ -187,21 +200,68 @@ function collectFallen() {
 }
 
 /* -------------------------------------------------------------------------
-   A drop. No chute and no pegs yet - this just puts an item in at the back of
-   the top tier so the machine has input flow, which is the only condition
-   under which "does the pile advance" is a meaningful question. The peg field
-   and the four glass chutes come next; this is deliberately the crudest thing
-   that lets the shelf be measured.
+   A drop. The item goes in at the top of one of the four chutes, ON EDGE and
+   behind glass, and rattles down through the pegs before it reaches the deck.
+
+   The zone biases where it ends up. It does not choose it - the entry point
+   is jittered and every peg it clips changes the answer. And because the fall
+   takes a real fraction of a shelf stroke, WHEN the host drops matters as
+   much as where.
    ------------------------------------------------------------------------- */
 export function dropInto(zone) {
-  const x = DIMS.zoneCentresX[Math.max(0, Math.min(3, zone | 0))];
-  return createItem(
+  const z = Math.max(0, Math.min(DIMS.zoneCount - 1, zone | 0));
+  const jitter = (Math.random() * 2 - 1) * DIMS.D * CFG.chute.entryJitterInCoins;
+
+  const item = createItem(
     ctx, CFG.dropItem,
-    x + (Math.random() * 2 - 1) * DIMS.D * 0.15,
-    DIMS.tierTop.y + DIMS.deckStep + DIMS.D * 2.5,
-    DIMS.tierTop.backZ + DIMS.D * 0.9,
-    Math.random() * Math.PI * 2
+    DIMS.zoneCentresX[z] + jitter,
+    DIMS.chuteTop - DIMS.D * CFG.chute.entryHeightInCoins,
+    DIMS.panelZ,
+    0,
+    { quat: quatOnEdge(Math.random() * Math.PI * 2), ccd: true }
   );
+
+  /* Sideways kick on entry: see chute.entrySpeedInCoins. Without it the coin
+     falls dead vertical and balances on the first peg it meets. */
+  const kick = DIMS.D * CFG.chute.entrySpeedInCoins;
+  item.body.setLinvel({
+    x: (Math.random() * 2 - 1) * kick,
+    y: -kick * 0.15,
+    z: 0
+  }, true);
+  item.body.setAngvel({
+    x: 0, y: 0,
+    z: (Math.random() * 2 - 1) * DIMS.D * CFG.chute.entrySpinInCoins
+  }, true);
+
+  item.dropStep = stepCount;
+  item.dropZone = z;
+  M.dropped++;
+  return item;
+}
+
+/* Time each dropped item from entering the chute to clearing it, and note
+   where it came out. A coin still in there after ten seconds is jammed, which
+   is a fact about the peg spacing and wants knowing about. */
+function trackChute() {
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+    if (it.dropStep === undefined) continue;
+    const t = it.body.translation();
+    if (t.y < DIMS.chuteBottom) {                 // clear of the chute
+      /* Count on a counter, never on the length of a rolling window - push()
+         caps its arrays, so array length silently stops growing and every
+         later success reads as a failure. That cost an hour of chasing a
+         50%% jam rate that did not exist. */
+      M.landed++;
+      push(M.fallSteps, stepCount - it.dropStep);
+      push(M.landX, t.x - DIMS.zoneCentresX[it.dropZone]);
+      it.dropStep = undefined;
+    } else if (stepCount - it.dropStep > 600) {
+      M.jammed++;
+      it.dropStep = undefined;
+    }
+  }
 }
 
 function physicsStep() {
@@ -235,6 +295,7 @@ function physicsStep() {
 
   ctx.world.step();
   stepCount++;
+  trackChute();
   collectFallen();
 }
 
@@ -303,6 +364,14 @@ function updateHud() {
     ' &nbsp; (coin = ' + DIMS.D + ')' +
     '<br><b>fallen off</b> ' + M.fallen +
     ' &nbsp; <b>per 20 strokes</b> ' + per20.toFixed(1) +
+    '<br><b>dropped</b> ' + M.dropped +
+    ' &nbsp; <b>through</b> ' + M.landed + '/' + M.dropped +
+    ' &nbsp; <b>chute fall</b> ' + (mean(M.fallSteps) === null ? '-' :
+        (mean(M.fallSteps) / 60).toFixed(2) + 's (' +
+        ((mean(M.fallSteps) / 60) / (CFG.shelf.periodMs / 1000) * 100).toFixed(0) + '% of a stroke)') +
+    ' &nbsp; <b>spread</b> ' + (M.landX.length < 2 ? '-' :
+        (spread(M.landX) / DIMS.D).toFixed(2) + ' coins') +
+    (M.jammed ? ' &nbsp; <b style="color:#ff6b6b">JAMMED ' + M.jammed + '</b>' : '') +
     '<br><span style="opacity:.55">SPACE run/pause &middot; S single step &middot; R reset &middot; ' +
     'presettle ' + presettleSteps + ' &middot; stroke ' + DIMS.stroke.toFixed(3) + '</span>';
 }
@@ -343,6 +412,22 @@ window.startCoinPusher = function (teamA, teamB) {
 
     ctx.machine = buildMachine(ctx);
     resetPile();
+
+    /* Host interaction: a click on one of the four chutes. Hit-tested against
+       invisible planes standing in front of the glass, never against the pile
+       or the shelf. */
+    const ray = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    renderer.domElement.addEventListener('pointerdown', function (e) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ndc.set(
+        ((e.clientX - r.left) / r.width) * 2 - 1,
+        -((e.clientY - r.top) / r.height) * 2 + 1
+      );
+      ray.setFromCamera(ndc, camera);
+      const hits = ray.intersectObjects(ctx.machine.panels, false);
+      if (hits.length) dropInto(hits[0].object.userData.zone);
+    });
 
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', function (e) {

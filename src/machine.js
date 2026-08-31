@@ -252,46 +252,103 @@ export function buildMachine(ctx) {
     width: width, thickness: deckThick * 2, color: P.tray
   });
 
-  /* The four drop panes. Visual only this pass: no pegs in the physics and no
-     chute volume. They are here so the camera can be judged against the
-     reference photograph. */
-  const pegGeo = new THREE.SphereGeometry(D * 0.055, 8, 6);
-  const pegMat = mat(P.peg);
-  for (let i = 0; i < DIMS.zoneCount; i++) {
-    const cx = DIMS.zoneCentresX[i];
-    const pane = new THREE.Mesh(
-      new THREE.PlaneGeometry(DIMS.zoneWidth * 0.94, DIMS.panelHeight),
-      mat(P.panel, { roughness: 0.35 })
-    );
-    pane.position.set(cx, DIMS.tierTop.y + DIMS.panelHeight / 2, DIMS.panelZ);
-    ctx.scene.add(pane);
-    parts.panels.push(pane);
+  /* ---------------------------------------------------------------------
+     THE FOUR DROP CHUTES
+     Each is a real volume: two glass panes front and back, a divider either
+     side, and a staggered peg field. The coin goes in on edge at the top and
+     rattles down. Nothing here filters or steers it - the scatter is just
+     bouncing.
+     --------------------------------------------------------------------- */
+  const chuteH = DIMS.chuteTop - DIMS.chuteBottom;
+  const chuteCy = (DIMS.chuteTop + DIMS.chuteBottom) / 2;
+  const glassT = D * 0.04;
 
-    for (let r = 0; r < 4; r++) {
-      for (let c = 0; c < 3; c++) {
-        const peg = new THREE.Mesh(pegGeo, pegMat);
-        peg.position.set(
-          cx + (c - 1) * DIMS.zoneWidth * 0.26,
-          DIMS.tierTop.y + DIMS.panelHeight * (0.18 + r * 0.21),
-          DIMS.panelZ + D * 0.06
+  function chuteWall(cx, cy, cz, sx, sy, sz, material) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
+    m.position.set(cx, cy, cz);
+    ctx.scene.add(m);
+    const b = ctx.world.createRigidBody(
+      ctx.RAPIER.RigidBodyDesc.fixed().setTranslation(cx, cy, cz)
+    );
+    ctx.world.createCollider(
+      ctx.RAPIER.ColliderDesc.cuboid(sx / 2, sy / 2, sz / 2)
+        .setFriction(PHY.wallFriction)
+        .setRestitution(PHY.itemRestitution),
+      b
+    );
+    return m;
+  }
+
+  const glassMat = mat(P.panel, { roughness: 0.15, opacity: CFG.chute.glassOpacity });
+  const backMat  = mat(P.panel, { roughness: 0.5 });
+
+  /* Back pane: solid, and the surface the peg dots read against. */
+  chuteWall(0, chuteCy, DIMS.panelZ - DIMS.chuteDepth / 2 - glassT / 2,
+            width, chuteH, glassT, backMat);
+  /* Front pane: glass, so the falling coin is visible. */
+  const frontPane = chuteWall(0, chuteCy, DIMS.panelZ + DIMS.chuteDepth / 2 + glassT / 2,
+            width, chuteH, glassT, glassMat);
+  frontPane.renderOrder = 2;
+
+  /* Dividers between the chutes, and the two outer walls. */
+  for (let i = 0; i <= DIMS.zoneCount; i++) {
+    chuteWall(-width / 2 + i * DIMS.zoneWidth, chuteCy, DIMS.panelZ,
+              D * 0.05, chuteH, DIMS.chuteDepth + glassT * 2,
+              mat(P.panelEdge));
+  }
+
+  /* Pegs. CYLINDERS spanning the full chute depth, not spheres.
+
+     A sphere was tried and it jams: it only occupies the middle of the chute,
+     leaving a slot about 0.010 wide between it and each glass pane. The
+     solver squeezes a 0.020-thick coin into that slot, half through the
+     glass, and it sticks there. Measured, that was 6 jams in 32 drops. A peg
+     that reaches both panes leaves nowhere to wedge. */
+  const pegLen = DIMS.chuteDepth * 1.2;
+  const pegGeo = new THREE.CylinderGeometry(DIMS.pegRadius, DIMS.pegRadius, pegLen, 12);
+  pegGeo.rotateX(Math.PI / 2);                 // lie the cylinder along z
+  const pegQuat = { x: Math.sin(Math.PI / 4), y: 0, z: 0, w: Math.cos(Math.PI / 4) };
+  const pegMat = mat(P.peg, { roughness: 0.4 });
+  const rowGap = chuteH * CFG.chute.rowGapFraction;
+  const firstRowY = DIMS.chuteTop - chuteH * CFG.chute.firstRowFraction;
+
+  parts.pegs = [];
+  for (let z = 0; z < DIMS.zoneCount; z++) {
+    const cx = DIMS.zoneCentresX[z];
+    for (let r = 0; r < CFG.chute.pegRows; r++) {
+      const py = firstRowY - r * rowGap;
+      const xs = [(r % 2 === 0 ? 1 : -1) * DIMS.pegRowDx];
+      xs.forEach(function (dx) {
+        const px = cx + dx;
+        const m = new THREE.Mesh(pegGeo, pegMat);
+        m.position.set(px, py, DIMS.panelZ);
+        ctx.scene.add(m);
+        const b = ctx.world.createRigidBody(
+          ctx.RAPIER.RigidBodyDesc.fixed().setTranslation(px, py, DIMS.panelZ)
         );
-        ctx.scene.add(peg);
-      }
+        ctx.world.createCollider(
+          ctx.RAPIER.ColliderDesc.cylinder(pegLen / 2, DIMS.pegRadius)
+            .setRotation(pegQuat)
+            .setFriction(0.05)
+            .setRestitution(0.45),
+          b
+        );
+        parts.pegs.push(m);
+      });
     }
   }
 
-  /* Divider mullions between the panes. */
-  for (let i = 0; i <= DIMS.zoneCount; i++) {
-    const m = new THREE.Mesh(
-      new THREE.BoxGeometry(D * 0.07, DIMS.panelHeight, D * 0.12),
-      mat(P.panelEdge)
+  /* Invisible click targets, one per chute, in front of the glass. Host
+     interaction hit-tests against these, never against the pile. */
+  for (let i = 0; i < DIMS.zoneCount; i++) {
+    const target = new THREE.Mesh(
+      new THREE.PlaneGeometry(DIMS.zoneWidth * 0.96, chuteH),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
     );
-    m.position.set(
-      -width / 2 + i * DIMS.zoneWidth,
-      DIMS.tierTop.y + DIMS.panelHeight / 2,
-      DIMS.panelZ
-    );
-    ctx.scene.add(m);
+    target.position.set(DIMS.zoneCentresX[i], chuteCy, DIMS.panelZ + D * 0.3);
+    target.userData.zone = i;
+    ctx.scene.add(target);
+    parts.panels.push(target);
   }
 
   return parts;

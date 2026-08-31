@@ -34,19 +34,25 @@ function materialFor(typeId) {
   return m;
 }
 
-export function createItem(ctx, typeId, x, y, z, yaw) {
+export function createItem(ctx, typeId, x, y, z, yaw, opts) {
+  opts = opts || {};
   const type = CFG.itemTypes[typeId];
   const d = DIMS.itemDims(typeId);
 
+  const rot = opts.quat || quatFromYaw(yaw || 0);
+
   const mesh = new THREE.Mesh(geometryFor(typeId), materialFor(typeId));
   mesh.position.set(x, y, z);
-  mesh.rotation.y = yaw || 0;
+  mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w);
   ctx.scene.add(mesh);
 
   const body = ctx.world.createRigidBody(
     ctx.RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(x, y, z)
-      .setRotation(quatFromYaw(yaw || 0))
+      .setRotation(rot)
+      /* A coin dropped on edge down a chute barely thicker than it is can
+         tunnel straight through the glass in one step without this. */
+      .setCcdEnabled(!!opts.ccd)
       .setCanSleep(PHY.allowSleep)
       /* See physics.angularDamping in config: this is standing in for
          spin friction, not papering over a missing rule. */
@@ -90,6 +96,23 @@ function discCollider(ctx, d) {
 
 function quatFromYaw(yaw) {
   return { x: 0, y: Math.sin(yaw / 2), z: 0, w: Math.cos(yaw / 2) };
+}
+
+/* On edge: tip the disc 90 degrees about x so its faces point at the viewer
+   and it falls within the plane of the chute. */
+export function quatOnEdge(spin) {
+  const h = Math.PI / 4;                       // half of 90 degrees
+  const c = Math.cos(h), s = Math.sin(h);
+  const a = { x: s, y: 0, z: 0, w: c };        // 90 about x
+  const b = quatFromYaw(0);
+  const t = spin / 2;
+  const r = { x: 0, y: 0, z: Math.sin(t), w: Math.cos(t) };   // spin in plane
+  return {
+    x: r.w * a.x + r.x * a.w + r.y * a.z - r.z * a.y,
+    y: r.w * a.y - r.x * a.z + r.y * a.w + r.z * a.x,
+    z: r.w * a.z + r.x * a.y - r.y * a.x + r.z * a.w,
+    w: r.w * a.w - r.x * a.x - r.y * a.y - r.z * a.z
+  };
 }
 
 /* --------------------------------------------------------------------------

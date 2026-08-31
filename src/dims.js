@@ -75,6 +75,21 @@ const wallHeight  = tierDrop + D * 3;
 const panelHeight = D * 5.2;        // the four drop panes, above the top tier
 const panelZ      = D * 0.15;       // stood just in front of the back wall
 
+/* ---- the drop chute ----------------------------------------------------
+   A thin vertical volume behind glass, one per drop zone. The coin enters
+   ON EDGE at the top and stays roughly in plane because the chute is barely
+   thicker than the coin, which is what makes the peg bounces read.
+   ---------------------------------------------------------------------- */
+const C = CFG.chute;
+const chuteDepth  = S.coinThickness * C.depthInCoinThicknesses;
+const chuteTop    = tierTop.y + panelHeight;
+const chuteBottom = tierTop.y + deckStep + D * C.exitHeightInCoins;
+/* NOT deck level: see chute.exitHeightInCoins. A coin still on edge at the
+   bottom of a chute this thin cannot topple, so the chute opens out above
+   the deck and the coin falls the last stretch in free air. */
+const pegRadius   = D * C.pegRadiusInCoins;
+const pegRowDx    = D * C.rowOffsetInCoins;
+
 /* ---- drop zones ---- */
 const zoneCount = 4;
 const zoneWidth = width / zoneCount;
@@ -113,6 +128,7 @@ export const DIMS = {
   tiers, tierTop, tierLast, trayY,
   wallThick, wallHeight, panelHeight, panelZ,
   zoneCount, zoneWidth, zoneCentresX,
+  chuteDepth, chuteTop, chuteBottom, pegRadius, pegRowDx,
   itemDims
 };
 
