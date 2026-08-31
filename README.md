@@ -1,148 +1,182 @@
 # Coin Pusher Quiz
 
-A browser-based coin pusher for quiz night. Host-driven: you ask the question,
-the winning team gets one drop.
+A browser-based coin pusher for a family quiz night, run on a TV. The host asks
+questions; whoever answers correctly gets one drop. Coins pile up, get shoved
+toward the edge, and score when they fall off. Some items on the shelf are
+physical prizes rather than points.
 
-## Running it on the night
+The host drives everything. Players don't need devices.
 
-Double-click **`serve.bat`**. It starts a small local server and opens the game
-in your browser. Press **F11** for full screen.
+---
 
-If `serve.bat` doesn't work (no Python on that machine), open a terminal in this
-folder and run any static server, e.g.:
+## Running it
 
-```bash
-npx --yes serve -l 8000 .
-```
+Double-click **`serve.bat`**, then open the page it launches.
 
-Then go to `http://localhost:8000`.
+It has to be served over http, not opened as a file. The physics engine ships
+as WebAssembly and browsers refuse to load that from a `file://` URL. That is
+the only reason the batch file exists.
 
-> Don't just double-click `index.html`. Browsers block a page opened from
-> `file://` from loading images out of the `assets/` folder, so your prize
-> pictures won't show up.
+Everything is offline — Three.js and Rapier are bundled in `vendor/`. No
+internet needed once the folder is on the machine.
 
-Everything is offline — Phaser is bundled in `vendor/`. No internet needed.
+Press **F11** for full screen. Reloading the page resets everything.
 
-## Playing
+## Controls
 
-| Action | How |
+| | |
 |---|---|
-| Pick the team that answered | Click their panel, or press **T** to toggle |
-| Drop a coin | Click a drop zone, or press **1**-**4** |
-| Pause the shelf | **SPACE** |
-| New session (resets everything) | Reload the page |
+| Drop a coin | **Click one of the four panels** at the back, or keys **1**–**4** |
+| Pause / restart the shelf | **SPACE** |
+| Single step (for a close look) | **S** |
+| Reset the machine | **R** |
 
-Whatever falls off the front edge scores for the **currently selected team**, so
-leave the right team selected between questions.
+Clicking anywhere else — the pile, the shelf, the cabinet — does nothing. Only
+the four chutes are clickable.
 
-### How the machine works
+---
 
-**The drop zone is not an aiming device.** The coin goes in at the back and
-rattles down through the pegs, drifting sideways on the way. Picking a zone
-biases where it lands; it does not choose it.
+## How the machine works
 
-**The shelf slides in and out of a slot at the back.** As it withdraws, part of
-it disappears into the machine. Coins sitting on it are carried forward as it
-comes out, and are simply left behind when it goes back in - they do not ride
-back with it. That one-way action is the whole engine of the machine: every
-stroke is a net gain forward, so the pile creeps towards the edge.
+**The coin does not drop onto the shelf.** It goes in at the back, behind
+glass, and falls through a field of pegs, bouncing as it goes. So a drop zone
+is not an aiming device. It *biases* where the coin lands; it does not choose
+it. Measured spread is about two-thirds of a coin either side of the chute it
+went into.
 
-**Timing matters.** A coin takes two or three seconds to come down the chute and
-the shelf keeps moving the whole time. Land it while the gap at the back is open
-and it sits where the shelf can get behind it and do some work. Land it late and
-it comes down further forward, past the shelf, where nothing can push it until
-the pile catches up.
+**Timing matters.** The fall takes about 0.7 seconds, which is roughly a
+quarter of a shelf stroke. The shelf keeps moving the whole time, so *when* the
+host clicks changes where the coin ends up as much as *which* panel they click.
+Drop on the wrong beat and it lands on top of the pile instead of where it
+would do useful work. That is a feature.
 
-Items that fall off the top shelf land on the bottom shelf. Only items that
-fall off the *bottom* shelf score.
+**The shelf is a block that slides forward and back**, at a constant rhythm
+that never varies. About half of it withdraws into the cabinet on the back
+stroke. It has a vertical front face, and that face is the entire mechanism: it
+pushes on the way out and simply separates from the coins on the way back.
 
-The machine starts loaded right up to the edge, but it will not spill on its
-own - nothing moves unless a coin lands on the shelf. Expect roughly the first
-half dozen drops of a session to build pressure before anything comes out, then
-a fairly steady one item per drop after that.
+Coins riding on top of the shelf tumble off its front edge down onto the fixed
+platform, and cannot climb back on. From there they get shoved along until they
+fall off the front, which scores.
 
-## Setting up prizes
+**It is stingy at first.** Roughly the first twenty drops of a session go into
+building the pile up before anything starts falling off. After that it settles
+into paying out about four items for every five dropped, and slowly gets
+fuller as the night goes on.
 
-Everything on the shelf is an "item", and every item is defined in one place:
-**`src/config.js`**.
+---
+
+## Setting it up before a quiz
+
+Everything you need is in **`src/config.js`**. It is the only file you should
+have to touch.
+
+### Items
+
+Every object on the shelf is an "item":
 
 ```js
-chocolate: {
-  label: 'Chocolate bar',
-  image: 'chocolate.png',              // file in assets/, or null for a plain disc
-  color: 0x8B4A2B,                     // fallback colour
-  radius: 17,                          // physics size. 16 = normal coin
-  value: { type: 'prize', label: 'Chocolate bar' }
+coin: {
+  label: 'Coin',
+  image: null,              // a PNG in assets/, or null for a plain shape
+  color: 0xE8C24A,          // fallback colour, also the prize-log dot
+  shape: 'disc',            // 'disc' or 'box'
+  size: { diameter: 1.0, thickness: 0.085 },
+  density: 1.0,             // 1.0 is a coin; higher is harder to shove
+  value: { type: 'points', amount: 10 }
 }
 ```
 
-`value` is either:
+**All sizes are in coin diameters**, so `1.0` is exactly one coin across. That
+means the config stays valid if you change the scale of the machine.
 
-- `{ type: 'points', amount: 50 }` — adds to that team's score
-- `{ type: 'prize', label: 'Chocolate bar' }` — shows a big banner so you know
-  to hand over the real thing
+A `box` takes `{ width, height, depth }` instead. Boxes behave very differently
+from discs — they won't roll or slide sideways, and they dam up everything
+behind them. Good for making a big prize feel hard-won; bad if you fill the
+shelf with them.
 
-To add a prize: drop a PNG in `assets/`, add a block like the one above, then
-add it to `startingLayout` with how many you want and which shelf (`tier: 1` is
-the top, `tier: 2` is the bottom).
+For a prize, use `value: { type: 'prize', label: 'Chocolate bar' }`.
 
-Square PNGs with transparent backgrounds look best.
+### What starts on the shelf
 
-## Tuning the feel
+```js
+startingLayout: [
+  { type: 'coin',      count: 44, tier: 1 },
+  { type: 'chocolate', count: 1,  tier: 1 },
+]
+```
 
-Also in `src/config.js`, under `tuning`:
+The machine loads from the front lip backwards, so it starts primed — close to
+tipping, but not spilling on its own.
 
-| Setting | What it does |
+### Pictures
+
+Drop PNGs into `assets/` and name them in the item's `image` field. Square with
+a transparent background works best.
+
+---
+
+## Tuning
+
+The knobs worth playing with, all in `config.js`:
+
+| | |
 |---|---|
-| `pusherPeriodMs` | Length of one full in-and-out stroke. Higher = slower, and a longer window to time a drop into. |
-| `pusherAmplitude` | How far the shelf slides each stroke. |
-| `shelfLength` | Length of the shelf when fully withdrawn. It extends by `pusherAmplitude` on top of this. |
-| `shelfGrip` | How firmly the shelf drags its coins forward. Low = they slip and the shelf slides under them. High = it shoves hard. |
-| `tipOverhang` | How far past the lip a coin must be before it tips off. The starting pile is loaded to just behind this line. Lower = the machine starts more primed and pays sooner. |
-| `edgeTip` | The shove given to a coin that is overhanging. |
-| `chuteGravity` | How fast a coin falls through the pegs. Lower = slower fall, more scatter, more time to time the drop. |
-| `pegSpacing` | Gap between pegs. **Must stay comfortably wider than a coin** or they jam. |
-| `pegRows` | Rows of pegs. They must sit further apart vertically than a coin is wide. |
-| `itemFriction` | Coin-on-coin grip. Keep low - high values lock the pile into a rigid raft. |
-| `rowGap` | Slack between rows of the starting pile. |
+| `scale.coinsAcrossWidth` | How many coins fit across the machine. This is the number that decides how the whole thing *feels*, because it sets how much one added coin advances the pile. |
+| `scale.coinsDeepPerTier` | How deep the playfield is. |
+| `scale.fixedFloorFraction` | How much of that depth is fixed platform rather than moving shelf. Raising it makes the machine stingier — coins have further to travel. |
+| `scale.deckStepInCoins` | How far the shelf's top sits above the platform. **Do not set this to 0** (see below). |
+| `shelf.periodMs` | One full back-and-forth stroke. |
+| `physics.itemFriction` | Coin on coin. Too high and the pile locks into a raft that won't shift. |
+| `physics.shelfFriction` | How firmly the shelf carries what sits on it. |
 
-### If it feels wrong
+If prizes are coming off too easily, put them further back in `startingLayout`
+or raise their `density`.
 
-**Nothing ever falls off, or it takes forever** — the pile is jamming. Lower
-`itemFriction`, raise `shelfGrip`, or lower `tipOverhang` so coins tip off the
-edge sooner. Adding more coins to `startingLayout` also helps, up to the point
-where the tier is full (it warns in the browser console if you overfill it).
+Tune by adjusting friction, mass and geometry. If you find yourself wanting to
+add a *rule* about how coins behave, something is wrong — that is what sank an
+earlier attempt at this.
 
-**Coins pour out constantly** — too many coins. Reduce the counts, or raise
-`rowGap` to put more slack back in the pile.
+---
 
-**Coins fall with nobody having dropped one** — the pile is loaded past the
-tipping line. Raise `tipOverhang` a little.
+## Why it is built this way
 
-The counts in `startingLayout` are the main difficulty dial. Roughly one item
-falls per drop once the shelf is loaded; the first few drops of a session build
-the pile up before anything comes out, which is the tension you want.
+A previous version was 2D, and failed. In 2D coins cannot stack, so the pile
+compacted into a rigid raft, the front row dammed the lip, and nothing ever
+fell off. Every fix was a hand-written rule patching over the missing third
+axis, and they fought each other.
 
-### Why the shelf is built the way it is
+This version is 3D with real gravity and real friction. Coins stack because
+they are solid, and fall off because they overbalance.
 
-Worth knowing before you change numbers. There is no world gravity — nothing
-moves unless the shelf moves it. That means:
+Two things were then found by measurement rather than reasoning, and both are
+worth knowing before changing anything:
 
-- The pile has to physically reach from the shelf to the front edge, or shoves
-  don't travel and the machine sits dead.
-- A pile packed with *zero* gaps is incompressible, and the whole thing marches
-  off the edge at once. The `rowGap` slack is what stops that.
-- Coins get Coulomb friction (a flat speed loss per step) rather than Matter's
-  `frictionAir` drag, so a shove travels a bounded distance and items actually
-  come to rest.
-- Coins on the shelf are dragged by it with a capped grip, not welded to it. The
-  cap is what lets the shelf slide out from under a pile that won't move.
-- The carry is one-way. Coins ride the shelf out and are left behind when it
-  goes back in. Make it symmetrical and the machine just rocks on the spot.
-- Coins that overhang the lip are actively tipped off. Without that the front
-  row carries the load of the whole pile and the tier locks solid.
-- Coins in the chute are on their own collision layer, so they rattle off the
-  pegs without touching the pile - the same job the glass does on a real
-  cabinet.
+**The shelf needs its step.** A shelf flush with the platform can only transmit
+force through friction, and friction is symmetric — it drags the pile back
+exactly as hard as it pushes it forward. Sixty coins dropped over sixty strokes
+produced *nothing* off the lip. The vertical front face is what makes the
+motion one-way. `deckStepInCoins: 0` reproduces the failure if you want to see
+it.
 
-If you change the geometry and it stops behaving, those are what to check.
+**The peg field has to be sparse.** A coin is one diameter across in every
+direction, so any gap it falls through must be wider than a whole coin. In a
+chute two and a half coins wide, that allows exactly one peg per row — a pair
+cannot work, because widening it to clear the dividers shuts the centre gap and
+narrowing it does the reverse. The dense dot grid in the reference photograph
+cannot be a peg field; as pegs it would simply be a wall.
+
+---
+
+## Not built yet
+
+- **Scoring.** Team names are collected at the start and items are counted off
+  the lip, but scores, the prize log and the on-screen team panels are not
+  wired up. Falling items are counted, not yet awarded.
+- **Art.** Everything is plain shapes. The shelf is red and the platform white
+  so the shelf's travel is easy to read while tuning; the real machine has both
+  surfaces red with thin white lips.
+- **Drop-panel colour and state.**
+
+`REBUILD-BRIEF.md` in this folder is the current design brief, including
+corrections made as the build went along. It is the thing to read first.
