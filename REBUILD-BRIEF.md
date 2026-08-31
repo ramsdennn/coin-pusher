@@ -93,6 +93,50 @@ top tier only.
 
 ---
 
+## Camera and drop-zone interaction (from reference images)
+
+Two reference screenshots confirm the intended look and resolve one open
+question from the original brief.
+
+### Camera
+Elevated, angled down and into the machine — looking from in front of and
+above the playfield, back toward the pile, roughly 30–40° off horizontal. Both
+shelf tiers are visible from above, along with the lower portion of the four
+vertical drop-zone panes at the back. This is a fixed camera; no orbit/pan/zoom
+controls implied by the reference. Treat it as one static camera transform to
+set up once, not a controllable rig.
+
+### Drop zones
+Four vertical panels at the back of the cabinet, side by side, separated by
+thin visible dividers. Each panel shows a faint dot grid through it — the peg
+field the coin bounces through on the way down — confirming drop zones are
+glass-fronted chutes, not open slots. Host interaction is a click/tap on one of
+these four panels; this should hit-test against the four chute volumes (or four
+simple invisible click-planes positioned in front of them), not against the
+pile or shelf geometry.
+
+### Shelf retraction — resolved (CORRECTED 2026-08-31)
+**The shelf retracts about halfway, not fully.** An earlier draft of this brief
+claimed full retraction — that it disappears from view entirely — based on a
+reading of the second reference image. The host has since corrected this
+directly: roughly **half** the shelf withdraws into the cabinet on the backward
+stroke; the remainder stays in the playfield at all times.
+
+Do not restore the "full retraction" wording. It was wrong.
+
+### Shelf depth — partially resolved
+With the shelf at its back position, the fixed platform ahead of it reads as
+roughly a third to half of the total playfield depth. Worth confirming against
+the coin-diameter scale once geometry is built, but a reasonable starting
+proportion rather than a guess.
+
+### Deferred
+Panel color/state (a white panel vs. red panels appears in the reference
+images) is explicitly out of scope for this pass — mechanics first, art/state-
+color logic later.
+
+---
+
 ## Tech
 
 - **Three.js** for rendering.
@@ -133,26 +177,52 @@ over. It is only the engine that failed.
 - No in-game image upload. Host edits a config file and drops PNGs in a folder.
 - 4 drop zones, no bonus zones or trigger pockets.
 - Constant shelf speed.
-- Art polish is a later phase — get the mechanics right with plain shapes first.
+- Fixed camera — angled down and into the machine from the front (see
+  Camera and drop-zone interaction, above).
+- Art polish, including drop-zone panel coloring/state, is a later phase — get
+  the mechanics right with plain shapes first.
 
 ---
 
 ## Open decisions — ask, do not guess
 
-1. **How much of the tier depth is moving shelf versus fixed floor?** Is the
-   shelf essentially the whole playfield with a narrow fixed ledge at the front,
-   or a distinct block at the back with a large fixed floor ahead of it? The 2D
-   attempt guessed at this repeatedly and got it wrong every time.
+1. **How much of the tier depth is moving shelf versus fixed floor?** Reference
+   images suggest the fixed floor is roughly a third to half of playfield
+   depth, which is a reasonable starting point — but confirm against actual
+   coin scale once geometry is built rather than treating it as exact.
 
-2. **How far does the shelf travel**, relative to a coin's diameter?
+---
 
-3. **Coin size relative to the machine** — how many coins across the width? This
-   turned out to strongly affect how responsive the machine feels, because it
-   determines how much one added coin advances the pile.
+## Resolved in session, 2026-08-31
+
+Answers given by the host against the two reference screenshots. These replace
+the corresponding open questions above.
+
+- **Coin size / scale.** Roughly **10 coins across the playfield width**,
+  measured off the frontal reference image. Model at 1 unit = 1 metre with a
+  coin 0.24 across and 0.02 thick (i.e. 10x real size, which keeps Rapier's
+  contact tolerances in their comfortable range); gravity -9.81. Playfield
+  therefore ~2.4 units wide. Confirm against the built geometry — the starting
+  layout of ~40 items per tier should read as roughly half a single layer.
+- **Shelf is flush**, not a raised slab: its deck is coplanar with the fixed
+  floor and coins slide across the seam. Chamfer the leading edge and overlap
+  slightly vertically, or coins catch on the seam every stroke.
+- **Shelf retraction is roughly half**, not full — see the corrected section
+  above.
+- **Fixed floor runs underneath the shelf** for the full tier depth, so a coin
+  landing in the vacated back region rests on solid ground and waits to be
+  shoved. The retraction does not open a hole.
+- **Prize items may be discs or boxes.** The config schema needs a per-item
+  shape, not just a radius — a box dams the pile very differently from a
+  cylinder, and both are wanted.
 
 Note: the direction of the push (whether coins advance on the out-stroke or the
 return) is *no longer a design decision*. In 3D, friction decides it. That was
 only ever a question because the 2D version had to hand-write the rule.
+
+Note: shelf travel distance is resolved (see Camera and drop-zone interaction,
+above) — roughly half retraction. An earlier draft said full retraction; that
+was wrong and has been corrected.
 
 ---
 
