@@ -152,7 +152,10 @@ export function buildStartingPile(ctx) {
          - which is the usual way to make a solver explode on frame 1. */
       const cx = cursorX + w / 2 + jitter(D * 0.07);
       const cz = rowZ - dep / 2 + jitter(D * 0.07);
-      const cy = layerTopY + h / 2 + D * (0.03 + Math.random() * 0.38);
+      /* Behind the deck's leading edge the resting surface is the deck top,
+         which with a stepped deck is higher than the fixed floor. */
+      const surface = cz < tier.shelfHomeZ ? layerTopY + DIMS.deckStep : layerTopY;
+      const cy = surface + h / 2 + D * (0.03 + Math.random() * 0.38);
 
       createItem(ctx, typeId, cx, cy, cz,
         d.shape === 'box' ? jitter(0.05) : Math.random() * Math.PI * 2);

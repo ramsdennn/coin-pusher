@@ -82,42 +82,89 @@ function wedgeGeometry(hx, t, hz, chamfer) {
 
 function buildShelf(ctx, tier) {
   const width = DIMS.width, deckThick = DIMS.deckThick, chamfer = DIMS.chamfer;
+  const step = DIMS.deckStep;
 
   /* Long enough that its back end is still buried in the cabinet at full
      retraction, so it never reveals its own tail. */
   const deckLength = DIMS.shelfDepth + DIMS.stroke + DIMS.D;
   const hz = deckLength / 2;
-  /* Sit the deck so its FLAT TOP meets the fixed floor, not so its chamfer
-     tip does. Otherwise the bevel leaves a V-groove across the full width
-     of the seam, and coins straddling it rock in the notch forever. The
-     chamfer tucks under the fixed floor instead; kinematic and fixed
-     bodies do not collide, so the overlap costs nothing. */
-  const homeCz = tier.shelfHomeZ - hz + DIMS.chamfer;
 
-  const mesh = new THREE.Mesh(
-    wedgeGeometry(width / 2, deckThick, hz, chamfer),
-    mat(P.deck, { roughness: 0.55 })
-  );
-  mesh.position.set(0, tier.y, homeCz);
+  let geo, colliderDesc, cy, homeCz;
+
+  if (step > 0) {
+    /* STEPPED: a block riding on the fixed floor, with a vertical front face.
+       That face is the whole mechanism - it pushes on the out-stroke and just
+       separates from the coins on the return. Coins riding the deck tumble
+       off its front edge onto the field and cannot climb back on, which is
+       the one-way behaviour a flush deck cannot produce.
+
+       A plain box is safe here: the deck's underside sits exactly on the
+       floor, so a coin lying on that floor cannot get beneath it and there is
+       nothing to wedge. */
+    homeCz = tier.shelfHomeZ - hz;
+    cy = tier.y + step / 2;
+    geo = new THREE.BoxGeometry(width, step, deckLength);
+    colliderDesc = ctx.RAPIER.ColliderDesc.cuboid(width / 2, step / 2, hz);
+  } else {
+    /* FLUSH: deck top level with the fixed floor. Sit it so its FLAT TOP
+       meets the floor, not its chamfer tip, or the bevel leaves a V-groove
+       across the seam and coins rock in the notch forever. */
+    homeCz = tier.shelfHomeZ - hz + chamfer;
+    cy = tier.y;
+    geo = wedgeGeometry(width / 2, deckThick, hz, chamfer);
+    const flat = [];
+    deckPoints(width / 2, deckThick, hz, chamfer).forEach(function (p) {
+      flat.push(p[0], p[1], p[2]);
+    });
+    colliderDesc = ctx.RAPIER.ColliderDesc.convexHull(new Float32Array(flat));
+  }
+
+  const mesh = new THREE.Mesh(geo, mat(P.deck, { roughness: 0.55 }));
+  mesh.position.set(0, cy, homeCz);
   ctx.scene.add(mesh);
 
   const body = ctx.world.createRigidBody(
-    ctx.RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, tier.y, homeCz)
+    ctx.RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, cy, homeCz)
   );
-
-  const flat = [];
-  deckPoints(width / 2, deckThick, hz, chamfer).forEach(function (p) {
-    flat.push(p[0], p[1], p[2]);
-  });
-
   ctx.world.createCollider(
-    ctx.RAPIER.ColliderDesc.convexHull(new Float32Array(flat))
-      .setFriction(PHY.shelfFriction)
-      .setRestitution(PHY.itemRestitution),
+    colliderDesc.setFriction(PHY.shelfFriction).setRestitution(PHY.itemRestitution),
     body
   );
 
-  return { mesh: mesh, body: body, homeCz: homeCz, deckLength: deckLength };
+  return { mesh: mesh, body: body, homeCz: homeCz, cy: cy, deckLength: deckLength };
+}
+
+/* -------------------------------------------------------------------------
+   Drive both decks from one phase, because there is one mechanism.
+
+   phase 0   = fully forward (home)
+   phase 0.5 = fully retracted
+   phase 1   = fully forward again
+
+   So 0 -> 0.5 is the RETURN (deck withdrawing) and 0.5 -> 1 is the OUT-stroke
+   (deck advancing). Which of those actually moves the pile is not decided
+   here - friction decides it, and the metrics in game.js measure which.
+
+   setNextKinematicTranslation, not setTranslation: Rapier derives the deck's
+   contact velocity from the position delta, and that derived velocity is the
+   entire reason friction can carry anything. Teleporting it would move the
+   deck through the pile without ever gripping it.
+   ------------------------------------------------------------------------- */
+export function shelfOffset(phase) {
+  const stroke = DIMS.stroke;
+  if (CFG.shelf.motion === 'triangle') {
+    const p = phase < 0.5 ? phase * 2 : (1 - phase) * 2;
+    return -stroke * p;
+  }
+  return -stroke * (1 - Math.cos(phase * Math.PI * 2)) / 2;
+}
+
+export function driveShelves(ctx, phase) {
+  const dz = shelfOffset(phase);
+  for (let i = 0; i < ctx.machine.shelves.length; i++) {
+    const sh = ctx.machine.shelves[i];
+    sh.body.setNextKinematicTranslation({ x: 0, y: sh.cy, z: sh.homeCz + dz });
+  }
 }
 
 export function buildMachine(ctx) {
@@ -125,19 +172,25 @@ export function buildMachine(ctx) {
   const parts = { shelves: [], panels: [] };
 
   TIERS.forEach(function (tier) {
-    /* Fixed floor: the front portion of the tier, level with the deck. */
-    staticBox(ctx, {
-      top: tier.y, z0: tier.fixedBackZ, z1: tier.fixedLipZ,
-      width: width, thickness: deckThick * 1.6, color: P.fixedFloor
-    });
-
-    /* Well floor: one deck-thickness lower, under the shelf's travel. When
-       the shelf withdraws, items in the vacated region rest here. A step,
-       not a hole - the chamfered deck picks them back up on its way out. */
-    staticBox(ctx, {
-      top: tier.y - deckThick, z0: tier.backZ - D, z1: tier.fixedBackZ,
-      width: width, thickness: deckThick, color: P.cabinet
-    });
+    if (DIMS.deckStep > 0) {
+      /* One continuous field floor for the whole tier depth. The deck rides
+         on top of it, so there is no well and no step-down to climb. */
+      staticBox(ctx, {
+        top: tier.y, z0: tier.backZ - D, z1: tier.fixedLipZ,
+        width: width, thickness: deckThick * 1.6, color: P.fixedFloor
+      });
+    } else {
+      /* Fixed floor: the front portion of the tier, level with the deck. */
+      staticBox(ctx, {
+        top: tier.y, z0: tier.fixedBackZ, z1: tier.fixedLipZ,
+        width: width, thickness: deckThick * 1.6, color: P.fixedFloor
+      });
+      /* Well floor: one deck-thickness lower, under the shelf's travel. */
+      staticBox(ctx, {
+        top: tier.y - deckThick, z0: tier.backZ - D, z1: tier.fixedBackZ,
+        width: width, thickness: deckThick, color: P.cabinet
+      });
+    }
 
     parts.shelves.push(buildShelf(ctx, tier));
   });
@@ -162,8 +215,8 @@ export function buildMachine(ctx) {
         .setFriction(PHY.wallFriction), b
     );
   }
-  backWall(TIERS[0].y + DIMS.wallHeight, TIERS[0].y, 0);
-  backWall(TIERS[0].y, TIERS[1].y, DIMS.tierDepth);
+  backWall(TIERS[0].y + DIMS.wallHeight, TIERS[0].y + DIMS.deckStep, 0);
+  backWall(TIERS[0].y, TIERS[1].y + DIMS.deckStep, DIMS.tierDepth);
 
   /* Side walls, spanning both tiers and the full depth. Kept translucent so
      they do not hide the pile from a front camera. */

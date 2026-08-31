@@ -35,6 +35,7 @@ const shelfDepth  = tierDepth * (1 - S.fixedFloorFraction);
 const fixedDepth  = tierDepth - shelfDepth;
 const stroke      = shelfDepth * S.shelfStrokeFraction;
 const deckThick   = D * 0.12;
+const deckStep    = D * S.deckStepInCoins;   // 0 = flush deck
 const chamfer     = D * 0.18;   // horizontal run of the leading-edge bevel
 
 /* ---- vertical stack ---- */
@@ -106,7 +107,7 @@ function itemDims(type) {
 
 export const DIMS = {
   D, width, tierDepth, tierDrop, playDepth,
-  shelfDepth, fixedDepth, stroke, deckThick, chamfer,
+  shelfDepth, fixedDepth, stroke, deckThick, chamfer, deckStep,
   tier1, tier2, trayY,
   wallThick, wallHeight, panelHeight, panelZ,
   zoneCount, zoneWidth, zoneCentresX,

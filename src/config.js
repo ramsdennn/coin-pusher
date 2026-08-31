@@ -32,6 +32,20 @@ window.COIN_PUSHER_CONFIG = {
        0.5 = about half of it disappears, which is what the machine does. */
     shelfStrokeFraction: 0.5,
 
+    /* How far the deck's top sits ABOVE the fixed floor, in coin diameters.
+
+       0 is a flush deck. Measured, a flush deck does not work: it can only
+       transmit force through friction, friction is symmetric, and it drags
+       the pile back exactly as hard as it pushes it. 60 coins added over 60
+       strokes gave net creep of 0.003 coin/stroke and nothing fell off at all.
+
+       A step gives the deck a vertical front face. That face pushes on the
+       out-stroke and simply separates from the coins on the return, which is
+       the one-way element a pusher needs, and it is what a real machine has.
+       Coins tumble off the front of the deck onto the field and cannot climb
+       back on. About half a coin diameter. */
+    deckStepInCoins: 0.55,
+
     /* Height from the top tier's surface down to the bottom tier's. */
     tierDropInCoins: 1.6
   },
@@ -160,14 +174,35 @@ window.COIN_PUSHER_CONFIG = {
     presettleAngularDamping: 12.0,
     presettleLinearDamping:   2.0,
 
+    /* A kinematic deck sliding under a SLEEPING pile moves nothing at
+       all, so while the shelf runs every item is kept awake. This is the
+       known cost of sleeping being on: it buys a cheap idle machine and
+       a clean settle, and it has to be switched off the moment anything
+       moves. Set false to test whether Rapier's own contact waking is
+       enough on its own. */
+    wakeAllWhileRunning: true,
+
     /* Let the pile fall asleep when it settles. Rapier will need waking
        once the shelf starts moving - that is a later problem, and a known
        one. */
     allowSleep: true
   },
 
-  /* One full back-and-forth stroke. Constant - no speed-ups, no pauses. */
-  shelf: { periodMs: 2600 },
+  /* --------------------------------------------------------------------
+     THE SHELF
+     One mechanism drives both tiers together, in phase. Constant rhythm -
+     no speed-ups, no pauses, the period never varies.
+
+     motion: 'sine' is a real crank-driven pusher, easing at each end of
+     the stroke. 'triangle' is literally constant speed with an instant
+     reversal, which is harsher on the solver because the deck's velocity
+     flips sign in a single step. Both keep the rhythm fixed.
+     -------------------------------------------------------------------- */
+  shelf: {
+    periodMs: 2600,
+    motion: 'sine',
+    startRunning: true
+  },
 
   /* --------------------------------------------------------------------
      CAMERA
