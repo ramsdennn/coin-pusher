@@ -101,10 +101,23 @@ function buildShelf(ctx, tier) {
        A plain box is safe here: the deck's underside sits exactly on the
        floor, so a coin lying on that floor cannot get beneath it and there is
        nothing to wedge. */
+    /* The shelf reaches DOWN THROUGH the floor, not just to it.
+
+       Sitting its underside exactly on the floor looks airtight and is not:
+       contact tolerance lets a coin settle a fraction into the floor slab,
+       and the shelf's flat bottom edge then rides straight over it. The coin
+       ends up under the shelf, dragged along inside the block - measured at
+       16 items buried after 50 strokes, the worst 0.064 deep.
+
+       Kinematic and fixed bodies do not collide in Rapier, so the shelf can
+       pass through the floor for free, and the skirt is hidden under an
+       opaque floor. Now the front face has no bottom edge to climb. */
+    const skirt = DIMS.deckSkirt;
+    const boxH = step + skirt;
     homeCz = tier.shelfHomeZ - hz;
-    cy = tier.y + step / 2;
-    geo = new THREE.BoxGeometry(width, step, deckLength);
-    colliderDesc = ctx.RAPIER.ColliderDesc.cuboid(width / 2, step / 2, hz);
+    cy = tier.y + step / 2 - skirt / 2;
+    geo = new THREE.BoxGeometry(width, boxH, deckLength);
+    colliderDesc = ctx.RAPIER.ColliderDesc.cuboid(width / 2, boxH / 2, hz);
   } else {
     /* FLUSH: deck top level with the fixed floor. Sit it so its FLAT TOP
        meets the floor, not its chamfer tip, or the bevel leaves a V-groove

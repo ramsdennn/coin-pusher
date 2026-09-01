@@ -125,6 +125,9 @@ function buildWorld() {
   const world = new RAPIER.World({ x: 0, y: PHY.gravity, z: 0 });
   world.timestep = PHY.timestep;
   try { world.numSolverIterations = PHY.solverIterations; } catch (e) { /* older Rapier */ }
+  try {
+    world.integrationParameters.lengthUnit = PHY.lengthUnit;
+  } catch (e) { /* older Rapier */ }
   return world;
 }
 

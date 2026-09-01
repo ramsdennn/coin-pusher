@@ -152,7 +152,21 @@ window.COIN_PUSHER_CONFIG = {
   physics: {
     gravity:          -9.81,
     timestep:         1 / 60,
-    solverIterations: 8,
+    solverIterations: 16,
+
+    /* Rapier scales its contact tolerances by this. It defaults to 1, meaning
+       metre-sized objects, and it allows contact penetration of 0.005 of that
+       before it considers anything wrong. Our coins are 0.0204 THICK - so the
+       default tolerance is a quarter of a coin's thickness, which is why thin
+       discs sink into the shelf and take a second or more to climb back out.
+
+       Setting it to roughly the size of a real object here scales that down.
+       Measured over 40 strokes: worst case a coin spent inside the shelf fell
+       from 8.5s to 2.7s, and episodes lasting over a second from 14 to 4.
+
+       Do not push it lower. At 0.08 the solver goes unstable and it gets far
+       worse - one coin stayed buried for 87 seconds. */
+    lengthUnit: 0.2,
 
     /* A disc's collider is a many-sided prism, not a mathematical
        cylinder. Rapier's cylinder-vs-cylinder contacts collapse to a
