@@ -16,7 +16,7 @@
 import * as THREE from 'three';
 import * as RAPIER from 'rapier';
 import { DIMS, TIERS } from '@app/dims';
-import { buildMachine, driveShelves } from '@app/machine';
+import { buildMachine, driveShelves, liftTrapped } from '@app/machine';
 import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
 
 const CFG = window.COIN_PUSHER_CONFIG;
@@ -33,6 +33,7 @@ const M = {
   fallen: 0,
   fallenByType: {},
   dropped: 0,
+  lifted: 0,
   landed: 0,
   jammed: 0,
   fallSteps: [],        // how long a coin takes to come down the chute
@@ -145,7 +146,7 @@ function resetPile() {
   stepCount = 0;
   phase = 0;
   M.strokes = 0; M.fallen = 0; M.fallenByType = {};
-  M.dropped = 0; M.landed = 0; M.jammed = 0; M.fallSteps = []; M.landX = [];
+  M.dropped = 0; M.lifted = 0; M.landed = 0; M.jammed = 0; M.fallSteps = []; M.landX = [];
   M.creep = []; M.retract = []; M.extend = [];
   M.atForward = null; M.atBack = null;
   driveShelves(ctx, 0);
@@ -335,6 +336,7 @@ function physicsStep() {
 
   ctx.world.step();
   stepCount++;
+  M.lifted += liftTrapped(ctx);
   trackChute();
   collectFallen();
 }

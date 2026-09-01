@@ -57,6 +57,19 @@ window.COIN_PUSHER_CONFIG = {
        back on. About half a coin diameter. */
     deckStepInCoins: 0.55,
 
+    /* How far the TOP of the shelf's front face is set back from its bottom,
+       as a fraction of the step height. A dead vertical face cannot lift
+       anything: a coin that is jammed and cannot slide forward simply gets
+       overrun, and once it is inside the shelf it is enclosed by a kinematic
+       body and never comes out. Measured with a vertical face and no drops at
+       all, buried coins stayed buried for a median of 9 seconds.
+
+       Raking the face makes its normal point forward AND up, so a coin that
+       cannot move forward rides up onto the deck instead of being run over.
+       The face still pushes - the rake is mild. */
+    deckRakeFraction: 0.0,   // measured: raking made burial WORSE, 56 -> 75
+                             // episodes. Kept configurable, set to 0.
+
     /* Height from the top tier's surface down to the bottom tier's. */
     tierDropInCoins: 1.6
   },
@@ -87,7 +100,7 @@ window.COIN_PUSHER_CONFIG = {
       image: null,
       color: 0xE8C24A,
       shape: 'disc',
-      size: { diameter: 1.0, thickness: 0.085 },
+      size: { diameter: 1.0, thickness: 0.16 },
       density: 1.0,
       value: { type: 'points', amount: 10 }
     },
@@ -96,7 +109,7 @@ window.COIN_PUSHER_CONFIG = {
       image: null,
       color: 0x4FD6C0,
       shape: 'disc',
-      size: { diameter: 1.15, thickness: 0.09 },
+      size: { diameter: 1.15, thickness: 0.17 },
       density: 1.0,
       value: { type: 'points', amount: 50 }
     },
@@ -105,7 +118,7 @@ window.COIN_PUSHER_CONFIG = {
       image: null,
       color: 0xE0603F,
       shape: 'disc',
-      size: { diameter: 1.15, thickness: 0.09 },
+      size: { diameter: 1.15, thickness: 0.17 },
       density: 1.0,
       value: { type: 'points', amount: 100 }
     },

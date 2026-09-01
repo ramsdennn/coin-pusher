@@ -43,6 +43,7 @@ const stroke      = shelfDepth * S.shelfStrokeFraction;
 const deckThick   = D * 0.12;
 const deckStep    = D * S.deckStepInCoins;   // 0 = flush deck (does not work)
 const chamfer     = D * 0.18;                // only used by the flush variant
+const deckRake    = deckStep * S.deckRakeFraction;
 const deckSkirt   = D * 0.25;                // how far the shelf reaches below
                                              // floor level, so coins cannot
                                              // slip under its leading edge
@@ -127,7 +128,7 @@ function itemDims(type) {
 
 export const DIMS = {
   D, width, tierDepth, tierDrop, tierCount, playDepth,
-  shelfDepth, fixedDepth, stroke, deckThick, deckStep, chamfer, deckSkirt,
+  shelfDepth, fixedDepth, stroke, deckThick, deckStep, chamfer, deckSkirt, deckRake,
   tiers, tierTop, tierLast, trayY,
   wallThick, wallHeight, panelHeight, panelZ,
   zoneCount, zoneWidth, zoneCentresX,

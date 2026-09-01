@@ -80,6 +80,51 @@ function wedgeGeometry(hx, t, hz, chamfer) {
   return g;
 }
 
+/* -------------------------------------------------------------------------
+   The shelf's side profile, in the z-y plane, local to the body centre.
+   Extruded across the full width.
+
+       back top ______________ front top        <- set back by the rake
+               |               \
+               |                \  raked face: pushes forward AND up
+               |                 |  <- floor level
+               |                 |  skirt, vertical, hidden below the floor
+       back bot|_________________| front bottom
+   ------------------------------------------------------------------------- */
+function deckProfile(hz, hy, floorY, rake) {
+  return [
+    [-hz,  hy],
+    [ hz - rake,  hy],
+    [ hz,  floorY],
+    [ hz, -hy],
+    [-hz, -hy]
+  ];
+}
+
+function deckGeometry(hx, profile) {
+  const n = profile.length;
+  const v = [];
+  for (let side = 0; side < 2; side++) {
+    const x = side === 0 ? -hx : hx;
+    for (let i = 0; i < n; i++) v.push(x, profile[i][1], profile[i][0]);
+  }
+  const idx = [];
+  for (let i = 1; i < n - 1; i++) {
+    idx.push(0, i + 1, i);                       // left cap
+    idx.push(n, n + i, n + i + 1);               // right cap
+  }
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    idx.push(i, j, n + j);
+    idx.push(i, n + j, n + i);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(v), 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
 function buildShelf(ctx, tier) {
   const width = DIMS.width, deckThick = DIMS.deckThick, chamfer = DIMS.chamfer;
   const step = DIMS.deckStep;
@@ -116,8 +161,16 @@ function buildShelf(ctx, tier) {
     const boxH = step + skirt;
     homeCz = tier.shelfHomeZ - hz;
     cy = tier.y + step / 2 - skirt / 2;
-    geo = new THREE.BoxGeometry(width, boxH, deckLength);
-    colliderDesc = ctx.RAPIER.ColliderDesc.cuboid(width / 2, boxH / 2, hz);
+
+    const profile = deckProfile(hz, boxH / 2, tier.y - cy, DIMS.deckRake);
+    geo = deckGeometry(width / 2, profile);
+
+    const hull = [];
+    profile.forEach(function (p) {
+      hull.push(-width / 2, p[1], p[0]);
+      hull.push( width / 2, p[1], p[0]);
+    });
+    colliderDesc = ctx.RAPIER.ColliderDesc.convexHull(new Float32Array(hull));
   } else {
     /* FLUSH: deck top level with the fixed floor. Sit it so its FLAT TOP
        meets the floor, not its chamfer tip, or the bevel leaves a V-groove
@@ -132,7 +185,9 @@ function buildShelf(ctx, tier) {
     colliderDesc = ctx.RAPIER.ColliderDesc.convexHull(new Float32Array(flat));
   }
 
-  const mesh = new THREE.Mesh(geo, mat(P.deck, { roughness: 0.55 }));
+  const deckMat = mat(P.deck, { roughness: 0.55 });
+  deckMat.side = THREE.DoubleSide;      // hand-wound profile; do not risk it
+  const mesh = new THREE.Mesh(geo, deckMat);
   mesh.position.set(0, cy, homeCz);
   ctx.scene.add(mesh);
 
@@ -170,6 +225,55 @@ export function shelfOffset(phase) {
     return -stroke * p;
   }
   return -stroke * (1 - Math.cos(phase * Math.PI * 2)) / 2;
+}
+
+/* -------------------------------------------------------------------------
+   Lift out anything that has ended up INSIDE the shelf.
+
+   This is a state guard, not a physics rule. A kinematic body ignores
+   contacts by definition: it moves exactly where it is told, every step,
+   whatever is in the way. So when an item is pinned between the advancing
+   face and a pile that cannot yield, Rapier has no choice but to let the
+   shelf overlap it - and once the item is fully enclosed there is no contact
+   normal pointing anywhere useful, so it never comes out. Measured with a
+   plain vertical face and NO drops at all, buried items stayed buried for a
+   median of 9 seconds and as long as 33.
+
+   Everything cheaper was measured first and rejected: a skirt through the
+   floor, thicker discs, lengthUnit, solver iterations, CCD, soft CCD, and
+   raking the face. Each helped a little or not at all, because none of them
+   address a kinematic body's indifference to contact.
+
+   This does not change how items behave in play. It only removes a state the
+   simulation should never have been able to reach.
+   ------------------------------------------------------------------------- */
+export function liftTrapped(ctx) {
+  if (DIMS.deckStep <= 0) return 0;
+  let lifted = 0;
+  for (let s = 0; s < ctx.machine.shelves.length; s++) {
+    const sh = ctx.machine.shelves[s];
+    const t = sh.body.translation();
+    const hx = DIMS.width / 2;
+    const hy = (DIMS.deckStep + DIMS.deckSkirt) / 2;
+    const hz = sh.deckLength / 2;
+    const topY = t.y + hy;
+
+    for (let i = 0; i < ctx.items.length; i++) {
+      const it = ctx.items[i];
+      const p = it.body.translation();
+      if (Math.abs(p.x - t.x) > hx) continue;
+      if (Math.abs(p.y - t.y) > hy) continue;
+      if (Math.abs(p.z - t.z) > hz) continue;
+
+      const dim = DIMS.itemDims(it.typeId);
+      const lift = dim.shape === 'box' ? dim.hy : dim.halfHeight;
+      it.body.setTranslation({ x: p.x, y: topY + lift * 1.2, z: p.z }, true);
+      const v = it.body.linvel();
+      it.body.setLinvel({ x: v.x, y: 0, z: v.z }, true);
+      lifted++;
+    }
+  }
+  return lifted;
 }
 
 export function driveShelves(ctx, phase) {
