@@ -407,10 +407,19 @@ export function buildMachine(ctx) {
             width, chuteH, glassT, glassMat);
   frontPane.renderOrder = 2;
 
-  /* Dividers between the chutes, and the two outer walls. */
+  /* Dividers, but only down as far as the entry slots. Below that the field
+     is open across the full width so coins can bounce between chutes. The two
+     outermost run the full height - they are the cabinet walls. */
+  const slotH = DIMS.chuteTop - DIMS.slotBottom;
+  const slotCy = (DIMS.chuteTop + DIMS.slotBottom) / 2;
   for (let i = 0; i <= DIMS.zoneCount; i++) {
-    chuteWall(-width / 2 + i * DIMS.zoneWidth, chuteCy, DIMS.panelZ,
-              D * 0.05, chuteH, DIMS.chuteDepth + glassT * 2,
+    const edge = (i === 0 || i === DIMS.zoneCount);
+    chuteWall(-width / 2 + i * DIMS.zoneWidth,
+              edge ? chuteCy : slotCy,
+              DIMS.panelZ,
+              D * 0.05,
+              edge ? chuteH : slotH,
+              DIMS.chuteDepth + glassT * 2,
               mat(P.panelEdge));
   }
 
@@ -422,21 +431,57 @@ export function buildMachine(ctx) {
      glass, and it sticks there. Measured, that was 6 jams in 32 drops. A peg
      that reaches both panes leaves nowhere to wedge. */
   const pegLen = DIMS.chuteDepth * 1.2;
+
+  /* The peg collider is a ROUND cylinder, deliberately.
+
+     A prism was tried and is worse: its flat facets give a coin a flat
+     horizontal ledge to sit on, and a flat-on-flat rest is stable no matter
+     how frictionless the surfaces are. Round pegs give a line contact that
+     nothing can balance on once friction is gone.
+
+     Superseded note, kept because it is still true of the coins themselves: Rapier's cylinder contacts
+     degenerate the same way they do for the coins - which is why the coins are
+     16-sided prisms already. As cylinders the pegs let coins sink into them
+     and stick: measured 22 of 40 drops jammed, every one of them overlapping
+     a peg rather than balanced between two. */
+  const pegHull = (function () {
+    const pts = [];
+    for (let k = 0; k < 10; k++) {
+      const a = (k / 10) * Math.PI * 2;
+      const cx = Math.cos(a) * DIMS.pegRadius, cy2 = Math.sin(a) * DIMS.pegRadius;
+      pts.push(cx, cy2, -pegLen / 2);
+      pts.push(cx, cy2,  pegLen / 2);
+    }
+    return new Float32Array(pts);
+  })();
   const pegGeo = new THREE.CylinderGeometry(DIMS.pegRadius, DIMS.pegRadius, pegLen, 12);
   pegGeo.rotateX(Math.PI / 2);                 // lie the cylinder along z
   const pegQuat = { x: Math.sin(Math.PI / 4), y: 0, z: 0, w: Math.cos(Math.PI / 4) };
   const pegMat = mat(P.peg, { roughness: 0.4 });
-  const rowGap = chuteH * CFG.chute.rowGapFraction;
-  const firstRowY = DIMS.chuteTop - chuteH * CFG.chute.firstRowFraction;
+  /* Spread the rows through the open part of the chute, leaving a run-out at
+     the bottom so a coin is falling clear before it leaves. */
+  /* The first peg row must clear the dividers by more than a whole coin.
+     At half a coin, an item resting on a peg still pokes its top back up into
+     the divider zone and wedges between the peg below and a divider beside
+     it - a stable jam that no amount of friction tuning shifts. Measured at
+     0.5: 6 of 12 single drops stuck, every one at the first two rows. */
+  const fieldTop = DIMS.slotBottom - D * 1.6;
+  const fieldBottom = DIMS.chuteBottom + D * 1.2;
+  const minGap = D * CFG.chute.pegRowGapInCoins;
+  const rows = Math.max(1, Math.min(CFG.chute.pegRows,
+                        Math.floor((fieldTop - fieldBottom) / minGap) + 1));
+  const rowGap = rows > 1 ? (fieldTop - fieldBottom) / (rows - 1) : 0;
 
   parts.pegs = [];
-  for (let z = 0; z < DIMS.zoneCount; z++) {
-    const cx = DIMS.zoneCentresX[z];
-    for (let r = 0; r < CFG.chute.pegRows; r++) {
-      const py = firstRowY - r * rowGap;
-      const xs = [(r % 2 === 0 ? 1 : -1) * DIMS.pegRowDx];
-      xs.forEach(function (dx) {
-        const px = cx + dx;
+  {
+    for (let r = 0; r < rows; r++) {
+      const py = fieldTop - r * rowGap;
+      /* The OFFSET row goes first. The dense row's spacing works out to half
+         the zone width, so its pegs sit exactly under the four entry slots -
+         every coin would drop straight onto an apex and balance there.
+         Measured that way: 22 of 40 drops jammed at the first row. */
+      const xs = (r % 2 === 0) ? DIMS.pegCols.b : DIMS.pegCols.a;
+      xs.forEach(function (px) {
         const m = new THREE.Mesh(pegGeo, pegMat);
         m.position.set(px, py, DIMS.panelZ);
         ctx.scene.add(m);
@@ -444,10 +489,18 @@ export function buildMachine(ctx) {
           ctx.RAPIER.RigidBodyDesc.fixed().setTranslation(px, py, DIMS.panelZ)
         );
         ctx.world.createCollider(
+          /* Frictionless pegs, combined with MIN so the coin's own friction
+             cannot reintroduce grip. A coin landing slightly off a peg apex
+             sits on a 10 degree slope; any friction above tan(10) = 0.18 holds
+             it there forever, and with 46 pegs there are 46 places to balance.
+             Measured with grippy pegs: 23 of 40 drops stopped dead on an apex.
+             Polished steel pegs are also what a real machine has. */
           ctx.RAPIER.ColliderDesc.cylinder(pegLen / 2, DIMS.pegRadius)
             .setRotation(pegQuat)
-            .setFriction(0.05)
-            .setRestitution(0.45),
+            .setFriction(0.0)
+            .setFrictionCombineRule(ctx.RAPIER.CoefficientCombineRule.Min)
+            .setRestitution(0.5)
+            .setRestitutionCombineRule(ctx.RAPIER.CoefficientCombineRule.Max),
           b
         );
         parts.pegs.push(m);

@@ -76,7 +76,7 @@ const trayY = tierLast.y - D * 2.2;
 /* ---- cabinet shell ---- */
 const wallThick   = D * 0.35;
 const wallHeight  = tierDrop + D * 3;
-const panelHeight = D * 5.2;        // the four drop panes, above the top tier
+const panelHeight = D * CFG.chute.heightInCoins;   // the drop panes
 const panelZ      = D * 0.15;       // stood just in front of the back wall
 
 /* ---- the drop chute ----------------------------------------------------
@@ -93,6 +93,26 @@ const chuteBottom = tierTop.y + deckStep + D * C.exitHeightInCoins;
    the deck and the coin falls the last stretch in free air. */
 const pegRadius   = D * C.pegRadiusInCoins;
 const pegRowDx    = D * C.rowOffsetInCoins;
+const slotBottom  = chuteTop - (chuteTop - chuteBottom) * C.slotHeightFraction;
+
+/* Peg columns across the FULL width, staggered row to row.
+
+   A coin is one diameter across in every direction, so every gap it falls
+   through has to clear a whole coin. Pick the densest row that still does,
+   then offset alternate rows by half a spacing so the coin gets a real
+   left-or-right choice at every row instead of a clear run. */
+const pegCols = (function () {
+  /* 1.1 coin diameters of clearance is too tight - items wedge in the gaps.
+     1.5 leaves a gap of about 1.57 coins, which still gives five pegs per row
+     and plenty of bouncing, with room to actually get through. */
+  let n = Math.floor(width / (D * 1.5 + pegRadius * 2)) - 1;
+  if (n < 1) n = 1;
+  const s = width / (n + 1);
+  const a = [], b = [];
+  for (let i = 0; i < n; i++) a.push(-width / 2 + s * (i + 1));
+  for (let i = 0; i < n - 1; i++) b.push(-width / 2 + s * (i + 1) + s / 2);
+  return { spacing: s, gap: s - pegRadius * 2, a: a, b: b };
+})();
 
 /* ---- drop zones ---- */
 const zoneCount = 4;
@@ -132,7 +152,7 @@ export const DIMS = {
   tiers, tierTop, tierLast, trayY,
   wallThick, wallHeight, panelHeight, panelZ,
   zoneCount, zoneWidth, zoneCentresX,
-  chuteDepth, chuteTop, chuteBottom, pegRadius, pegRowDx,
+  chuteDepth, chuteTop, chuteBottom, pegRadius, pegRowDx, slotBottom, pegCols,
   itemDims
 };
 

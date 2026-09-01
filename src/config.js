@@ -268,7 +268,31 @@ window.COIN_PUSHER_CONFIG = {
      -------------------------------------------------------------------- */
   chute: {
     depthInCoinThicknesses: 2.6,   // front-to-back gap the coin falls down
-    pegRows:                4,
+
+    /* Total height of the drop, in coins. The fall has to take a real
+       fraction of a shelf stroke or timing the drop means nothing. */
+    heightInCoins:          13,
+
+    /* The four entry slots are only divided for the TOP of the chute. Below
+       that the peg field opens out to the FULL WIDTH of the machine.
+
+       This is what makes a real peg field possible. Sealed into its own
+       2.5-coin-wide box, a chute has room for exactly one peg per row, near
+       the centreline - which is why the pegs were all stacked in the middle.
+       Across the full 10-coin width there is room for seven per row, so a
+       coin can bounce sideways between them. The slot still biases where it
+       ends up; it no longer dictates it. */
+    slotHeightFraction:     0.26,
+    pegRows:                7,     // an upper bound; see pegRowGapInCoins
+
+    /* Vertical spacing between peg rows, in coin diameters. MUST exceed 1.0.
+       The 2D build already knew this and said so in its own config: "rows
+       must sit further apart than a coin is wide, or coins jam between two
+       rows at once". I did not carry the warning over, packed seven rows into
+       a space that allowed 0.54 of a coin between them, and every coin
+       spanned two rows and wedged. Rows are now derived from this gap and the
+       space available, so the machine cannot be configured into that state. */
+    pegRowGapInCoins:       1.5,
     /* Where the peg field starts and how far apart the rows are, as
        fractions of the chute height. The first row has to clear the entry
        point by more than a coin radius plus a peg radius, or coins are born
