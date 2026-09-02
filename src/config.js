@@ -41,7 +41,10 @@ window.COIN_PUSHER_CONFIG = {
 
     /* How much of the shelf withdraws into the cabinet on the back stroke.
        0.5 = about half of it disappears, which is what the machine does. */
-    shelfStrokeFraction: 0.5,
+    /* Measured off the footage at roughly 2.2 coin diameters, correcting the
+       56px of on-screen travel for foreshortening (counters read as ellipses
+       about 0.54 as tall as wide). */
+    shelfStrokeFraction: 0.62,
 
     /* How far the deck's top sits ABOVE the fixed floor, in coin diameters.
 
@@ -54,8 +57,14 @@ window.COIN_PUSHER_CONFIG = {
        out-stroke and simply separates from the coins on the return, which is
        the one-way element a pusher needs, and it is what a real machine has.
        Coins tumble off the front of the deck onto the field and cannot climb
-       back on. About half a coin diameter. */
-    deckStepInCoins: 0.55,
+       back on.
+
+       This is the ONLY step in the machine, and it does both jobs at once:
+       items ride the shelf top, tumble off this face onto the platform below,
+       and that same face then pushes them along it. So it is a real level
+       drop, not a lip - at 0.55 of a coin it read as a bump and the two
+       levels were not legible. */
+    deckStepInCoins: 1.4,
 
     /* How far the TOP of the shelf's front face is set back from its bottom,
        as a fraction of the step height. A dead vertical face cannot lift
@@ -236,7 +245,11 @@ window.COIN_PUSHER_CONFIG = {
      flips sign in a single step. Both keep the rhythm fixed.
      -------------------------------------------------------------------- */
   shelf: {
-    periodMs: 2600,
+    /* Measured off the reference footage: the real machine runs a full
+       in-and-out cycle in about 9 seconds. Tracked frame by frame in two
+       separate shots - peak to trough of 4.7s in one, 4.3s in the other.
+       That is three and a half times slower than the 2600 I had guessed. */
+    periodMs: 9000,
     motion: 'sine',
     startRunning: true
   },
