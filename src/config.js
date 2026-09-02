@@ -323,11 +323,16 @@ window.COIN_PUSHER_CONFIG = {
        leaves it in free air and lands flat. */
     /* Measured off the reference close-up: the gap between the bottom of the
        glass and the surface below is about ONE coin diameter - a counter
-       standing on edge very nearly fills it. That is what makes the drop
-       behave the way the host describes: sometimes an item topples out on its
-       own, sometimes it stands there until the shelf carries it out under the
-       glass edge. A hair over 1.0 so a standing item is not pinched. */
-    exitHeightInCoins:      1.05,
+       standing on edge is TALLER than it, and that is the whole point.
+
+       The item drops down behind the glass and comes to rest vertically with
+       its top caught behind the glass edge. The shelf then drags its lower end
+       forward, the item pivots over that edge, and it is released - landing
+       flat, which is the only way it can push anything.
+
+       So this MUST be less than 1.0. At 1.05 the item stood clear of the edge,
+       nothing caught it, and it simply rode along upright and useless. */
+    exitHeightInCoins:      0.92,
     pegRadiusInCoins:       0.050,
     rowOffsetInCoins:       0.085, // peg offset from centre, alternating side
     entryJitterInCoins:     0.30,  // scatter on where the coin enters
