@@ -321,7 +321,13 @@ window.COIN_PUSHER_CONFIG = {
        chute running down to deck level, half of all coins stuck standing on
        edge at the bottom. The chute has to end high enough that the coin
        leaves it in free air and lands flat. */
-    exitHeightInCoins:      1.3,
+    /* Measured off the reference close-up: the gap between the bottom of the
+       glass and the surface below is about ONE coin diameter - a counter
+       standing on edge very nearly fills it. That is what makes the drop
+       behave the way the host describes: sometimes an item topples out on its
+       own, sometimes it stands there until the shelf carries it out under the
+       glass edge. A hair over 1.0 so a standing item is not pinched. */
+    exitHeightInCoins:      1.05,
     pegRadiusInCoins:       0.050,
     rowOffsetInCoins:       0.085, // peg offset from centre, alternating side
     entryJitterInCoins:     0.30,  // scatter on where the coin enters
