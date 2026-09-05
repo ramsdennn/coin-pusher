@@ -492,7 +492,7 @@ window.COIN_PUSHER_CONFIG = {
      rebuilt, and the emissive follows the colour automatically. */
   lightTubes: {
     enabled: true,
-    radius:  0.038,
+    radius:  0.058,        // half the side of the square section
     gap:     0.075,        // between the cabinet and the first tube, and between tubes
     glow:    1.6,
     colours: [0xF7C51A, 0x7A1FC4, 0x7A1FC4]

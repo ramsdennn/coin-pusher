@@ -328,6 +328,7 @@ function buildLightTubes(ctx) {
     (zFront - zHold) * Math.tan((CFG.scale.wallDescentDeg * Math.PI) / 180);
 
   const UP = new THREE.Vector3(0, 1, 0);
+  const UP_ALT = new THREE.Vector3(0, 0, 1);   // for runs that are vertical
 
   /* Straight runs, joined by a ball at each corner.
 
@@ -335,15 +336,33 @@ function buildLightTubes(ctx) {
      right angle bows the long side runs out away from the machine entirely,
      which is what happened first time. Straight segments hug the wall by
      construction. */
+  const SIDE = new THREE.Vector3();
+  const AXIS = new THREE.Vector3();
+  const OUT  = new THREE.Vector3();
+  const BASIS = new THREE.Matrix4();
+
   function run(from, to, radius, material, group) {
     const dir = new THREE.Vector3().subVectors(to, from);
     const len = dir.length();
     if (len < 1e-6) return;
+
     const seg = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius, radius, len, 10, 1, true), material
+      new THREE.BoxGeometry(radius * 2, len, radius * 2), material
     );
     seg.position.copy(from).addScaledVector(dir, 0.5);
-    seg.quaternion.setFromUnitVectors(UP, dir.clone().normalize());
+
+    /* A square section needs its ROLL controlled, which a round one did not.
+       setFromUnitVectors picks an arbitrary rotation about the run's axis, so
+       a box ends up randomly diamond-on instead of flat-on. Build the basis
+       explicitly against a world reference and the flats stay square to the
+       machine. */
+    AXIS.copy(dir).normalize();
+    const ref = Math.abs(AXIS.y) > 0.9 ? UP_ALT : UP;
+    SIDE.crossVectors(ref, AXIS).normalize();
+    OUT.crossVectors(AXIS, SIDE).normalize();
+    BASIS.makeBasis(SIDE, AXIS, OUT);
+    seg.quaternion.setFromRotationMatrix(BASIS);
+
     group.add(seg);
   }
 
@@ -394,12 +413,13 @@ function buildLightTubes(ctx) {
     const group = new THREE.Group();
     for (let k = 0; k < pts.length - 1; k++) run(pts[k], pts[k + 1], T.radius, material, group);
 
-    /* Balls fill the mitre at each corner so the joins do not show gaps. */
-    const ballGeo = new THREE.SphereGeometry(T.radius, 10, 8);
+    /* Cubes, not balls, fill the mitre at each corner - a sphere on the end
+       of a square run reads as a bead threaded onto it. */
+    const cornerGeo = new THREE.BoxGeometry(T.radius * 2, T.radius * 2, T.radius * 2);
     for (let k = 1; k < pts.length - 1; k++) {
-      const ball = new THREE.Mesh(ballGeo, material);
-      ball.position.copy(pts[k]);
-      group.add(ball);
+      const corner = new THREE.Mesh(cornerGeo, material);
+      corner.position.copy(pts[k]);
+      group.add(corner);
     }
 
     group.traverse(function (o) {
