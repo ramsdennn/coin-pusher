@@ -20,7 +20,7 @@ window.COIN_PUSHER_CONFIG = {
     coinDiameter:  0.24,
     coinThickness: 0.02,
 
-    coinsAcrossWidth: 12.5, // machine width, in coins (widened 25%)
+    coinsAcrossWidth: 13.75, // machine width, in coins
     coinsDeepPerTier:  6,   // depth of each tier, in coins
 
     /* How many tiers the machine has.
@@ -160,7 +160,7 @@ window.COIN_PUSHER_CONFIG = {
      Loaded from the front lip backwards, so the machine starts primed.
      -------------------------------------------------------------------- */
   startingLayout: [
-    { type: 'coin',      count: 52, tier: 1 },
+    { type: 'coin',      count: 57, tier: 1 },
     { type: 'token50',   count: 2,  tier: 1 },
     { type: 'token100',  count: 1,  tier: 1 },
     { type: 'chocolate', count: 1,  tier: 1 },
@@ -326,7 +326,7 @@ window.COIN_PUSHER_CONFIG = {
        coin can bounce sideways between them. The slot still biases where it
        ends up; it no longer dictates it. */
     slotHeightFraction:     1.0,
-    pegRows:                0,     // 0 = no pegs at all
+    pegRows:                5,     // 0 = no pegs at all
 
     /* Vertical spacing between peg rows, in coin diameters. MUST exceed 1.0.
        The 2D build already knew this and said so in its own config: "rows
@@ -363,8 +363,27 @@ window.COIN_PUSHER_CONFIG = {
        So this MUST be less than 1.0. At 1.05 the item stood clear of the edge,
        nothing caught it, and it simply rode along upright and useless. */
     exitHeightInCoins:      0.92,
-    pegRadiusInCoins:       0.050,
-    rowOffsetInCoins:       0.085, // peg offset from centre, alternating side
+    pegRadiusInCoins:       0.035,
+    /* Peg offset from the zone centreline, alternating side each row.
+
+       One peg per row per zone is the maximum: two side by side is
+       geometrically impossible even in a 3.13-coin zone, because opening the
+       side gaps to clear a coin closes the middle one and the reverse.
+
+       The offset is what makes a single peg worth having - dead centre it
+       just splits the flow evenly every time. Both gaps keep clearing a whole
+       coin while this stays under about 0.51, so 0.40 leaves margin. */
+    /* A quincunx: rows alternate between a PAIR set either side of the
+       centreline and a SINGLE peg on it, so an item meets three gaps then
+       two, staggered.
+
+       The pair is the tight part. Its offset must be large enough that the
+       middle gap clears a whole coin and small enough that the two side gaps
+       do too, and those demands nearly meet. In a 3.12-coin zone they cross
+       over and a pair is flatly impossible - which is why the machine widened
+       again to make room. At 3.44 coins the valid window is 0.128 to 0.164,
+       and 0.146 sits in the middle of it. */
+    pairOffsetInCoins:      0.61,
     entryJitterInCoins:     0.30,  // scatter on where the coin enters
 
     /* The coin does not enter at rest. Dropped dead vertical it lands square

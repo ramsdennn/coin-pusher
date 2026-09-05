@@ -465,23 +465,37 @@ export function buildMachine(ctx) {
      the divider zone and wedges between the peg below and a divider beside
      it - a stable jam that no amount of friction tuning shifts. Measured at
      0.5: 6 of 12 single drops stuck, every one at the first two rows. */
-  const fieldTop = DIMS.slotBottom - D * 1.6;
+  /* The peg field starts well below the entry point. An item resting on a peg
+     stands a full radius tall, so a first row placed too near where items
+     arrive means they drop straight onto an apex and balance there. Rows sit
+     more than a coin diameter apart for the reason the 2D build already knew
+     and wrote in its own config: closer than that and an item spans two rows
+     at once and wedges between them. The run-out at the bottom lets an item
+     fall clear before it leaves the chute. */
+  const fieldTop = DIMS.chuteTop - D * (CFG.chute.entryHeightInCoins + 1.5);
   const fieldBottom = DIMS.chuteBottom + D * 1.2;
   const minGap = D * CFG.chute.pegRowGapInCoins;
   const rows = CFG.chute.pegRows <= 0 ? 0
              : Math.max(1, Math.min(CFG.chute.pegRows,
                         Math.floor((fieldTop - fieldBottom) / minGap) + 1));
   const rowGap = rows > 1 ? (fieldTop - fieldBottom) / (rows - 1) : 0;
+  const pairDx = D * CFG.chute.pairOffsetInCoins;
 
   parts.pegs = [];
   {
     for (let r = 0; r < rows; r++) {
       const py = fieldTop - r * rowGap;
-      /* The OFFSET row goes first. The dense row's spacing works out to half
-         the zone width, so its pegs sit exactly under the four entry slots -
-         every coin would drop straight onto an apex and balance there.
-         Measured that way: 22 of 40 drops jammed at the first row. */
-      const xs = (r % 2 === 0) ? DIMS.pegCols.b : DIMS.pegCols.a;
+
+      /* Quincunx: one on the centreline, then a pair either side of it,
+         alternating. The SINGLE row goes first so an item entering on the
+         zone centreline meets a peg head-on and is thrown to one side,
+         instead of sailing down a clear middle gap undeflected. */
+      const xs = [];
+      DIMS.zoneCentresX.forEach(function (cx) {
+        if (r % 2 === 0) { xs.push(cx); }
+        else { xs.push(cx - pairDx); xs.push(cx + pairDx); }
+      });
+
       xs.forEach(function (px) {
         const m = new THREE.Mesh(pegGeo, pegMat);
         m.position.set(px, py, DIMS.panelZ);
