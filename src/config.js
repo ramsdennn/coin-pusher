@@ -455,15 +455,23 @@ window.COIN_PUSHER_CONFIG = {
   /* Plain-shape colours for this pass. Art is a later phase. The deck is
      red and the fixed floor white, matching the reference machine, so the
      shelf's travel is readable while tuning. */
+  /* Greys carry the machine, red is reserved for the two vertical faces that
+     front each level - the shelf's pushing face and the fascia under the lip.
+     The horizontal surfaces items sit on are all pale grey, so the red reads
+     as a stripe across the machine rather than a slab of colour. The greys
+     are cooled very slightly towards blue so they sit against the red rather
+     than muddying into it. */
   palette: {
     background: 0x0B0616,
-    deck:       0xD8232A,
-    fixedFloor: 0xF2F0EE,
-    wall:       0xB9A9C9,
-    cabinet:    0x2A1B3D,
+    deck:       0xC9CDD4,   // shelf top - items rest on this
+    deckFace:   0xD22B2B,   // its front face, the pushing edge
+    fixedFloor: 0xDFE2E6,   // the platform below
+    fascia:     0xC22525,   // front of the machine, under the lip
+    wall:       0xAEB4BD,
+    cabinet:    0x6E7681,
     panel:      0xF6F2F4,
-    panelEdge:  0xB9A9C9,
-    peg:        0x54455F,
+    panelEdge:  0x9AA1AB,
+    peg:        0x3E454E,
     tray:       0x1A1030
   }
 };

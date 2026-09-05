@@ -189,6 +189,21 @@ function buildShelf(ctx, tier) {
   deckMat.side = THREE.DoubleSide;      // hand-wound profile; do not risk it
   const mesh = new THREE.Mesh(geo, deckMat);
   mesh.position.set(0, cy, homeCz);
+
+  if (step > 0) {
+    /* The pushing face, in red. Parented to the deck so it travels with it
+       rather than needing its own position update every frame. Sized to the
+       step alone - the skirt below floor level is hidden, and colouring it
+       would show red through the gap under the shelf. */
+    const faceTop = (step + DIMS.deckSkirt) / 2;   // boxH is scoped to the
+    const faceBottom = tier.y - cy;                // branch above
+    const plate = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, faceTop - faceBottom),
+      mat(P.deckFace, { roughness: 0.45 })
+    );
+    plate.position.set(0, (faceTop + faceBottom) / 2, hz + DIMS.D * 0.004);
+    mesh.add(plate);
+  }
   ctx.scene.add(mesh);
 
   const body = ctx.world.createRigidBody(
@@ -364,6 +379,18 @@ export function buildMachine(ctx) {
 
   /* No tray. Items are deleted as they pass the lip, so a catch tray caught
      nothing and only added dead cabinet below the playfield. */
+
+  /* The fascia: the red band across the front of the machine below the lip.
+     Purely a face - items are already gone by the time they pass it. */
+  {
+    const top = DIMS.tierLast.y, bottom = DIMS.trayY;
+    const fascia = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, top - bottom),
+      mat(P.fascia, { roughness: 0.45 })
+    );
+    fascia.position.set(0, (top + bottom) / 2, DIMS.tierLast.fixedLipZ + D * 0.004);
+    ctx.scene.add(fascia);
+  }
 
   /* ---------------------------------------------------------------------
      THE FOUR DROP CHUTES
