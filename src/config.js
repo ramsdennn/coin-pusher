@@ -290,6 +290,45 @@ window.COIN_PUSHER_CONFIG = {
        Set to 0 to go back to a true cylinder and see the difference. */
     discColliderSides: 16,
 
+    /* How much of the radius the flat faces are pulled in by, leaving the
+       rim as a ridge rather than a flat band.
+
+       This is what stops coins standing on their edge on the field. A 16-gon
+       prism's rim is sixteen FLAT facets, and at this size each facet is
+       0.0477 across against a coin 0.0384 thick - so a coin stood on its rim
+       has a support base wider than it is thick, which is a properly stable
+       resting pose. Nothing tips it over, and 12% of the field ended up
+       standing up. A real coin's rim is a smooth cylinder: it touches the
+       floor along a line of no width, balancing on it is a knife edge, and it
+       falls flat almost at once.
+
+       Pinching the rim to a ridge restores that. The coin can still balance
+       against ROLLING, which is the one thing a real coin on its edge can do,
+       but it has nothing to stand on across its thickness.
+
+       Raising the side count instead does NOT fix it - measured, 32 sides gave
+       16.9% standing against 13.3% at 16, no better at all. That result also
+       corrects the reasoning above: narrow facets are not what lets a coin
+       stand. What does is that a square-cut rim is FLAT across the coin's
+       thickness, so the coin has a real base to balance on either way. The
+       bevel takes that base away while leaving the faces almost full size.
+
+       Measured over 10 strokes, coins standing on the field against coins
+       delivered:
+
+           chamfer 0     13.3%     40 delivered   (square rim)
+           chamfer 0.08   1.8%     43 delivered
+           chamfer 0.14   1.3%     24 delivered
+           chamfer 0.22   1.1%      8 delivered
+
+       So it is a trade, and past about 0.1 it turns into a bad one. A deep
+       bevel meets the deck's vertical push face at an angle, so part of the
+       push becomes lift and the machine stops delivering. 0.08 takes out
+       seven eighths of the standing and costs nothing.
+
+       Set 0 for the old square-rimmed prism. */
+    discRimChamfer: 0.08,
+
     /* Damping stands in for the spin friction a real coin gets from its
        contact patch, which a point-contact solver does not model at all:
        without it a coin spinning on its own axis never slows down. Too

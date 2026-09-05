@@ -85,7 +85,11 @@ export function createItem(ctx, typeId, x, y, z, yaw, opts) {
 }
 
 /* A disc as an N-sided prism. See physics.discColliderSides in config for
-   why this is not just ColliderDesc.cylinder(). */
+   why this is not just ColliderDesc.cylinder().
+
+   With physics.discRimChamfer the rim is pinched to a ridge instead of a flat
+   band - see the note on it in config for why a flat band makes coins stand
+   on their edge when a real one would fall over. */
 function discCollider(ctx, d) {
   const n = PHY.discColliderSides | 0;
   if (n < 3) return ctx.RAPIER.ColliderDesc.cylinder(d.halfHeight, d.radius);
@@ -93,11 +97,25 @@ function discCollider(ctx, d) {
   /* Circumscribe, so the prism has the same width across the flats as the
      drawn cylinder does across its diameter and the pile packs the same. */
   const r = d.radius / Math.cos(Math.PI / n);
+  const chamfer = PHY.discRimChamfer || 0;
   const pts = [];
+
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2;
-    const x = Math.cos(a) * r, z = Math.sin(a) * r;
-    pts.push(x, d.halfHeight, z, x, -d.halfHeight, z);
+    const c = Math.cos(a), s = Math.sin(a);
+
+    if (chamfer > 0) {
+      /* Three rings: the faces pulled in, the equator left at full radius.
+         The hull between them is a bevel, so the widest part of the coin is
+         a single ring rather than a band with a flat top. */
+      const rf = r * (1 - chamfer);
+      pts.push(rf * c,  d.halfHeight, rf * s);
+      pts.push(r  * c,  0,            r  * s);
+      pts.push(rf * c, -d.halfHeight, rf * s);
+    } else {
+      pts.push(r * c,  d.halfHeight, r * s);
+      pts.push(r * c, -d.halfHeight, r * s);
+    }
   }
   return ctx.RAPIER.ColliderDesc.convexHull(new Float32Array(pts));
 }
