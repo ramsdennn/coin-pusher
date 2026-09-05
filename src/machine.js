@@ -494,6 +494,18 @@ export function buildMachine(ctx) {
       DIMS.zoneCentresX.forEach(function (cx) {
         if (r % 2 === 0) { xs.push(cx); }
         else { xs.push(cx - pairDx); xs.push(cx + pairDx); }
+
+        /* Edge pegs, on the zone boundary. Neighbouring zones share a
+           divider, so the two that meet there would land on the same spot -
+           dedupe rather than stack two colliders in one place. */
+        if (r === CFG.chute.edgePegRow) {
+          [cx - DIMS.zoneWidth / 2, cx + DIMS.zoneWidth / 2].forEach(function (ex) {
+            for (let k = 0; k < xs.length; k++) {
+              if (Math.abs(xs[k] - ex) < 1e-6) return;
+            }
+            xs.push(ex);
+          });
+        }
       });
 
       xs.forEach(function (px) {

@@ -384,6 +384,11 @@ window.COIN_PUSHER_CONFIG = {
        again to make room. At 3.44 coins the valid window is 0.128 to 0.164,
        and 0.146 sits in the middle of it. */
     pairOffsetInCoins:      0.61,
+
+    /* One row also carries a peg hard against each edge of the zone, sitting
+       on the divider itself so it reads as a half peg from the front. Counted
+       from the top, zero-based, so 2 is the third row down. */
+    edgePegRow:             2,
     entryJitterInCoins:     0.30,  // scatter on where the coin enters
 
     /* The coin does not enter at rest. Dropped dead vertical it lands square
