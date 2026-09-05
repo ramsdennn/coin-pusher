@@ -248,8 +248,10 @@ window.COIN_PUSHER_CONFIG = {
     /* Measured off the reference footage: the real machine runs a full
        in-and-out cycle in about 9 seconds. Tracked frame by frame in two
        separate shots - peak to trough of 4.7s in one, 4.3s in the other.
-       That is three and a half times slower than the 2600 I had guessed. */
-    periodMs: 9000,
+
+       Set to 7000 at the host's request: a little quicker than the real
+       machine, which suits a quiz where the drop wants to feel responsive. */
+    periodMs: 7000,
     motion: 'sine',
     startRunning: true
   },
