@@ -6,6 +6,7 @@
 
 import * as THREE from 'three';
 import { DIMS, TIERS } from '@app/dims';
+import { GROUP_ITEM } from '@app/machine';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
@@ -69,7 +70,8 @@ export function createItem(ctx, typeId, x, y, z, yaw, opts) {
   ctx.world.createCollider(
     desc.setDensity(type.density)
       .setFriction(PHY.itemFriction)
-      .setRestitution(PHY.itemRestitution),
+      .setRestitution(PHY.itemRestitution)
+      .setCollisionGroups(GROUP_ITEM),
     body
   );
 

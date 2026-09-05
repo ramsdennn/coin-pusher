@@ -11,6 +11,19 @@ import * as THREE from 'three';
 import { DIMS, TIERS } from '@app/dims';
 
 const CFG = window.COIN_PUSHER_CONFIG;
+
+/* Collision groups. A dynamic shelf would otherwise fight the static cabinet:
+   its skirt deliberately reaches down INSIDE the floor slab so items cannot
+   slip under the leading edge, which was free when the shelf was kinematic
+   (kinematic and fixed bodies never collide) and would eject it now that it
+   is dynamic.
+
+   So the shelf collides with items and nothing else, the cabinet collides
+   with items and nothing else, and items collide with everything. */
+const GRP = { ITEM: 0x0001, SHELF: 0x0002, STATIC: 0x0004 };
+const GROUP_SHELF  = (GRP.SHELF  << 16) | GRP.ITEM;
+const GROUP_STATIC = (GRP.STATIC << 16) | GRP.ITEM;
+export const GROUP_ITEM = (GRP.ITEM << 16) | (GRP.ITEM | GRP.SHELF | GRP.STATIC);
 const P   = CFG.palette;
 const PHY = CFG.physics;
 
@@ -211,10 +224,20 @@ function buildShelf(ctx, tier) {
   ctx.scene.add(mesh);
 
   const body = ctx.world.createRigidBody(
-    ctx.RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, cy, homeCz)
+    ctx.RAPIER.RigidBodyDesc.dynamic().setTranslation(0, cy, homeCz)
   );
+  /* Free to slide along z and nothing else. Gravity cannot drop it, items
+     cannot shove it sideways, and it cannot tip. */
+  body.setEnabledTranslations(false, false, true, true);
+  body.setEnabledRotations(false, false, false, true);
+  body.setLinearDamping(0);
+
   ctx.world.createCollider(
-    colliderDesc.setFriction(PHY.shelfFriction).setRestitution(PHY.itemRestitution),
+    colliderDesc
+      .setMass(CFG.shelf.drive.mass)
+      .setFriction(PHY.shelfFriction)
+      .setRestitution(PHY.itemRestitution)
+      .setCollisionGroups(GROUP_SHELF),
     body
   );
 
@@ -318,9 +341,24 @@ export function liftTrapped(ctx) {
 
 export function driveShelves(ctx, phase) {
   const dz = shelfOffset(phase);
+  const dr = CFG.shelf.drive;
+
   for (let i = 0; i < ctx.machine.shelves.length; i++) {
     const sh = ctx.machine.shelves[i];
-    sh.body.setNextKinematicTranslation({ x: 0, y: sh.cy, z: sh.homeCz + dz });
+    const target = sh.homeCz + dz;
+    const t = sh.body.translation();
+    const v = sh.body.linvel();
+
+    /* A critically damped spring toward the target, with the force CAPPED.
+       The cap is what makes this different from a kinematic shelf: meet
+       something immovable and the shelf stalls, rather than driving through
+       it and leaving the solver to absorb the difference. */
+    let f = dr.stiffness * (target - t.z) - dr.damping * v.z;
+    if (f >  dr.maxForce) f =  dr.maxForce;
+    if (f < -dr.maxForce) f = -dr.maxForce;
+
+    sh.body.resetForces(false);
+    sh.body.addForce({ x: 0, y: 0, z: f }, true);
   }
 }
 
@@ -827,6 +865,14 @@ export function buildMachine(ctx) {
     ctx.scene.add(target);
     parts.panels.push(target);
   }
+
+  /* One pass rather than tagging five separate collider sites: everything
+     fixed is cabinet, and cabinet only ever needs to meet items. Runs before
+     any item exists, so items are untouched. */
+  ctx.world.forEachCollider(function (c) {
+    const p = c.parent();
+    if (p && p.isFixed && p.isFixed()) c.setCollisionGroups(GROUP_STATIC);
+  });
 
   parts.tubes = buildLightTubes(ctx);
 

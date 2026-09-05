@@ -312,6 +312,29 @@ window.COIN_PUSHER_CONFIG = {
        machine, which suits a quiz where the drop wants to feel responsive. */
     periodMs: 7000,
     motion: 'sine',
+
+    /* The shelf is a DYNAMIC body pushed by a force-limited spring, not a
+       kinematic one teleported into place.
+
+       A kinematic body ignores contacts entirely: it goes exactly where it is
+       told every step, so when items had nowhere left to go the solver was
+       the only thing that could give, and items ended up 94% inside each
+       other. A dynamic shelf on a capped force simply STALLS against a jam,
+       which is what a real machine does.
+
+       maxForce is the whole point. Too low and the shelf cannot push a full
+       pile; too high and it crushes again, which is the behaviour we are
+       trying to leave behind.
+
+       stiffness and damping are a critically damped spring on the target
+       position - stiff enough to track a 7s stroke closely, soft enough that
+       resistance registers. */
+    drive: {
+      mass:      5.0,
+      stiffness: 2000,
+      damping:   200,
+      maxForce:  10
+    },
     startRunning: true
   },
 
