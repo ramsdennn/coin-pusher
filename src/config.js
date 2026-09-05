@@ -186,7 +186,12 @@ window.COIN_PUSHER_CONFIG = {
        Measured over 40 strokes: worst case a coin spent inside the shelf fell
        from 8.5s to 2.7s, and episodes lasting over a second from 14 to 4.
 
-       REVERTED to 1.0. Tightening it was the right call when the shelf step
+       Set to 0.2. Briefly reverted to 1.0 to cure pile shimmer, which worked
+       but multiplied Rapier's allowed contact penetration by five and made
+       items visibly overlap each other. The shimmer is dealt with by
+       renderDeadzone and wakeAllWhileRunning instead, which cost nothing.
+
+       Original reasoning, still valid: Tightening it was the right call when the shelf step
        was only 0.55 of a coin and the period 2.6s, but the step is now 1.4
        and the period 7s, and those removed the sinking on their own. The
        tightening was left behind doing nothing useful except making every
@@ -196,7 +201,7 @@ window.COIN_PUSHER_CONFIG = {
        0.0110 and mean spin 0.326; at 1.0 it is 0.0052 and 0.158, and the
        trapped-item guard fires a fraction as often. Do not go below 0.2 - at
        0.08 the solver destabilises badly. */
-    lengthUnit: 1.0,
+    lengthUnit: 0.2,
 
     /* A disc's collider is a many-sided prism, not a mathematical
        cylinder. Rapier's cylinder-vs-cylinder contacts collapse to a
