@@ -41,25 +41,27 @@
 <filter id="coreblur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="7"/></filter>
 <radialGradient id="flareCore"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.25" stop-color="#FFF6DF" stop-opacity="0.85"/><stop offset="0.6" stop-color="#FFD98A" stop-opacity="0.28"/><stop offset="1" stop-color="#FFB65C" stop-opacity="0"/></radialGradient>
 <radialGradient id="flareCoolCore"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.28" stop-color="#EAF4FF" stop-opacity="0.8"/><stop offset="0.65" stop-color="#A8CBFF" stop-opacity="0.24"/><stop offset="1" stop-color="#7FB0FF" stop-opacity="0"/></radialGradient>
+<linearGradient id="rayFadeH" gradientUnits="userSpaceOnUse" x1="-330" y1="0" x2="330" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/><stop offset="0.34" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.9"/><stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0.45"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+<linearGradient id="rayFadeV" gradientUnits="userSpaceOnUse" x1="0" y1="-190" x2="0" y2="190"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/><stop offset="0.34" stop-color="#FFFFFF" stop-opacity="0.40"/><stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.8"/><stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0.40"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
 <g id="flareWarm">
 <circle r="150" fill="url(#flareCore)" opacity="0.55" filter="url(#soft)"/>
 <circle r="46" fill="url(#flareCore)"/>
-<g filter="url(#rayblur)" fill="#FFFFFF">
-<path d="M-330 0 L0 -9 L330 0 L0 9Z" opacity="0.85"/>
-<path d="M0 -190 L7 0 L0 190 L-7 0Z" opacity="0.7"/>
-<path d="M-96 -96 L0 -5 L96 96 L0 5Z" opacity="0.4"/>
-<path d="M96 -96 L5 0 L-96 96 L-5 0Z" opacity="0.4"/>
+<g filter="url(#rayblur)">
+<path d="M-330 0 L0 -9 L330 0 L0 9Z" fill="url(#rayFadeH)"/>
+<path d="M0 -190 L7 0 L0 190 L-7 0Z" fill="url(#rayFadeV)"/>
+<path d="M-96 -96 L0 -5 L96 96 L0 5Z" fill="#FFFFFF" opacity="0.4"/>
+<path d="M96 -96 L5 0 L-96 96 L-5 0Z" fill="#FFFFFF" opacity="0.4"/>
 </g>
 <circle r="20" fill="#FFFFFF" filter="url(#coreblur)"/>
 </g>
 <g id="flareCool">
 <circle r="150" fill="url(#flareCoolCore)" opacity="0.55" filter="url(#soft)"/>
 <circle r="46" fill="url(#flareCoolCore)"/>
-<g filter="url(#rayblur)" fill="#FFFFFF">
-<path d="M-330 0 L0 -9 L330 0 L0 9Z" opacity="0.85"/>
-<path d="M0 -190 L7 0 L0 190 L-7 0Z" opacity="0.7"/>
-<path d="M-96 -96 L0 -5 L96 96 L0 5Z" opacity="0.4"/>
-<path d="M96 -96 L5 0 L-96 96 L-5 0Z" opacity="0.4"/>
+<g filter="url(#rayblur)">
+<path d="M-330 0 L0 -9 L330 0 L0 9Z" fill="url(#rayFadeH)"/>
+<path d="M0 -190 L7 0 L0 190 L-7 0Z" fill="url(#rayFadeV)"/>
+<path d="M-96 -96 L0 -5 L96 96 L0 5Z" fill="#FFFFFF" opacity="0.4"/>
+<path d="M96 -96 L5 0 L-96 96 L-5 0Z" fill="#FFFFFF" opacity="0.4"/>
 </g>
 <circle r="20" fill="#FFFFFF" filter="url(#coreblur)"/>
 </g>

@@ -182,17 +182,36 @@ def defs():
              '<stop offset="0.65" stop-color="#A8CBFF" stop-opacity="0.24"/>'
              '<stop offset="1" stop-color="#7FB0FF" stop-opacity="0"/></radialGradient>')
 
+    # The long rays fade out along their length. A ray that merely tapers to a
+    # point still ends on a visible line, and the P's ray is long enough to run
+    # past the edge of the canvas - as an overlay on the game that clip showed
+    # as a hard cut. Fading means it no longer matters where the edge falls.
+    d.append('<linearGradient id="rayFadeH" gradientUnits="userSpaceOnUse" '
+             'x1="-330" y1="0" x2="330" y2="0">'
+             '<stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/>'
+             '<stop offset="0.34" stop-color="#FFFFFF" stop-opacity="0.45"/>'
+             '<stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.9"/>'
+             '<stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0.45"/>'
+             '<stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>')
+    d.append('<linearGradient id="rayFadeV" gradientUnits="userSpaceOnUse" '
+             'x1="0" y1="-190" x2="0" y2="190">'
+             '<stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/>'
+             '<stop offset="0.34" stop-color="#FFFFFF" stop-opacity="0.40"/>'
+             '<stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.8"/>'
+             '<stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0.40"/>'
+             '<stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>')
+
     # A four-point star: two long spokes, two short, plus a bloom. Drawn as
     # thin diamonds so the spokes taper to a point instead of ending flat.
     for name, core in (('flareWarm', 'flareCore'), ('flareCool', 'flareCoolCore')):
         d.append('<g id="%s">' % name)
         d.append('<circle r="150" fill="url(#%s)" opacity="0.55" filter="url(#soft)"/>' % core)
         d.append('<circle r="46" fill="url(#%s)"/>' % core)
-        d.append('<g filter="url(#rayblur)" fill="#FFFFFF">')
-        d.append('<path d="M-330 0 L0 -9 L330 0 L0 9Z" opacity="0.85"/>')
-        d.append('<path d="M0 -190 L7 0 L0 190 L-7 0Z" opacity="0.7"/>')
-        d.append('<path d="M-96 -96 L0 -5 L96 96 L0 5Z" opacity="0.4"/>')
-        d.append('<path d="M96 -96 L5 0 L-96 96 L-5 0Z" opacity="0.4"/>')
+        d.append('<g filter="url(#rayblur)">')
+        d.append('<path d="M-330 0 L0 -9 L330 0 L0 9Z" fill="url(#rayFadeH)"/>')
+        d.append('<path d="M0 -190 L7 0 L0 190 L-7 0Z" fill="url(#rayFadeV)"/>')
+        d.append('<path d="M-96 -96 L0 -5 L96 96 L0 5Z" fill="#FFFFFF" opacity="0.4"/>')
+        d.append('<path d="M96 -96 L5 0 L-96 96 L-5 0Z" fill="#FFFFFF" opacity="0.4"/>')
         d.append('</g>')
         d.append('<circle r="20" fill="#FFFFFF" filter="url(#coreblur)"/>')
         d.append('</g>')

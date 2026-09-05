@@ -202,6 +202,25 @@ window.COIN_PUSHER_CONFIG = {
     }
   },
 
+  /* --------------------------------------------------------------------
+     LOGO
+     Sits in the empty right-hand side of the screen that camera.widthFraction
+     frees up. A screen-space overlay, not geometry in the scene: it has to
+     hold the same place on any TV, it must not be walked through by the
+     camera, and drawn as an image it costs the renderer nothing.
+
+     Sizes are fractions of the window, so the placement holds at any size
+     without a resize handler - the browser does the arithmetic in CSS.
+     -------------------------------------------------------------------- */
+  logo: {
+    enabled: true,
+    src: 'assets/logo/tipping-point.svg',
+    widthFraction:   0.34,   // of the window's WIDTH
+    centreAtScreenX: 0.81,   // matches camera.centreAtScreenX in spirit
+    topFraction:     0.05,   // of the window's HEIGHT
+    opacity:         1.0
+  },
+
   /* What actually drops when the host clicks a drop zone. */
   /* A single type id, or a list to cycle through. Cycling, not picking at
      random: random drifts, and across a night's play one colour would end up

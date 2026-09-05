@@ -665,6 +665,31 @@ function updateHud() {
     'presettle ' + presettleSteps + ' &middot; stroke ' + DIMS.stroke.toFixed(3) + '</span>';
 }
 
+/* The logo, as a plain image over the canvas.
+
+   Deliberately NOT a textured plane in the scene. In the scene it would sit
+   in the machine's world, so it would shift with the camera fit, take
+   lighting it should not take, and cost a draw call with a transparent
+   material. Over the canvas it is one image element the compositor handles.
+
+   Placed entirely in CSS percentages, so it holds its position through every
+   resize without any JavaScript running on resize. */
+function makeLogo() {
+  const L = CFG.logo;
+  if (!L || !L.enabled) return;
+
+  const img = document.createElement('img');
+  img.src = L.src;
+  img.alt = '';
+  img.style.cssText =
+    'position:fixed;z-index:10;pointer-events:none;' +
+    'left:' + ((L.centreAtScreenX - L.widthFraction / 2) * 100).toFixed(3) + '%;' +
+    'top:' + (L.topFraction * 100).toFixed(3) + '%;' +
+    'width:' + (L.widthFraction * 100).toFixed(3) + '%;' +
+    'height:auto;opacity:' + L.opacity + ';';
+  document.body.appendChild(img);
+}
+
 function makeHud() {
   hud = document.createElement('div');
   hud.style.cssText =
@@ -685,6 +710,7 @@ function onResize() {
 window.startCoinPusher = function (teamA, teamB) {
   return RAPIER.init().then(function () {
     buildScene();
+    makeLogo();
     makeHud();
 
     ctx = {
