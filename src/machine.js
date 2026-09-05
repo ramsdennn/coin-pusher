@@ -349,10 +349,16 @@ function buildLightTubes(ctx) {
 
   const tubes = [];
 
+  /* Each tube is a bigger frame than the one inside it: further out at the
+     sides, and higher across the top. The side runs all sit at the same
+     height because they follow the wall, and stay distinct by their x. */
+  const step = T.gap + T.radius * 2;
+
   T.colours.forEach(function (colour, i) {
     const x = DIMS.width / 2 + DIMS.wallThick
             + T.gap * (i + 1) + T.radius * (2 * i + 1);
-    const drop = T.radius * 1.4 * i;
+    const yTop = DIMS.chuteTop + step * i;
+    const yBot = DIMS.trayY;
 
     const material = new THREE.MeshStandardMaterial({
       color: colour,
@@ -362,13 +368,27 @@ function buildLightTubes(ctx) {
       metalness: 0.0
     });
 
+    /* One continuous run, front-left round to front-right:
+
+         down the front face of the left wall
+         up that face to the wall top
+         back along the wall's descent, then its level section
+         UP the back wall
+         across the back at the top
+         down the far side of the back wall
+         forward along the right wall
+         down its front face                                             */
     const pts = [
-      new THREE.Vector3(-x, yFront - drop, zFront),
-      new THREE.Vector3(-x, yBack  - drop, zHold),
-      new THREE.Vector3(-x, yBack  - drop, zBack),
-      new THREE.Vector3( x, yBack  - drop, zBack),
-      new THREE.Vector3( x, yBack  - drop, zHold),
-      new THREE.Vector3( x, yFront - drop, zFront)
+      new THREE.Vector3(-x, yBot,   zFront),
+      new THREE.Vector3(-x, yFront, zFront),
+      new THREE.Vector3(-x, yBack,  zHold),
+      new THREE.Vector3(-x, yBack,  zBack),
+      new THREE.Vector3(-x, yTop,   zBack),
+      new THREE.Vector3( x, yTop,   zBack),
+      new THREE.Vector3( x, yBack,  zBack),
+      new THREE.Vector3( x, yBack,  zHold),
+      new THREE.Vector3( x, yFront, zFront),
+      new THREE.Vector3( x, yBot,   zFront)
     ];
 
     const group = new THREE.Group();
