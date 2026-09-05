@@ -64,6 +64,11 @@ window.COIN_PUSHER_CONFIG = {
        and that same face then pushes them along it. So it is a real level
        drop, not a lip - at 0.55 of a coin it read as a bump and the two
        levels were not legible. */
+    /* How far the cabinet extends below the front lip, in coins. Items are
+       removed as they fall off, so this only needs to be deep enough to see
+       them go. */
+    skirtBelowLipInCoins: 0.55,
+
     deckStepInCoins: 1.4,
 
     /* How far the TOP of the shelf's front face is set back from its bottom,

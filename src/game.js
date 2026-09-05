@@ -106,17 +106,38 @@ function aimCamera() {
   place(d);
   if (!c.autoFit) return;
 
-  /* Pull back until every corner of the machine is inside the frame. A few
-     passes is plenty - moving the camera back shrinks the projection close
-     enough to proportionally for this to converge fast. */
+  /* Frame the machine: pull back until it fits, AND raise or lower the aim so
+     it sits centred in the frame.
+
+     Scaling alone is not enough. The machine is much taller than it is deep,
+     so its extremes are the top of the chute and the front lip - and a fit
+     that only pushes the worst corner to the margin leaves everything hanging
+     off the top with dead screen underneath. Centring is what uses the space.
+
+     Both passes run together because they interact: recentring changes which
+     corner is worst, and rescaling changes where the centre falls. */
   const pts = fitPoints();
-  for (let pass = 0; pass < 5; pass++) {
-    let worst = 0;
+  const worldSpan = DIMS.chuteTop - (DIMS.tierLast.y - DIMS.D * 0.3);
+
+  for (let pass = 0; pass < 8; pass++) {
+    let minY = Infinity, maxY = -Infinity, worstX = 0;
     for (let i = 0; i < pts.length; i++) {
       const v = pts[i].clone().project(camera);
-      worst = Math.max(worst, Math.abs(v.x), Math.abs(v.y));
+      if (v.y < minY) minY = v.y;
+      if (v.y > maxY) maxY = v.y;
+      worstX = Math.max(worstX, Math.abs(v.x));
     }
-    if (Math.abs(worst - c.fitMargin) < 0.01) break;
+
+    /* Nudge the aim so the content's vertical mid-point sits on the centreline. */
+    const midY = (maxY + minY) / 2;
+    const spanY = Math.max(maxY - minY, 1e-3);
+    target.y += midY * (worldSpan / spanY);
+
+    const worst = Math.max(worstX, Math.abs(maxY - midY), Math.abs(minY - midY));
+    if (Math.abs(worst - c.fitMargin) < 0.005 && Math.abs(midY) < 0.01) {
+      place(d);
+      break;
+    }
     d = Math.max(0.3, d * (worst / c.fitMargin));
     place(d);
   }

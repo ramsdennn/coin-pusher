@@ -362,12 +362,8 @@ export function buildMachine(ctx) {
     );
   });
 
-  /* Tray. Nothing scores yet - this just catches what falls so it does not
-     drop forever and quietly eat frame time. */
-  staticBox(ctx, {
-    top: DIMS.trayY, z0: DIMS.tierLast.lipZ - D * 0.5, z1: DIMS.tierLast.lipZ + D * 3,
-    width: width, thickness: deckThick * 2, color: P.tray
-  });
+  /* No tray. Items are deleted as they pass the lip, so a catch tray caught
+     nothing and only added dead cabinet below the playfield. */
 
   /* ---------------------------------------------------------------------
      THE FOUR DROP CHUTES

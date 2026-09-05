@@ -71,7 +71,12 @@ const tierTop  = tiers[0];
 const tierLast = tiers[tiers.length - 1];      // the one items score off
 const playDepth = tierCount * tierDepth;
 
-const trayY = tierLast.y - D * 2.2;
+/* How far the cabinet carries on below the playfield. Items are deleted the
+   moment they leave the lip, so there is nothing down here to look at - this
+   is just enough of a lip for items to fall past on their way out. It used to
+   be 2.2 coins holding a catch tray, which caught nothing and took up most of
+   the lower third of the screen. */
+const trayY = tierLast.y - D * S.skirtBelowLipInCoins;
 
 /* ---- cabinet shell ---- */
 const wallThick   = D * 0.35;
