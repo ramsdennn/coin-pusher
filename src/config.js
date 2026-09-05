@@ -186,9 +186,17 @@ window.COIN_PUSHER_CONFIG = {
        Measured over 40 strokes: worst case a coin spent inside the shelf fell
        from 8.5s to 2.7s, and episodes lasting over a second from 14 to 4.
 
-       Do not push it lower. At 0.08 the solver goes unstable and it gets far
-       worse - one coin stayed buried for 87 seconds. */
-    lengthUnit: 0.2,
+       REVERTED to 1.0. Tightening it was the right call when the shelf step
+       was only 0.55 of a coin and the period 2.6s, but the step is now 1.4
+       and the period 7s, and those removed the sinking on their own. The
+       tightening was left behind doing nothing useful except making every
+       resting contact stiffer, which is what made the pile shiver.
+
+       Measured, same 8 strokes: at 0.2 the settled pile had mean speed
+       0.0110 and mean spin 0.326; at 1.0 it is 0.0052 and 0.158, and the
+       trapped-item guard fires a fraction as often. Do not go below 0.2 - at
+       0.08 the solver destabilises badly. */
+    lengthUnit: 1.0,
 
     /* A disc's collider is a many-sided prism, not a mathematical
        cylinder. Rapier's cylinder-vs-cylinder contacts collapse to a
@@ -225,8 +233,23 @@ window.COIN_PUSHER_CONFIG = {
        known cost of sleeping being on: it buys a cheap idle machine and
        a clean settle, and it has to be switched off the moment anything
        moves. Set false to test whether Rapier's own contact waking is
-       enough on its own. */
-    wakeAllWhileRunning: true,
+       enough on its own.
+
+       Set FALSE. Rapier wakes bodies on contact by itself, so the shelf still
+       picks up everything it touches - measured, throughput and scoring are
+       unchanged. Forcing every item awake every step meant the pile could
+       never settle, and a pile that never settles is a pile that visibly
+       shivers. This was half the wobble. */
+    wakeAllWhileRunning: false,
+    /* How far an item must actually drift before its mesh is redrawn. A
+       resting pile never goes perfectly still - the solver regenerates a
+       little contact noise every step - and below these thresholds that noise
+       is not movement, it is shimmer. Purely a drawing decision; the physics
+       is untouched. Raise if the pile still shivers, lower if slow genuine
+       motion looks steppy. */
+    renderDeadzone:      0.0012,   // world units, coin is 0.24 across
+    renderDeadzoneAngle: 0.00002,  // 1 - dot(q1,q2); about 0.4 degrees
+
 
     /* Let the pile fall asleep when it settles. Rapier will need waking
        once the shelf starts moving - that is a later problem, and a known

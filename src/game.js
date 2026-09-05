@@ -368,11 +368,43 @@ function frame(now) {
   renderer.render(scene, camera);
 }
 
+/* -------------------------------------------------------------------------
+   A resting pile in any rigid-body engine never goes perfectly still: the
+   solver regenerates a little contact noise every step, and items sit awake
+   creeping and rocking by amounts far too small to be real motion but easily
+   big enough to see. Physics tuning got this down a long way and no further -
+   damping made it worse, not better.
+
+   So the last step is drawn, not simulated: an item's mesh only moves when
+   the body has drifted a visible distance from where the mesh was LAST DRAWN.
+   Comparing against the last drawn pose rather than the last frame matters -
+   a slow genuine creep still accumulates past the threshold and updates, so
+   nothing can drift away invisibly and then jump.
+
+   This changes nothing about the simulation. It only declines to redraw
+   movement too small to be movement.
+   ------------------------------------------------------------------------- */
 function syncMeshes() {
+  const eps = PHY.renderDeadzone;
+  const epsRot = PHY.renderDeadzoneAngle;
+
   for (let i = 0; i < ctx.items.length; i++) {
     const it = ctx.items[i];
     const t = it.body.translation();
     const r = it.body.rotation();
+
+    const d = it.mesh.position;
+    const moved = Math.abs(t.x - d.x) > eps ||
+                  Math.abs(t.y - d.y) > eps ||
+                  Math.abs(t.z - d.z) > eps;
+
+    /* Dot product of the two orientations: 1 means identical. */
+    const q = it.mesh.quaternion;
+    const dot = Math.abs(q.x * r.x + q.y * r.y + q.z * r.z + q.w * r.w);
+    const turned = dot < 1 - epsRot;
+
+    if (!moved && !turned) continue;
+
     it.mesh.position.set(t.x, t.y, t.z);
     it.mesh.quaternion.set(r.x, r.y, r.z, r.w);
   }
