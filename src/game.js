@@ -454,12 +454,22 @@ function collectFallen() {
    takes a real fraction of a shelf stroke, WHEN the host drops matters as
    much as where.
    ------------------------------------------------------------------------- */
+let dropTurn = 0;
+
+/* config.dropItem may be one type id or a list. A list cycles - see the note
+   there on why this is not a random pick. */
+function nextDropType() {
+  const d = CFG.dropItem;
+  if (typeof d === 'string') return d;
+  return d[dropTurn++ % d.length];
+}
+
 export function dropInto(zone) {
   const z = Math.max(0, Math.min(DIMS.zoneCount - 1, zone | 0));
   const jitter = (Math.random() * 2 - 1) * DIMS.D * CFG.chute.entryJitterInCoins;
 
   const item = createItem(
-    ctx, CFG.dropItem,
+    ctx, nextDropType(),
     DIMS.zoneCentresX[z] + jitter,
     DIMS.chuteTop - DIMS.D * CFG.chute.entryHeightInCoins,
     DIMS.panelZ,

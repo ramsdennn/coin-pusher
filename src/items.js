@@ -26,10 +26,14 @@ function geometryFor(typeId) {
 
 function materialFor(typeId) {
   if (matCache[typeId]) return matCache[typeId];
+  const type = CFG.itemTypes[typeId];
+  const f = type.finish || {};
   const m = new THREE.MeshStandardMaterial({
-    color: CFG.itemTypes[typeId].color,
-    roughness: 0.34,
-    metalness: 0.35
+    color: type.color,
+    /* Defaults are the old metal-token finish, so a type that says nothing
+       about its surface looks exactly as it did before. */
+    roughness: f.roughness === undefined ? 0.34 : f.roughness,
+    metalness: f.metalness === undefined ? 0.35 : f.metalness
   });
   matCache[typeId] = m;
   return m;

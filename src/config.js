@@ -122,10 +122,38 @@ window.COIN_PUSHER_CONFIG = {
      them.
      -------------------------------------------------------------------- */
   itemTypes: {
-    coin: {
-      label: 'Coin',
+    /* Two coins, identical but for their colour, so the pile reads as a mix
+       the way the real machine's does. Matched to the reference photo: glossy
+       white and a very dark blue-black.
+
+       They are separate TYPES rather than one type with two colours because
+       everything downstream - the geometry cache, the material cache, the
+       dimensions, the fallen-item tally - is keyed by type id. A type that
+       could come in more than one colour would have to be special-cased in
+       every one of them.
+
+       finish is optional. Left out, an item uses the defaults in items.js.
+       These two are plastic, not metal: low roughness for a sharp highlight,
+       almost no metalness, which is what makes them read as glossy discs
+       rather than the gold tokens they started as. */
+    coinWhite: {
+      label: 'White coin',
       image: null,
-      color: 0xE8C24A,
+      color: 0xE4E7EA,
+      finish: { roughness: 0.20, metalness: 0.06 },
+      shape: 'disc',
+      size: { diameter: 1.0, thickness: 0.16 },
+      density: 1.0,
+      value: { type: 'points', amount: 10 }
+    },
+    coinNavy: {
+      label: 'Navy coin',
+      image: null,
+      /* Not black. A true black disc loses its edges against the shadows
+         between coins and the pile turns into one dark mass - the blue is
+         what keeps the individual coins readable. */
+      color: 0x232B40,
+      finish: { roughness: 0.18, metalness: 0.10 },
       shape: 'disc',
       size: { diameter: 1.0, thickness: 0.16 },
       density: 1.0,
@@ -170,7 +198,10 @@ window.COIN_PUSHER_CONFIG = {
   },
 
   /* What actually drops when the host clicks a drop zone. */
-  dropItem: 'coin',
+  /* A single type id, or a list to cycle through. Cycling, not picking at
+     random: random drifts, and across a night's play one colour would end up
+     noticeably commoner than the other. */
+  dropItem: ['coinWhite', 'coinNavy'],
 
   /* --------------------------------------------------------------------
      STARTING SHELF
@@ -182,7 +213,8 @@ window.COIN_PUSHER_CONFIG = {
        above and still work - they are just not loaded onto the shelf. Add a
        line back here to bring one in. The count is 62 rather than 57 so the
        field holds the same number of items it did with the extras. */
-    { type: 'coin',      count: 62, tier: 1 }
+    { type: 'coinWhite', count: 31, tier: 1 },
+    { type: 'coinNavy',  count: 31, tier: 1 }
   ],
 
   /* --------------------------------------------------------------------
