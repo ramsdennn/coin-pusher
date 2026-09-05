@@ -123,8 +123,13 @@ window.COIN_PUSHER_CONFIG = {
      -------------------------------------------------------------------- */
   itemTypes: {
     /* Two coins, identical but for their colour, so the pile reads as a mix
-       the way the real machine's does. Matched to the reference photo: glossy
-       white and a very dark blue-black.
+       the way the real machine's does. A dark grey and a mid-light grey,
+       picked by rendering candidate pairs in the pile under the real scene
+       lighting and comparing them side by side.
+
+       Note how much lighter these render than the hex suggests - the scene is
+       bright, and a lighter pair tried first came out reading as white rather
+       than as grey at all.
 
        They are separate TYPES rather than one type with two colours because
        everything downstream - the geometry cache, the material cache, the
@@ -136,24 +141,24 @@ window.COIN_PUSHER_CONFIG = {
        These two are plastic, not metal: low roughness for a sharp highlight,
        almost no metalness, which is what makes them read as glossy discs
        rather than the gold tokens they started as. */
-    coinWhite: {
-      label: 'White coin',
+    coinLight: {
+      label: 'Light coin',
       image: null,
-      color: 0xE4E7EA,
-      finish: { roughness: 0.20, metalness: 0.06 },
+      color: 0x9AA0A7,
+      finish: { roughness: 0.25, metalness: 0.05 },
       shape: 'disc',
       size: { diameter: 1.0, thickness: 0.16 },
       density: 1.0,
       value: { type: 'points', amount: 10 }
     },
-    coinNavy: {
-      label: 'Navy coin',
+    coinDark: {
+      label: 'Dark coin',
       image: null,
-      /* Not black. A true black disc loses its edges against the shadows
-         between coins and the pile turns into one dark mass - the blue is
-         what keeps the individual coins readable. */
-      color: 0x232B40,
-      finish: { roughness: 0.18, metalness: 0.10 },
+      /* Dark grey, not black. A true black disc loses its edges against the
+         shadows between coins and the pile turns into one dark mass; keeping
+         it off the floor is what holds the individual coins apart. */
+      color: 0x4A4F55,
+      finish: { roughness: 0.25, metalness: 0.05 },
       shape: 'disc',
       size: { diameter: 1.0, thickness: 0.16 },
       density: 1.0,
@@ -201,7 +206,7 @@ window.COIN_PUSHER_CONFIG = {
   /* A single type id, or a list to cycle through. Cycling, not picking at
      random: random drifts, and across a night's play one colour would end up
      noticeably commoner than the other. */
-  dropItem: ['coinWhite', 'coinNavy'],
+  dropItem: ['coinLight', 'coinDark'],
 
   /* --------------------------------------------------------------------
      STARTING SHELF
@@ -213,8 +218,8 @@ window.COIN_PUSHER_CONFIG = {
        above and still work - they are just not loaded onto the shelf. Add a
        line back here to bring one in. The count is 62 rather than 57 so the
        field holds the same number of items it did with the extras. */
-    { type: 'coinWhite', count: 31, tier: 1 },
-    { type: 'coinNavy',  count: 31, tier: 1 }
+    { type: 'coinLight', count: 31, tier: 1 },
+    { type: 'coinDark',  count: 31, tier: 1 }
   ],
 
   /* --------------------------------------------------------------------
