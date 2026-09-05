@@ -326,7 +326,12 @@ window.COIN_PUSHER_CONFIG = {
        coin can bounce sideways between them. The slot still biases where it
        ends up; it no longer dictates it. */
     slotHeightFraction:     1.0,
-    pegRows:                5,     // 0 = no pegs at all
+    /* Four rows, not five. A fifth row is a single peg on the zone
+       centreline at the very bottom of the field, which means an item can
+       never leave the chute down the middle of its zone. Ending on a PAIR
+       leaves a 1.15-coin gap on the centreline, so the middle is a real
+       outcome again. 0 = no pegs at all. */
+    pegRows:                4,
 
     /* Vertical spacing between peg rows, in coin diameters. MUST exceed 1.0.
        The 2D build already knew this and said so in its own config: "rows
