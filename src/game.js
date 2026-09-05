@@ -227,6 +227,7 @@ function buildWorld() {
   try { world.numSolverIterations = PHY.solverIterations; } catch (e) { /* older Rapier */ }
   try {
     world.integrationParameters.lengthUnit = PHY.lengthUnit;
+    world.integrationParameters.numInternalPgsIterations = PHY.pgsIterations;
   } catch (e) { /* older Rapier */ }
   return world;
 }

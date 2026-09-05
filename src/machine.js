@@ -286,7 +286,28 @@ export function liftTrapped(ctx) {
 
       const dim = DIMS.itemDims(it.typeId);
       const lift = dim.shape === 'box' ? dim.hy : dim.halfHeight;
-      it.body.setTranslation({ x: p.x, y: topY + lift * 1.2, z: p.z }, true);
+      const reach = dim.shape === 'box' ? Math.max(dim.hx, dim.hz) : dim.radius;
+
+      /* Land it ON TOP of whatever already occupies this column, not at deck
+         height regardless.
+
+         Dropping every lifted item at the deck surface teleports it straight
+         inside anything already resting there - measured, two items ending up
+         at the same height with their centres aligned, 90%+ interpenetrated,
+         which is what made stacked items look melted together. */
+      let restY = topY;
+      for (let j = 0; j < ctx.items.length; j++) {
+        const other = ctx.items[j];
+        if (other === it) continue;
+        const q = other.body.translation();
+        const od = DIMS.itemDims(other.typeId);
+        const oReach = od.shape === 'box' ? Math.max(od.hx, od.hz) : od.radius;
+        if (Math.hypot(q.x - p.x, q.z - p.z) > (reach + oReach) * 0.8) continue;
+        const oTop = q.y + (od.shape === 'box' ? od.hy : od.halfHeight);
+        if (oTop > restY) restY = oTop;
+      }
+
+      it.body.setTranslation({ x: p.x, y: restY + lift * 1.15, z: p.z }, true);
       const v = it.body.linvel();
       it.body.setLinvel({ x: v.x, y: 0, z: v.z }, true);
       lifted++;

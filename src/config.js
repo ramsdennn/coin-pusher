@@ -194,6 +194,12 @@ window.COIN_PUSHER_CONFIG = {
     timestep:         1 / 60,
     solverIterations: 16,
 
+    /* Rapier's inner PGS loop. Defaults to 1; 4 measurably reduces how far
+       items interpenetrate when the shelf compresses the pile, for almost no
+       cost (2.32 -> 2.37 ms/step). It does NOT solve the problem - see the
+       note on shelf compression below. */
+    pgsIterations: 4,
+
     /* Rapier scales its contact tolerances by this. It defaults to 1, meaning
        metre-sized objects, and it allows contact penetration of 0.005 of that
        before it considers anything wrong. Our coins are 0.0204 THICK - so the
