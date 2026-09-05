@@ -307,6 +307,104 @@ export function driveShelves(ctx, phase) {
    The set the cabinet stands in. Decoration only - not one collider here, and
    nothing in this function is raycast for host clicks.
    ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------
+   Light tubes. Decoration - no colliders, and they are excluded from shadow
+   work: a glowing tube that catches a shadow reads as a painted pipe.
+
+   Each tube follows the same profile the side walls do, so it sits level
+   above the shelf and then descends with the wall to the front edge, rather
+   than cutting across it.
+   ------------------------------------------------------------------------- */
+function buildLightTubes(ctx) {
+  const T = CFG.lightTubes;
+  if (!T.enabled) return [];
+
+  const D = DIMS.D;
+  const yBack  = DIMS.tierTop.y + DIMS.deckStep + D * CFG.scale.wallAboveShelfInCoins;
+  const zBack  = -DIMS.wallThick;
+  const zHold  = DIMS.tierTop.shelfHomeZ;
+  const zFront = DIMS.tierLast.fixedLipZ;
+  const yFront = yBack -
+    (zFront - zHold) * Math.tan((CFG.scale.wallDescentDeg * Math.PI) / 180);
+
+  const UP = new THREE.Vector3(0, 1, 0);
+
+  /* Straight runs, joined by a ball at each corner.
+
+     A smoothed curve through these points is no good: fitting a spline to a
+     right angle bows the long side runs out away from the machine entirely,
+     which is what happened first time. Straight segments hug the wall by
+     construction. */
+  function run(from, to, radius, material, group) {
+    const dir = new THREE.Vector3().subVectors(to, from);
+    const len = dir.length();
+    if (len < 1e-6) return;
+    const seg = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, len, 10, 1, true), material
+    );
+    seg.position.copy(from).addScaledVector(dir, 0.5);
+    seg.quaternion.setFromUnitVectors(UP, dir.clone().normalize());
+    group.add(seg);
+  }
+
+  const tubes = [];
+
+  T.colours.forEach(function (colour, i) {
+    const x = DIMS.width / 2 + DIMS.wallThick
+            + T.gap * (i + 1) + T.radius * (2 * i + 1);
+    const drop = T.radius * 1.4 * i;
+
+    const material = new THREE.MeshStandardMaterial({
+      color: colour,
+      emissive: new THREE.Color(colour),
+      emissiveIntensity: T.glow,
+      roughness: 0.35,
+      metalness: 0.0
+    });
+
+    const pts = [
+      new THREE.Vector3(-x, yFront - drop, zFront),
+      new THREE.Vector3(-x, yBack  - drop, zHold),
+      new THREE.Vector3(-x, yBack  - drop, zBack),
+      new THREE.Vector3( x, yBack  - drop, zBack),
+      new THREE.Vector3( x, yBack  - drop, zHold),
+      new THREE.Vector3( x, yFront - drop, zFront)
+    ];
+
+    const group = new THREE.Group();
+    for (let k = 0; k < pts.length - 1; k++) run(pts[k], pts[k + 1], T.radius, material, group);
+
+    /* Balls fill the mitre at each corner so the joins do not show gaps. */
+    const ballGeo = new THREE.SphereGeometry(T.radius, 10, 8);
+    for (let k = 1; k < pts.length - 1; k++) {
+      const ball = new THREE.Mesh(ballGeo, material);
+      ball.position.copy(pts[k]);
+      group.add(ball);
+    }
+
+    group.traverse(function (o) {
+      if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; }
+    });
+    group.userData.isLightTube = true;
+    ctx.scene.add(group);
+
+    tubes.push({ group: group, material: material });
+  });
+
+  return tubes;
+}
+
+/* Recolour a tube in place. Index 0 is the innermost. */
+export function setTubeColour(ctx, index, colour) {
+  const t = ctx.machine.tubes[index];
+  if (!t) return false;
+  /* Every segment and corner of a tube shares one material, so this is a
+     single assignment however many pieces the run is built from. */
+  t.material.color.set(colour);
+  t.material.emissive.set(colour);
+  return true;
+}
+
 export function buildMachine(ctx) {
   const width = DIMS.width, D = DIMS.D, deckThick = DIMS.deckThick;
   const parts = { shelves: [], panels: [] };
@@ -664,6 +762,8 @@ export function buildMachine(ctx) {
     ctx.scene.add(target);
     parts.panels.push(target);
   }
+
+  parts.tubes = buildLightTubes(ctx);
 
   return parts;
 }

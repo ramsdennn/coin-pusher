@@ -16,7 +16,7 @@
 import * as THREE from 'three';
 import * as RAPIER from 'rapier';
 import { DIMS, TIERS } from '@app/dims';
-import { buildMachine, driveShelves, liftTrapped } from '@app/machine';
+import { buildMachine, driveShelves, liftTrapped, setTubeColour } from '@app/machine';
 import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
 
 const CFG = window.COIN_PUSHER_CONFIG;
@@ -657,6 +657,7 @@ window.startCoinPusher = function (teamA, teamB) {
       ctx: ctx, DIMS: DIMS, TIERS: TIERS, CFG: CFG, M: M,
       camera: camera, aimCamera: aimCamera, resetPile: resetPile,
       step: physicsStep,
+      setTubeColour: function (i, hex) { return setTubeColour(ctx, i, hex); },
       dropInto: dropInto,
       setRunning: function (v) { running = v; },
       getPhase: function () { return phase; }

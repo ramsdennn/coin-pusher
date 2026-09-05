@@ -484,6 +484,20 @@ window.COIN_PUSHER_CONFIG = {
      coloured spill from the flanks onto the cabinet sides does more work here
      than the geometry does. */
 
+  /* Three tubes of light tracing the machine: up one side wall, across the
+     back, down the other. Innermost first.
+
+     Colour is expected to change during play, so each tube keeps its own
+     material and machine.setTubeColour(i, hex) swaps it live - no geometry is
+     rebuilt, and the emissive follows the colour automatically. */
+  lightTubes: {
+    enabled: true,
+    radius:  0.038,
+    gap:     0.075,        // between the cabinet and the first tube, and between tubes
+    glow:    1.6,
+    colours: [0xF7C51A, 0x7A1FC4, 0x7A1FC4]
+  },
+
   palette: {
     background: 0x0B0616,
     deck:       0xC9CDD4,   // shelf top - items rest on this
