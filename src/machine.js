@@ -359,7 +359,11 @@ function buildLightTubes(ctx) {
     AXIS.copy(dir).normalize();
     const ref = Math.abs(AXIS.y) > 0.9 ? UP_ALT : UP;
     SIDE.crossVectors(ref, AXIS).normalize();
-    OUT.crossVectors(AXIS, SIDE).normalize();
+    /* SIDE x AXIS, not AXIS x SIDE. The other order gives a LEFT-handed
+       basis - determinant -1, a reflection rather than a rotation - and
+       building a quaternion from one produces nonsense. Every run direction
+       was affected, which is what tore the tubes apart at the corners. */
+    OUT.crossVectors(SIDE, AXIS).normalize();
     BASIS.makeBasis(SIDE, AXIS, OUT);
     seg.quaternion.setFromRotationMatrix(BASIS);
 
