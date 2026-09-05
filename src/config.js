@@ -493,7 +493,7 @@ window.COIN_PUSHER_CONFIG = {
        the camera. Turning it would view the machine from an angle, and the
        four drop panes would stop being equally square-on to the viewer, which
        is the whole reason the camera is frontal in the first place. */
-    centreAtScreenX: 0.34,
+    centreAtScreenX: 0.38,
 
     autoFit:      true,
     fitMargin:    0.94,

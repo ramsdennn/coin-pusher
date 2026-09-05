@@ -54,7 +54,6 @@ function buildScene() {
   camera = new THREE.PerspectiveCamera(
     CFG.camera.fovDeg, host.clientWidth / host.clientHeight, 0.05, 100
   );
-  applyLensShift();
   aimCamera();
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -183,6 +182,15 @@ function applyLensShift() {
 
 function aimCamera() {
   const c = CFG.camera;
+
+  /* Size the machine with NO shift applied, then shift it afterwards.
+
+     Fitting through a shifted projection makes the fit see the machine's left
+     edge pushed out towards the frame margin, so it pulls the camera back and
+     the machine shrinks - moving it sideways should not change how big it is.
+     Clearing the offset first keeps the scale identical to the centred
+     framing, and the shift then only translates. */
+  camera.clearViewOffset();
   const el = (c.elevationDeg * Math.PI) / 180;
   const target = new THREE.Vector3(0, c.lookAt.y, DIMS.playDepth * c.lookAt.zFraction);
 
@@ -236,6 +244,8 @@ function aimCamera() {
     d = Math.max(0.3, d * (worst / c.fitMargin));
     place(d);
   }
+
+  applyLensShift();
 }
 
 function buildWorld() {
@@ -597,7 +607,6 @@ function onResize() {
   camera.aspect = host.clientWidth / host.clientHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(host.clientWidth, host.clientHeight);
-  applyLensShift();                  // offset is in pixels, so it must be redone
   aimCamera();                       // re-fit: the screen shape just changed
 }
 
