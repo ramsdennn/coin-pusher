@@ -20,7 +20,7 @@ window.COIN_PUSHER_CONFIG = {
     coinDiameter:  0.24,
     coinThickness: 0.02,
 
-    coinsAcrossWidth: 10,   // machine width, in coins
+    coinsAcrossWidth: 12.5, // machine width, in coins (widened 25%)
     coinsDeepPerTier:  6,   // depth of each tier, in coins
 
     /* How many tiers the machine has.
@@ -160,7 +160,7 @@ window.COIN_PUSHER_CONFIG = {
      Loaded from the front lip backwards, so the machine starts primed.
      -------------------------------------------------------------------- */
   startingLayout: [
-    { type: 'coin',      count: 42, tier: 1 },
+    { type: 'coin',      count: 52, tier: 1 },
     { type: 'token50',   count: 2,  tier: 1 },
     { type: 'token100',  count: 1,  tier: 1 },
     { type: 'chocolate', count: 1,  tier: 1 },
