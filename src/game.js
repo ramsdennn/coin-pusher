@@ -616,7 +616,6 @@ window.startCoinPusher = function (teamA, teamB) {
       if (!o.isMesh) return;
       const m = o.material;
       if (m && m.transparent && m.opacity < 0.9) return;
-      if (o.userData.noShadow) return;
       o.castShadow = false;
       o.receiveShadow = true;
     });
