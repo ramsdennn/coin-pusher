@@ -1,0 +1,875 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 620" width="1240" height="620">
+<defs>
+<path id="gT" d="M0 0H64V20H45.5V100H18.5V20H0Z" fill-rule="evenodd"/>
+<path id="gI" d="M0 0H27V100H0Z" fill-rule="evenodd"/>
+<path id="gP" d="M0 0H42C54 0 64 8 64 20V38C64 50 54 58 42 58H27V100H0ZM27 20H38C42 20 44 23 44 29C44 35 42 38 38 38H27Z" fill-rule="evenodd"/>
+<path id="gN" d="M0 100V0H26L48 72V0H74V100H48L26 28V100Z" fill-rule="evenodd"/>
+<path id="gO" d="M28 0H46C61 0 74 12 74 28V72C74 88 61 100 46 100H28C13 100 0 88 0 72V28C0 12 13 0 28 0ZM30 20H44C46 20 47 22 47 25V75C47 78 46 80 44 80H30C28 80 27 78 27 75V25C27 22 28 20 30 20Z" fill-rule="evenodd"/>
+<path id="gG" d="M52 30H74C74 12 61 0 46 0H28C13 0 0 12 0 28V72C0 88 13 100 28 100H46C61 100 74 88 74 72V52H36V76H30C28 76 27 74 27 72V28C27 26 28 24 30 24H52Z" fill-rule="evenodd"/>
+<linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.00" stop-color="#F6F9FD"/>
+      <stop offset="0.06" stop-color="#E8EDF5"/>
+      <stop offset="0.20" stop-color="#C7CFDC"/>
+      <stop offset="0.36" stop-color="#ADB5C4"/>
+      <stop offset="0.455" stop-color="#7C8496"/>
+      <stop offset="0.495" stop-color="#5A6274"/>
+      <stop offset="0.520" stop-color="#C7CEDA"/>
+      <stop offset="0.60" stop-color="#FBFCFE"/>
+      <stop offset="0.68" stop-color="#FFFFFF"/>
+      <stop offset="0.79" stop-color="#DCE1EA"/>
+      <stop offset="0.89" stop-color="#A5ADBC"/>
+      <stop offset="0.96" stop-color="#79818F"/>
+      <stop offset="1.00" stop-color="#AEB6C4"/>
+    </linearGradient>
+<linearGradient id="warm" gradientUnits="userSpaceOnUse"
+        x1="0" y1="200" x2="1240" y2="480">
+      <stop offset="0.00" stop-color="#FFCE86" stop-opacity="0.40"/>
+      <stop offset="0.28" stop-color="#FFE0AE" stop-opacity="0.20"/>
+      <stop offset="0.60" stop-color="#EAF2FF" stop-opacity="0.05"/>
+      <stop offset="1.00" stop-color="#AFCEFF" stop-opacity="0.20"/>
+    </linearGradient>
+<linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+      <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+      <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+      <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+      <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+    </linearGradient>
+<filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="22"/></filter>
+<filter id="rayblur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2"/></filter>
+<filter id="coreblur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="7"/></filter>
+<radialGradient id="flareCore"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.25" stop-color="#FFF6DF" stop-opacity="0.85"/><stop offset="0.6" stop-color="#FFD98A" stop-opacity="0.28"/><stop offset="1" stop-color="#FFB65C" stop-opacity="0"/></radialGradient>
+<radialGradient id="flareCoolCore"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.28" stop-color="#EAF4FF" stop-opacity="0.8"/><stop offset="0.65" stop-color="#A8CBFF" stop-opacity="0.24"/><stop offset="1" stop-color="#7FB0FF" stop-opacity="0"/></radialGradient>
+<g id="flareWarm">
+<circle r="150" fill="url(#flareCore)" opacity="0.55" filter="url(#soft)"/>
+<circle r="46" fill="url(#flareCore)"/>
+<g filter="url(#rayblur)" fill="#FFFFFF">
+<path d="M-330 0 L0 -9 L330 0 L0 9Z" opacity="0.85"/>
+<path d="M0 -190 L7 0 L0 190 L-7 0Z" opacity="0.7"/>
+<path d="M-96 -96 L0 -5 L96 96 L0 5Z" opacity="0.4"/>
+<path d="M96 -96 L5 0 L-96 96 L-5 0Z" opacity="0.4"/>
+</g>
+<circle r="20" fill="#FFFFFF" filter="url(#coreblur)"/>
+</g>
+<g id="flareCool">
+<circle r="150" fill="url(#flareCoolCore)" opacity="0.55" filter="url(#soft)"/>
+<circle r="46" fill="url(#flareCoolCore)"/>
+<g filter="url(#rayblur)" fill="#FFFFFF">
+<path d="M-330 0 L0 -9 L330 0 L0 9Z" opacity="0.85"/>
+<path d="M0 -190 L7 0 L0 190 L-7 0Z" opacity="0.7"/>
+<path d="M-96 -96 L0 -5 L96 96 L0 5Z" opacity="0.4"/>
+<path d="M96 -96 L5 0 L-96 96 L-5 0Z" opacity="0.4"/>
+</g>
+<circle r="20" fill="#FFFFFF" filter="url(#coreblur)"/>
+</g>
+<radialGradient id="bgWash" cx="0.42" cy="0.34" r="0.85"><stop offset="0" stop-color="#2B3566"/><stop offset="0.45" stop-color="#141A38"/><stop offset="1" stop-color="#05060F"/></radialGradient>
+<clipPath id="c-tp-0"><use href="#gT" transform="translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-tp-1"><use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-tp-2"><use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-tp-3"><use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-tp-4"><use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-tp-5"><use href="#gN" transform="translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-tp-6"><use href="#gG" transform="translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-pt-0"><use href="#gP" transform="translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-pt-1"><use href="#gO" transform="translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-pt-2"><use href="#gI" transform="translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-pt-3"><use href="#gN" transform="translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="c-pt-4"><use href="#gT" transform="translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/></clipPath>
+<clipPath id="allFaces">
+<use href="#gT" transform="translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</clipPath>
+</defs>
+<g id="logo" transform="translate(43.86,-3.02) scale(0.9297)">
+<g id="tp">
+<g opacity="0.5" filter="url(#soft)" fill="#03040A">
+<use href="#gT" transform="translate(32.4,57.5) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(32.4,57.5) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(32.4,57.5) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(32.4,57.5) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(32.4,57.5) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(32.4,57.5) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(32.4,57.5) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#0F1116">
+<use href="#gT" transform="translate(21.57,38.35) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(21.57,38.35) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(21.57,38.35) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(21.57,38.35) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(21.57,38.35) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(21.57,38.35) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(21.57,38.35) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#111318">
+<use href="#gT" transform="translate(21.08,37.48) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(21.08,37.48) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(21.08,37.48) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(21.08,37.48) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(21.08,37.48) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(21.08,37.48) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(21.08,37.48) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#12151A">
+<use href="#gT" transform="translate(20.59,36.61) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(20.59,36.61) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(20.59,36.61) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(20.59,36.61) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(20.59,36.61) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(20.59,36.61) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(20.59,36.61) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#14171C">
+<use href="#gT" transform="translate(20.10,35.73) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(20.10,35.73) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(20.10,35.73) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(20.10,35.73) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(20.10,35.73) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(20.10,35.73) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(20.10,35.73) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#16191F">
+<use href="#gT" transform="translate(19.61,34.86) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(19.61,34.86) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(19.61,34.86) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(19.61,34.86) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(19.61,34.86) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(19.61,34.86) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(19.61,34.86) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#181A21">
+<use href="#gT" transform="translate(19.12,33.99) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(19.12,33.99) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(19.12,33.99) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(19.12,33.99) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(19.12,33.99) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(19.12,33.99) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(19.12,33.99) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1A1C23">
+<use href="#gT" transform="translate(18.63,33.12) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(18.63,33.12) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(18.63,33.12) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(18.63,33.12) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(18.63,33.12) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(18.63,33.12) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(18.63,33.12) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1B1E25">
+<use href="#gT" transform="translate(18.14,32.25) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(18.14,32.25) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(18.14,32.25) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(18.14,32.25) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(18.14,32.25) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(18.14,32.25) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(18.14,32.25) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1D2027">
+<use href="#gT" transform="translate(17.65,31.38) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(17.65,31.38) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(17.65,31.38) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(17.65,31.38) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(17.65,31.38) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(17.65,31.38) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(17.65,31.38) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1F2229">
+<use href="#gT" transform="translate(17.16,30.51) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(17.16,30.51) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(17.16,30.51) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(17.16,30.51) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(17.16,30.51) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(17.16,30.51) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(17.16,30.51) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#20242B">
+<use href="#gT" transform="translate(16.67,29.63) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(16.67,29.63) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(16.67,29.63) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(16.67,29.63) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(16.67,29.63) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(16.67,29.63) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(16.67,29.63) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#22262E">
+<use href="#gT" transform="translate(16.18,28.76) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(16.18,28.76) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(16.18,28.76) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(16.18,28.76) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(16.18,28.76) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(16.18,28.76) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(16.18,28.76) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#242830">
+<use href="#gT" transform="translate(15.69,27.89) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(15.69,27.89) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(15.69,27.89) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(15.69,27.89) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(15.69,27.89) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(15.69,27.89) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(15.69,27.89) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#262A32">
+<use href="#gT" transform="translate(15.20,27.02) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(15.20,27.02) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(15.20,27.02) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(15.20,27.02) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(15.20,27.02) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(15.20,27.02) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(15.20,27.02) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#282B34">
+<use href="#gT" transform="translate(14.71,26.15) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(14.71,26.15) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(14.71,26.15) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(14.71,26.15) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(14.71,26.15) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(14.71,26.15) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(14.71,26.15) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#292D36">
+<use href="#gT" transform="translate(14.22,25.28) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(14.22,25.28) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(14.22,25.28) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(14.22,25.28) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(14.22,25.28) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(14.22,25.28) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(14.22,25.28) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#2B2F38">
+<use href="#gT" transform="translate(13.73,24.40) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(13.73,24.40) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(13.73,24.40) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(13.73,24.40) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(13.73,24.40) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(13.73,24.40) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(13.73,24.40) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#2D313A">
+<use href="#gT" transform="translate(13.24,23.53) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(13.24,23.53) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(13.24,23.53) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(13.24,23.53) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(13.24,23.53) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(13.24,23.53) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(13.24,23.53) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#2E333C">
+<use href="#gT" transform="translate(12.75,22.66) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(12.75,22.66) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(12.75,22.66) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(12.75,22.66) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(12.75,22.66) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(12.75,22.66) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(12.75,22.66) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#30353F">
+<use href="#gT" transform="translate(12.26,21.79) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(12.26,21.79) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(12.26,21.79) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(12.26,21.79) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(12.26,21.79) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(12.26,21.79) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(12.26,21.79) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#323741">
+<use href="#gT" transform="translate(11.77,20.92) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(11.77,20.92) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(11.77,20.92) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(11.77,20.92) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(11.77,20.92) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(11.77,20.92) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(11.77,20.92) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#343943">
+<use href="#gT" transform="translate(11.28,20.05) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(11.28,20.05) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(11.28,20.05) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(11.28,20.05) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(11.28,20.05) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(11.28,20.05) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(11.28,20.05) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#363A45">
+<use href="#gT" transform="translate(10.79,19.17) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(10.79,19.17) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(10.79,19.17) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(10.79,19.17) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(10.79,19.17) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(10.79,19.17) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(10.79,19.17) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#373C47">
+<use href="#gT" transform="translate(10.30,18.30) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(10.30,18.30) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(10.30,18.30) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(10.30,18.30) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(10.30,18.30) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(10.30,18.30) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(10.30,18.30) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#393E49">
+<use href="#gT" transform="translate(9.81,17.43) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(9.81,17.43) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(9.81,17.43) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(9.81,17.43) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(9.81,17.43) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(9.81,17.43) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(9.81,17.43) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#3B404B">
+<use href="#gT" transform="translate(9.31,16.56) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(9.31,16.56) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(9.31,16.56) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(9.31,16.56) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(9.31,16.56) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(9.31,16.56) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(9.31,16.56) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#3C424E">
+<use href="#gT" transform="translate(8.82,15.69) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(8.82,15.69) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(8.82,15.69) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(8.82,15.69) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(8.82,15.69) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(8.82,15.69) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(8.82,15.69) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#3E4450">
+<use href="#gT" transform="translate(8.33,14.82) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(8.33,14.82) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(8.33,14.82) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(8.33,14.82) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(8.33,14.82) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(8.33,14.82) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(8.33,14.82) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#404652">
+<use href="#gT" transform="translate(7.84,13.95) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(7.84,13.95) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(7.84,13.95) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(7.84,13.95) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(7.84,13.95) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(7.84,13.95) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(7.84,13.95) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#424854">
+<use href="#gT" transform="translate(7.35,13.07) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(7.35,13.07) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(7.35,13.07) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(7.35,13.07) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(7.35,13.07) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(7.35,13.07) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(7.35,13.07) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#444A56">
+<use href="#gT" transform="translate(6.86,12.20) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(6.86,12.20) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(6.86,12.20) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(6.86,12.20) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(6.86,12.20) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(6.86,12.20) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(6.86,12.20) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#454B58">
+<use href="#gT" transform="translate(6.37,11.33) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(6.37,11.33) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(6.37,11.33) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(6.37,11.33) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(6.37,11.33) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(6.37,11.33) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(6.37,11.33) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#474D5A">
+<use href="#gT" transform="translate(5.88,10.46) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(5.88,10.46) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(5.88,10.46) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(5.88,10.46) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(5.88,10.46) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(5.88,10.46) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(5.88,10.46) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#494F5C">
+<use href="#gT" transform="translate(5.39,9.59) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(5.39,9.59) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(5.39,9.59) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(5.39,9.59) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(5.39,9.59) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(5.39,9.59) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(5.39,9.59) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#4A515F">
+<use href="#gT" transform="translate(4.90,8.72) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(4.90,8.72) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(4.90,8.72) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(4.90,8.72) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(4.90,8.72) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(4.90,8.72) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(4.90,8.72) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#4C5361">
+<use href="#gT" transform="translate(4.41,7.84) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(4.41,7.84) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(4.41,7.84) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(4.41,7.84) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(4.41,7.84) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(4.41,7.84) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(4.41,7.84) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#4E5563">
+<use href="#gT" transform="translate(3.92,6.97) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(3.92,6.97) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(3.92,6.97) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(3.92,6.97) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(3.92,6.97) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(3.92,6.97) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(3.92,6.97) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#505765">
+<use href="#gT" transform="translate(3.43,6.10) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(3.43,6.10) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(3.43,6.10) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(3.43,6.10) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(3.43,6.10) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(3.43,6.10) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(3.43,6.10) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#525967">
+<use href="#gT" transform="translate(2.94,5.23) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(2.94,5.23) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(2.94,5.23) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(2.94,5.23) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(2.94,5.23) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(2.94,5.23) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(2.94,5.23) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#535B69">
+<use href="#gT" transform="translate(2.45,4.36) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(2.45,4.36) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(2.45,4.36) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(2.45,4.36) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(2.45,4.36) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(2.45,4.36) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(2.45,4.36) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#555C6B">
+<use href="#gT" transform="translate(1.96,3.49) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.96,3.49) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(1.96,3.49) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(1.96,3.49) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.96,3.49) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(1.96,3.49) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(1.96,3.49) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#575E6E">
+<use href="#gT" transform="translate(1.47,2.61) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.47,2.61) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(1.47,2.61) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(1.47,2.61) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.47,2.61) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(1.47,2.61) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(1.47,2.61) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#586070">
+<use href="#gT" transform="translate(0.98,1.74) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(0.98,1.74) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(0.98,1.74) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(0.98,1.74) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(0.98,1.74) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(0.98,1.74) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(0.98,1.74) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#5A6272">
+<use href="#gT" transform="translate(0.49,0.87) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(0.49,0.87) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(0.49,0.87) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(0.49,0.87) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(0.49,0.87) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(0.49,0.87) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(0.49,0.87) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#CBD3E0">
+<use href="#gT" transform="translate(1.72,3.05) translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.72,3.05) translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(1.72,3.05) translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gP" transform="translate(1.72,3.05) translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.72,3.05) translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(1.72,3.05) translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)"/>
+<use href="#gG" transform="translate(1.72,3.05) translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)"/>
+</g>
+<use href="#gT" transform="translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gT" transform="translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-tp-0)"><use href="#gT" transform="translate(352.00,268.00) rotate(13.000) translate(0.00,0) scale(1.7000) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-tp-1)"><use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(117.30,0) scale(1.8000) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-tp-2)"><use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(174.90,0) scale(1.9000) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-tp-3)"><use href="#gP" transform="translate(352.00,268.00) rotate(13.000) translate(306.00,0) scale(2.0000) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-tp-4)"><use href="#gI" transform="translate(352.00,268.00) rotate(13.000) translate(444.00,0) scale(2.1000) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gN" transform="translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gN" transform="translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-tp-5)"><use href="#gN" transform="translate(352.00,268.00) rotate(13.000) translate(511.20,0) scale(2.2000) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gG" transform="translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gG" transform="translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-tp-6)"><use href="#gG" transform="translate(352.00,268.00) rotate(13.000) translate(685.00,0) scale(2.3000) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+</g>
+<g id="pt">
+<g opacity="0.5" filter="url(#soft)" fill="#03040A">
+<use href="#gP" transform="translate(32.4,57.5) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(32.4,57.5) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(32.4,57.5) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(32.4,57.5) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(32.4,57.5) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#0F1116">
+<use href="#gP" transform="translate(21.57,38.35) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(21.57,38.35) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(21.57,38.35) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(21.57,38.35) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(21.57,38.35) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#111318">
+<use href="#gP" transform="translate(21.08,37.48) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(21.08,37.48) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(21.08,37.48) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(21.08,37.48) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(21.08,37.48) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#12151A">
+<use href="#gP" transform="translate(20.59,36.61) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(20.59,36.61) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(20.59,36.61) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(20.59,36.61) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(20.59,36.61) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#14171C">
+<use href="#gP" transform="translate(20.10,35.73) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(20.10,35.73) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(20.10,35.73) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(20.10,35.73) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(20.10,35.73) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#16191F">
+<use href="#gP" transform="translate(19.61,34.86) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(19.61,34.86) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(19.61,34.86) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(19.61,34.86) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(19.61,34.86) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#181A21">
+<use href="#gP" transform="translate(19.12,33.99) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(19.12,33.99) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(19.12,33.99) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(19.12,33.99) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(19.12,33.99) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1A1C23">
+<use href="#gP" transform="translate(18.63,33.12) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(18.63,33.12) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(18.63,33.12) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(18.63,33.12) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(18.63,33.12) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1B1E25">
+<use href="#gP" transform="translate(18.14,32.25) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(18.14,32.25) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(18.14,32.25) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(18.14,32.25) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(18.14,32.25) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1D2027">
+<use href="#gP" transform="translate(17.65,31.38) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(17.65,31.38) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(17.65,31.38) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(17.65,31.38) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(17.65,31.38) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#1F2229">
+<use href="#gP" transform="translate(17.16,30.51) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(17.16,30.51) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(17.16,30.51) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(17.16,30.51) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(17.16,30.51) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#20242B">
+<use href="#gP" transform="translate(16.67,29.63) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(16.67,29.63) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(16.67,29.63) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(16.67,29.63) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(16.67,29.63) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#22262E">
+<use href="#gP" transform="translate(16.18,28.76) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(16.18,28.76) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(16.18,28.76) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(16.18,28.76) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(16.18,28.76) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#242830">
+<use href="#gP" transform="translate(15.69,27.89) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(15.69,27.89) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(15.69,27.89) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(15.69,27.89) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(15.69,27.89) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#262A32">
+<use href="#gP" transform="translate(15.20,27.02) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(15.20,27.02) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(15.20,27.02) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(15.20,27.02) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(15.20,27.02) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#282B34">
+<use href="#gP" transform="translate(14.71,26.15) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(14.71,26.15) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(14.71,26.15) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(14.71,26.15) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(14.71,26.15) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#292D36">
+<use href="#gP" transform="translate(14.22,25.28) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(14.22,25.28) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(14.22,25.28) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(14.22,25.28) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(14.22,25.28) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#2B2F38">
+<use href="#gP" transform="translate(13.73,24.40) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(13.73,24.40) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(13.73,24.40) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(13.73,24.40) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(13.73,24.40) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#2D313A">
+<use href="#gP" transform="translate(13.24,23.53) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(13.24,23.53) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(13.24,23.53) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(13.24,23.53) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(13.24,23.53) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#2E333C">
+<use href="#gP" transform="translate(12.75,22.66) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(12.75,22.66) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(12.75,22.66) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(12.75,22.66) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(12.75,22.66) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#30353F">
+<use href="#gP" transform="translate(12.26,21.79) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(12.26,21.79) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(12.26,21.79) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(12.26,21.79) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(12.26,21.79) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#323741">
+<use href="#gP" transform="translate(11.77,20.92) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(11.77,20.92) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(11.77,20.92) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(11.77,20.92) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(11.77,20.92) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#343943">
+<use href="#gP" transform="translate(11.28,20.05) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(11.28,20.05) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(11.28,20.05) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(11.28,20.05) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(11.28,20.05) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#363A45">
+<use href="#gP" transform="translate(10.79,19.17) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(10.79,19.17) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(10.79,19.17) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(10.79,19.17) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(10.79,19.17) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#373C47">
+<use href="#gP" transform="translate(10.30,18.30) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(10.30,18.30) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(10.30,18.30) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(10.30,18.30) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(10.30,18.30) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#393E49">
+<use href="#gP" transform="translate(9.81,17.43) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(9.81,17.43) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(9.81,17.43) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(9.81,17.43) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(9.81,17.43) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#3B404B">
+<use href="#gP" transform="translate(9.31,16.56) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(9.31,16.56) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(9.31,16.56) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(9.31,16.56) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(9.31,16.56) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#3C424E">
+<use href="#gP" transform="translate(8.82,15.69) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(8.82,15.69) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(8.82,15.69) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(8.82,15.69) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(8.82,15.69) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#3E4450">
+<use href="#gP" transform="translate(8.33,14.82) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(8.33,14.82) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(8.33,14.82) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(8.33,14.82) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(8.33,14.82) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#404652">
+<use href="#gP" transform="translate(7.84,13.95) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(7.84,13.95) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(7.84,13.95) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(7.84,13.95) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(7.84,13.95) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#424854">
+<use href="#gP" transform="translate(7.35,13.07) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(7.35,13.07) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(7.35,13.07) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(7.35,13.07) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(7.35,13.07) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#444A56">
+<use href="#gP" transform="translate(6.86,12.20) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(6.86,12.20) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(6.86,12.20) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(6.86,12.20) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(6.86,12.20) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#454B58">
+<use href="#gP" transform="translate(6.37,11.33) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(6.37,11.33) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(6.37,11.33) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(6.37,11.33) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(6.37,11.33) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#474D5A">
+<use href="#gP" transform="translate(5.88,10.46) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(5.88,10.46) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(5.88,10.46) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(5.88,10.46) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(5.88,10.46) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#494F5C">
+<use href="#gP" transform="translate(5.39,9.59) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(5.39,9.59) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(5.39,9.59) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(5.39,9.59) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(5.39,9.59) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#4A515F">
+<use href="#gP" transform="translate(4.90,8.72) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(4.90,8.72) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(4.90,8.72) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(4.90,8.72) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(4.90,8.72) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#4C5361">
+<use href="#gP" transform="translate(4.41,7.84) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(4.41,7.84) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(4.41,7.84) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(4.41,7.84) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(4.41,7.84) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#4E5563">
+<use href="#gP" transform="translate(3.92,6.97) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(3.92,6.97) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(3.92,6.97) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(3.92,6.97) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(3.92,6.97) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#505765">
+<use href="#gP" transform="translate(3.43,6.10) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(3.43,6.10) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(3.43,6.10) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(3.43,6.10) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(3.43,6.10) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#525967">
+<use href="#gP" transform="translate(2.94,5.23) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(2.94,5.23) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(2.94,5.23) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(2.94,5.23) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(2.94,5.23) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#535B69">
+<use href="#gP" transform="translate(2.45,4.36) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(2.45,4.36) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(2.45,4.36) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(2.45,4.36) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(2.45,4.36) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#555C6B">
+<use href="#gP" transform="translate(1.96,3.49) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(1.96,3.49) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.96,3.49) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(1.96,3.49) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(1.96,3.49) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#575E6E">
+<use href="#gP" transform="translate(1.47,2.61) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(1.47,2.61) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.47,2.61) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(1.47,2.61) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(1.47,2.61) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#586070">
+<use href="#gP" transform="translate(0.98,1.74) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(0.98,1.74) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(0.98,1.74) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(0.98,1.74) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(0.98,1.74) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#5A6272">
+<use href="#gP" transform="translate(0.49,0.87) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(0.49,0.87) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(0.49,0.87) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(0.49,0.87) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(0.49,0.87) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<g fill="#CBD3E0">
+<use href="#gP" transform="translate(1.72,3.05) translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)"/>
+<use href="#gO" transform="translate(1.72,3.05) translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)"/>
+<use href="#gI" transform="translate(1.72,3.05) translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)"/>
+<use href="#gN" transform="translate(1.72,3.05) translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)"/>
+<use href="#gT" transform="translate(1.72,3.05) translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)"/>
+</g>
+<use href="#gP" transform="translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gP" transform="translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-pt-0)"><use href="#gP" transform="translate(42.00,494.00) rotate(4.000) translate(0.00,0) scale(2.1400) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gO" transform="translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gO" transform="translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-pt-1)"><use href="#gO" transform="translate(42.00,494.00) rotate(4.000) translate(147.66,0) scale(1.9950) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gI" transform="translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gI" transform="translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-pt-2)"><use href="#gI" transform="translate(42.00,494.00) rotate(4.000) translate(305.26,0) scale(1.8500) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gN" transform="translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gN" transform="translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-pt-3)"><use href="#gN" transform="translate(42.00,494.00) rotate(4.000) translate(364.46,0) scale(1.7050) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+<use href="#gT" transform="translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)" fill="none" stroke="#0E1119" stroke-width="4" stroke-opacity="0.55"/>
+<use href="#gT" transform="translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)" fill="url(#chrome)"/>
+<g clip-path="url(#c-pt-4)"><use href="#gT" transform="translate(42.00,494.00) rotate(4.000) translate(499.16,0) scale(1.5600) translate(0,-100) skewX(-16.00)" fill="none" stroke="url(#bevel)" stroke-width="9"/></g>
+</g>
+<g clip-path="url(#allFaces)"><rect x="-59" y="62" width="1358" height="549" fill="url(#warm)"/></g>
+<use href="#flareWarm" transform="translate(120.2,287.1) scale(0.60) rotate(-8)"/>
+<use href="#flareCool" transform="translate(1106.6,435.1) scale(0.40) rotate(6)"/>
+</g>
+</svg>
