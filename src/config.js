@@ -470,6 +470,19 @@ window.COIN_PUSHER_CONFIG = {
      lower if the greys start clipping to white under the key light. */
   render: { exposure: 1.15, envIntensity: 0.85 },
 
+  /* The set around the cabinet. Not decoration for its own sake - a machine
+     floating in a void has nothing to sit on and nothing to catch light from,
+     which is most of why it reads as a model rather than an object. The
+     coloured spill from the flanks onto the cabinet sides does more work here
+     than the geometry does. */
+  set: {
+    enabled:      true,
+    wingAngleDeg: 34,     // how far the flanks turn in towards the camera
+    wingWidth:    2.6,
+    spill:        6.0,    // how hard the flanks throw colour back on the cabinet
+    floorGloss:   0.30    // lower is shinier; the cabinet picks up in it
+  },
+
   palette: {
     background: 0x0B0616,
     deck:       0xC9CDD4,   // shelf top - items rest on this
@@ -481,6 +494,10 @@ window.COIN_PUSHER_CONFIG = {
     panel:      0xF6F2F4,
     panelEdge:  0x9AA1AB,
     chrome:     0xDCE2E8,   // bezel, mullions and peg studs
+    setFloor:   0x141020,   // studio floor the cabinet stands on
+    setWing:    0xF5C518,   // the bright flanks either side
+    setOuter:   0x6B1FA8,   // panels beyond them
+    setStripe:  0x2A0A45,   // chevrons on those panels
     panelGlow:  0xFFFFFF,   // the lit face behind the glass
     peg:        0x3E454E,
     tray:       0x1A1030

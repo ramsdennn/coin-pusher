@@ -303,6 +303,90 @@ export function driveShelves(ctx, phase) {
   }
 }
 
+/* -------------------------------------------------------------------------
+   The set the cabinet stands in. Decoration only - not one collider here, and
+   nothing in this function is raycast for host clicks.
+   ------------------------------------------------------------------------- */
+function chevronTexture(base, stripe) {
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = '#' + base.toString(16).padStart(6, '0');
+  g.fillRect(0, 0, 128, 128);
+  g.strokeStyle = '#' + stripe.toString(16).padStart(6, '0');
+  g.lineWidth = 13;
+  g.lineCap = 'square';
+  for (let i = -128; i < 256; i += 46) {
+    g.beginPath();
+    g.moveTo(i, 0); g.lineTo(i + 64, 64); g.lineTo(i, 128);
+    g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(2, 3);
+  if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+function buildSurround(ctx) {
+  const S = CFG.set;
+  if (!S.enabled) return;
+
+  const D = DIMS.D;
+  const half = DIMS.width / 2 + DIMS.wallThick;
+  const midY = (DIMS.chuteTop + DIMS.trayY) / 2;
+  const tall = (DIMS.chuteTop - DIMS.trayY) * 1.35;
+
+  /* Floor. Slightly glossy so the cabinet and the lit flanks smear into it -
+     a matte floor reads as a backdrop, a glossy one reads as a room. */
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(16, 16),
+    mat(P.setFloor, { roughness: S.floorGloss, metalness: 0.55 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, DIMS.trayY - D * 0.05, DIMS.playDepth * 0.4);
+  floor.receiveShadow = false;
+  ctx.scene.add(floor);
+
+  const ang = (S.wingAngleDeg * Math.PI) / 180;
+  const outerTex = chevronTexture(P.setOuter, P.setStripe);
+
+  [-1, 1].forEach(function (sx) {
+    /* The bright flank, turned in towards the camera. */
+    const wing = new THREE.Mesh(
+      new THREE.PlaneGeometry(S.wingWidth, tall),
+      mat(P.setWing, { roughness: 0.5, metalness: 0.15 })
+    );
+    wing.position.set(
+      sx * (half + Math.cos(ang) * S.wingWidth / 2),
+      midY,
+      Math.sin(ang) * S.wingWidth / 2
+    );
+    wing.rotation.y = -sx * ang;
+    ctx.scene.add(wing);
+
+    /* Chevroned panel beyond it, turned further still. */
+    const outer = new THREE.Mesh(
+      new THREE.PlaneGeometry(S.wingWidth * 1.5, tall * 1.15),
+      new THREE.MeshStandardMaterial({ map: outerTex, roughness: 0.65, metalness: 0.1 })
+    );
+    outer.position.set(
+      sx * (half + Math.cos(ang) * S.wingWidth + S.wingWidth * 0.55),
+      midY,
+      Math.sin(ang) * S.wingWidth + S.wingWidth * 0.3
+    );
+    outer.rotation.y = -sx * (ang * 1.5);
+    ctx.scene.add(outer);
+
+    /* And the light those flanks throw back. This is the part that matters:
+       a warm edge down each side of the cabinet, from a source you can see in
+       the frame, is what ties the machine to the room it is standing in. */
+    const spill = new THREE.PointLight(P.setWing, S.spill, DIMS.width * 2.2, 2);
+    spill.position.set(sx * (half + S.wingWidth * 0.35), midY, DIMS.playDepth * 0.9);
+    ctx.scene.add(spill);
+  });
+}
+
 export function buildMachine(ctx) {
   const width = DIMS.width, D = DIMS.D, deckThick = DIMS.deckThick;
   const parts = { shelves: [], panels: [] };
@@ -630,6 +714,8 @@ export function buildMachine(ctx) {
     ctx.scene.add(target);
     parts.panels.push(target);
   }
+
+  buildSurround(ctx);
 
   return parts;
 }
