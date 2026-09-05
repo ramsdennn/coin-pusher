@@ -518,9 +518,12 @@ window.COIN_PUSHER_CONFIG = {
     wallZ:        -12.5,
     wallSize:      34,
     floorY:        -0.55,
-    lampRows:      2,
-    lampsPerRow:   11,
-    lampGlow:      2.2
+    lampRows:      3,
+    lampsPerRow:   13,
+    lampGlow:      2.2,
+    ceilingY:      8.4,
+    trussCount:    4,
+    postCount:     4
   },
 
   palette: {
@@ -533,7 +536,9 @@ window.COIN_PUSHER_CONFIG = {
     cabinet:    0x6E7681,
     panel:      0xF6F2F4,
     panelEdge:  0x9AA1AB,
-    setFloorBack: 0x0E0B1A, // stage floor behind the machine
+    stageFloor:   0xEDF1F6, // the white studio floor
+    trussDark:    0x16161E, // rig and ceiling
+    setFloorBack: 0x0E0B1A,
     chrome:     0xDCE2E8,   // bezel, mullions and peg studs
     panelGlow:  0xFFFFFF,   // the lit face behind the glass
     peg:        0x3E454E,

@@ -509,13 +509,60 @@ function buildBackdrop(ctx) {
   ));
   wall.position.set(0, B.wallSize * 0.16, B.wallZ);
 
-  /* Stage floor, running back under the frames. */
+  /* The studio floor is WHITE and glossy. It was near-black, which is most of
+     why the set read as a flat backdrop rather than a room - a bright floor
+     bounces the frames and the wall back up and gives the whole space a
+     second light source. */
   const floor = add(new THREE.Mesh(
-    new THREE.PlaneGeometry(B.wallSize, Math.abs(B.wallZ) * 2.2),
-    mat(P.setFloorBack, { roughness: 0.45, metalness: 0.5 })
+    new THREE.PlaneGeometry(B.wallSize, Math.abs(B.wallZ) * 2.4),
+    mat(P.stageFloor, { roughness: 0.22, metalness: 0.35 })
   ));
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, B.floorY, B.wallZ / 2);
+  floor.position.set(0, B.floorY, B.wallZ / 2 + 3);
+
+  /* A soft dark patch under the cabinet, painted rather than cast.
+
+     A white floor with nothing beneath the machine makes it hover. The real
+     shadow cannot help: the shadow camera is sized to the playfield, and
+     widening it to take in the floor is exactly the mistake that cost most of
+     the frame rate earlier. A gradient decal costs one quad and grounds it. */
+  const blobTex = (function () {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+    grad.addColorStop(0.0, 'rgba(0,0,0,0.55)');
+    grad.addColorStop(0.55, 'rgba(0,0,0,0.28)');
+    grad.addColorStop(1.0, 'rgba(0,0,0,0)');
+    g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  })();
+
+  const blob = add(new THREE.Mesh(
+    new THREE.PlaneGeometry(DIMS.width * 2.1, DIMS.playDepth * 3.4),
+    new THREE.MeshBasicMaterial({
+      map: blobTex, transparent: true, depthWrite: false
+    })
+  ));
+  blob.rotation.x = -Math.PI / 2;
+  blob.position.set(0, B.floorY + 0.01, DIMS.playDepth * 0.3);
+  blob.renderOrder = 1;
+
+  /* Ceiling, so the lamps read against something rather than floating in the
+     void, and a rig of trusses across it. */
+  const ceiling = add(new THREE.Mesh(
+    new THREE.PlaneGeometry(B.wallSize, Math.abs(B.wallZ) * 2.4),
+    mat(P.trussDark, { roughness: 0.95, metalness: 0.0 })
+  ));
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.set(0, B.ceilingY, B.wallZ / 2 + 3);
+
+  const trussMat = mat(P.trussDark, { roughness: 0.6, metalness: 0.5 });
+  for (let i = 0; i < B.trussCount; i++) {
+    const bar = add(new THREE.Mesh(
+      new THREE.BoxGeometry(B.wallSize * 0.9, 0.18, 0.18), trussMat));
+    bar.position.set(0, B.ceilingY - 0.35, -1.5 - i * 3.4);
+  }
 
   /* Nested light frames, each smaller and further back, so they narrow into
      the distance rather than staying the same size on screen. */
@@ -531,6 +578,20 @@ function buildBackdrop(ctx) {
     [-f.halfW, f.halfW].forEach(function (x) {
       const bar = add(new THREE.Mesh(new THREE.BoxGeometry(t, h, t), frameMat));
       bar.position.set(x, f.halfH * 0.15, f.z);
+    });
+  });
+
+  /* Posts carrying each frame down to the floor. Without them the frames hang
+     in mid-air, which is the single clearest tell that a set is fake. */
+  const postMat = mat(P.trussDark, { roughness: 0.5, metalness: 0.55 });
+  B.frames.forEach(function (f) {
+    [-f.halfW, f.halfW].forEach(function (x) {
+      const yBottom = -f.halfH + f.halfH * 0.15;
+      const h = yBottom - B.floorY;
+      if (h <= 0) return;
+      const post = add(new THREE.Mesh(
+        new THREE.BoxGeometry(t * 0.8, h, t * 0.8), postMat));
+      post.position.set(x, B.floorY + h / 2, f.z);
     });
   });
 
