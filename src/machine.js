@@ -468,7 +468,8 @@ export function buildMachine(ctx) {
   const fieldTop = DIMS.slotBottom - D * 1.6;
   const fieldBottom = DIMS.chuteBottom + D * 1.2;
   const minGap = D * CFG.chute.pegRowGapInCoins;
-  const rows = Math.max(1, Math.min(CFG.chute.pegRows,
+  const rows = CFG.chute.pegRows <= 0 ? 0
+             : Math.max(1, Math.min(CFG.chute.pegRows,
                         Math.floor((fieldTop - fieldBottom) / minGap) + 1));
   const rowGap = rows > 1 ? (fieldTop - fieldBottom) / (rows - 1) : 0;
 

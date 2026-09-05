@@ -325,8 +325,8 @@ window.COIN_PUSHER_CONFIG = {
        Across the full 10-coin width there is room for seven per row, so a
        coin can bounce sideways between them. The slot still biases where it
        ends up; it no longer dictates it. */
-    slotHeightFraction:     0.26,
-    pegRows:                7,     // an upper bound; see pegRowGapInCoins
+    slotHeightFraction:     1.0,
+    pegRows:                0,     // 0 = no pegs at all
 
     /* Vertical spacing between peg rows, in coin diameters. MUST exceed 1.0.
        The 2D build already knew this and said so in its own config: "rows
