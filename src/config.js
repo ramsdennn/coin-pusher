@@ -495,7 +495,10 @@ window.COIN_PUSHER_CONFIG = {
     radius:  0.058,        // half the side of the square section
     gap:     0.075,        // between the cabinet and the first tube, and between tubes
     glow:    1.6,
-    colours: [0xF7C51A, 0x7A1FC4, 0x7A1FC4]
+    /* Default gradient, innermost outwards: white, light blue, deeper blue.
+       Each step drops brightness as well as shifting hue, so the three read
+       as one graded frame rather than three separate rings. */
+    colours: [0xFFFFFF, 0x8FD3FF, 0x2E7BE8]
   },
 
   palette: {
