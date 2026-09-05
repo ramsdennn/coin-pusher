@@ -475,12 +475,27 @@ window.COIN_PUSHER_CONFIG = {
      which is most of why it reads as a model rather than an object. The
      coloured spill from the flanks onto the cabinet sides does more work here
      than the geometry does. */
+  /* The set beside the cabinet: upright LIT BARS, not angled scenery.
+     Reading outward from the cabinet edge on each side - a yellow bar, a
+     black gap, a purple bar, a black gap, another purple bar. The gaps are
+     simply the background showing through, so they cost nothing.
+
+     The bars glow rather than being lit: emissive means they read as
+     illuminated panels regardless of where the key light happens to fall,
+     which is what they are. */
   set: {
-    enabled:      true,
-    wingAngleDeg: 34,     // how far the flanks turn in towards the camera
-    wingWidth:    2.6,
-    spill:        6.0,    // how hard the flanks throw colour back on the cabinet
-    floorGloss:   0.30    // lower is shinier; the cabinet picks up in it
+    enabled:        true,
+    gapFromCabinet: 0.30,
+    heightScale:    1.65,
+    depth:          0.34,
+    glow:           1.25,   // emissive strength of the bars
+    spill:          3.5,    // colour they throw back onto the cabinet
+    floorGloss:     0.30,
+    bars: [
+      { colour: 0xF7C51A, width: 0.42, gapAfter: 0.32 },
+      { colour: 0x7A1FC4, width: 0.52, gapAfter: 0.26 },
+      { colour: 0x7A1FC4, width: 0.52, gapAfter: 0.00 }
+    ]
   },
 
   palette: {

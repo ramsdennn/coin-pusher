@@ -307,27 +307,6 @@ export function driveShelves(ctx, phase) {
    The set the cabinet stands in. Decoration only - not one collider here, and
    nothing in this function is raycast for host clicks.
    ------------------------------------------------------------------------- */
-function chevronTexture(base, stripe) {
-  const c = document.createElement('canvas');
-  c.width = 128; c.height = 128;
-  const g = c.getContext('2d');
-  g.fillStyle = '#' + base.toString(16).padStart(6, '0');
-  g.fillRect(0, 0, 128, 128);
-  g.strokeStyle = '#' + stripe.toString(16).padStart(6, '0');
-  g.lineWidth = 13;
-  g.lineCap = 'square';
-  for (let i = -128; i < 256; i += 46) {
-    g.beginPath();
-    g.moveTo(i, 0); g.lineTo(i + 64, 64); g.lineTo(i, 128);
-    g.stroke();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(2, 3);
-  if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
 function buildSurround(ctx) {
   const S = CFG.set;
   if (!S.enabled) return;
@@ -335,10 +314,13 @@ function buildSurround(ctx) {
   const D = DIMS.D;
   const half = DIMS.width / 2 + DIMS.wallThick;
   const midY = (DIMS.chuteTop + DIMS.trayY) / 2;
-  const tall = (DIMS.chuteTop - DIMS.trayY) * 1.35;
+  const tall = (DIMS.chuteTop - DIMS.trayY) * S.heightScale;
+  const zc = DIMS.playDepth * 0.35;
 
-  /* Floor. Slightly glossy so the cabinet and the lit flanks smear into it -
-     a matte floor reads as a backdrop, a glossy one reads as a room. */
+  /* Floor. Kept small and NOT a shadow receiver - a large receiving plane
+     inside the shadow frustum costs a shadow-map lookup per fragment across
+     an area many times the size of the machine, which took this scene to
+     about 1fps before. */
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(16, 16),
     mat(P.setFloor, { roughness: S.floorGloss, metalness: 0.55 })
@@ -348,41 +330,30 @@ function buildSurround(ctx) {
   floor.receiveShadow = false;
   ctx.scene.add(floor);
 
-  const ang = (S.wingAngleDeg * Math.PI) / 180;
-  const outerTex = chevronTexture(P.setOuter, P.setStripe);
-
   [-1, 1].forEach(function (sx) {
-    /* The bright flank, turned in towards the camera. */
-    const wing = new THREE.Mesh(
-      new THREE.PlaneGeometry(S.wingWidth, tall),
-      mat(P.setWing, { roughness: 0.5, metalness: 0.15 })
-    );
-    wing.position.set(
-      sx * (half + Math.cos(ang) * S.wingWidth / 2),
-      midY,
-      Math.sin(ang) * S.wingWidth / 2
-    );
-    wing.rotation.y = -sx * ang;
-    ctx.scene.add(wing);
+    let x = half + S.gapFromCabinet;
 
-    /* Chevroned panel beyond it, turned further still. */
-    const outer = new THREE.Mesh(
-      new THREE.PlaneGeometry(S.wingWidth * 1.5, tall * 1.15),
-      new THREE.MeshStandardMaterial({ map: outerTex, roughness: 0.65, metalness: 0.1 })
-    );
-    outer.position.set(
-      sx * (half + Math.cos(ang) * S.wingWidth + S.wingWidth * 0.55),
-      midY,
-      Math.sin(ang) * S.wingWidth + S.wingWidth * 0.3
-    );
-    outer.rotation.y = -sx * (ang * 1.5);
-    ctx.scene.add(outer);
+    S.bars.forEach(function (bar) {
+      const m = new THREE.MeshStandardMaterial({
+        color: bar.colour,
+        emissive: new THREE.Color(bar.colour),
+        emissiveIntensity: S.glow,
+        roughness: 0.42,
+        metalness: 0.0
+      });
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(bar.width, tall, S.depth), m
+      );
+      mesh.position.set(sx * (x + bar.width / 2), midY, zc);
+      ctx.scene.add(mesh);
+      x += bar.width + bar.gapAfter;
+    });
 
-    /* And the light those flanks throw back. This is the part that matters:
-       a warm edge down each side of the cabinet, from a source you can see in
-       the frame, is what ties the machine to the room it is standing in. */
-    const spill = new THREE.PointLight(P.setWing, S.spill, DIMS.width * 2.2, 2);
-    spill.position.set(sx * (half + S.wingWidth * 0.35), midY, DIMS.playDepth * 0.9);
+    /* A little of the nearest bar's colour thrown back on the cabinet, so the
+       grey side picks up an edge rather than sitting flat against the glow. */
+    const spill = new THREE.PointLight(
+      S.bars[0].colour, S.spill, DIMS.width * 1.6, 2);
+    spill.position.set(sx * (half + S.gapFromCabinet * 1.5), midY, zc + D);
     ctx.scene.add(spill);
   });
 }
@@ -452,7 +423,7 @@ export function buildMachine(ctx) {
     const cy = DIMS.trayY + h / 2, cz = DIMS.playDepth / 2;
     const m = new THREE.Mesh(
       new THREE.BoxGeometry(DIMS.wallThick, h, DIMS.playDepth),
-      mat(P.wall, { opacity: 0.28 })
+      mat(P.wall, { roughness: 0.24, metalness: 0.85 })
     );
     m.position.set(x, cy, cz);
     ctx.scene.add(m);
