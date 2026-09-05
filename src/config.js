@@ -431,24 +431,7 @@ window.COIN_PUSHER_CONFIG = {
        per second, random direction. */
     entrySpeedInCoins:      1.8,
     entrySpinInCoins:       6.0,
-    glassOpacity:           0.20,
-
-    /* Lamps behind the backing panel. The panel's emissive map only makes it
-       LOOK lit - it throws no light, so an item falling down the chute was
-       unlit by the very thing it was falling in front of.
-
-       The lamps sit behind the back pane, which casts no shadow, so their
-       light passes through it as if the acrylic were translucent. That is
-       what a backlit panel actually does.
-
-       Keep the range short. Left to reach the playfield they wash out the
-       shelf from behind, which reads as a light leak rather than a panel. */
-    backlight: {
-      colour:    0xEAF2FF,
-      intensity: 7.0,
-      range:     1.5,      // world units before it falls to nothing
-      offset:    0.9       // how far behind the panel, in coins
-    }
+    glassOpacity:           0.20
   },
 
   /* --------------------------------------------------------------------
