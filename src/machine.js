@@ -305,7 +305,7 @@ export function driveShelves(ctx, phase) {
 
 export function buildMachine(ctx) {
   const width = DIMS.width, D = DIMS.D, deckThick = DIMS.deckThick;
-  const parts = { shelves: [], panels: [] };
+  const parts = { shelves: [], panels: [], backlights: [] };
 
   TIERS.forEach(function (tier) {
     if (DIMS.deckStep > 0) {
@@ -465,6 +465,18 @@ export function buildMachine(ctx) {
   const frontPane = chuteWall(0, chuteCy, DIMS.panelZ + DIMS.chuteDepth / 2 + glassT / 2,
             width, chuteH, glassT, glassMat);
   frontPane.renderOrder = 2;
+
+  /* One lamp behind each panel. Placed behind the back pane so its light
+     passes through - see chute.backlight. */
+  {
+    const bl = CFG.chute.backlight;
+    DIMS.zoneCentresX.forEach(function (cx) {
+      const lamp = new THREE.PointLight(bl.colour, bl.intensity, bl.range, 2);
+      lamp.position.set(cx, chuteCy, DIMS.panelZ - D * bl.offset);
+      ctx.scene.add(lamp);
+      parts.backlights.push(lamp);
+    });
+  }
 
   /* Dividers, but only down as far as the entry slots. Below that the field
      is open across the full width so coins can bounce between chutes. The two
