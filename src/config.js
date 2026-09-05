@@ -165,11 +165,11 @@ window.COIN_PUSHER_CONFIG = {
      Loaded from the front lip backwards, so the machine starts primed.
      -------------------------------------------------------------------- */
   startingLayout: [
-    { type: 'coin',      count: 57, tier: 1 },
-    { type: 'token50',   count: 2,  tier: 1 },
-    { type: 'token100',  count: 1,  tier: 1 },
-    { type: 'chocolate', count: 1,  tier: 1 },
-    { type: 'voucher',   count: 1,  tier: 1 }
+    /* Plain coins only for now. The token and prize types are still defined
+       above and still work - they are just not loaded onto the shelf. Add a
+       line back here to bring one in. The count is 62 rather than 57 so the
+       field holds the same number of items it did with the extras. */
+    { type: 'coin',      count: 62, tier: 1 }
   ],
 
   /* --------------------------------------------------------------------
