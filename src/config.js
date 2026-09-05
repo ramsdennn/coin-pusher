@@ -501,6 +501,28 @@ window.COIN_PUSHER_CONFIG = {
     colours: [0xFFFFFF, 0x8FD3FF, 0x2E7BE8]
   },
 
+  /* The set behind the machine. Scenery only - no colliders, no shadow work,
+     nothing raycast. Built in 3D rather than painted on a plane because the
+     camera has real perspective: nested frames actually receding read as
+     depth, where a flat picture of them would sit dead behind the machine. */
+  backdrop: {
+    enabled: true,
+    frames: [
+      { z: -1.6,  halfW: 5.4, halfH: 3.5 },
+      { z: -4.2,  halfW: 4.3, halfH: 2.8 },
+      { z: -6.8,  halfW: 3.3, halfH: 2.2 },
+      { z: -9.4,  halfW: 2.5, halfH: 1.7 }
+    ],
+    frameThickness: 0.22,
+    frameGlow:      1.1,
+    wallZ:        -12.5,
+    wallSize:      34,
+    floorY:        -0.55,
+    lampRows:      2,
+    lampsPerRow:   11,
+    lampGlow:      2.2
+  },
+
   palette: {
     background: 0x0B0616,
     deck:       0xC9CDD4,   // shelf top - items rest on this
@@ -511,6 +533,7 @@ window.COIN_PUSHER_CONFIG = {
     cabinet:    0x6E7681,
     panel:      0xF6F2F4,
     panelEdge:  0x9AA1AB,
+    setFloorBack: 0x0E0B1A, // stage floor behind the machine
     chrome:     0xDCE2E8,   // bezel, mullions and peg studs
     panelGlow:  0xFFFFFF,   // the lit face behind the glass
     peg:        0x3E454E,

@@ -449,6 +449,109 @@ export function setTubeColour(ctx, index, colour) {
   return true;
 }
 
+/* -------------------------------------------------------------------------
+   The studio behind the machine. Scenery: no colliders, and every piece is
+   flagged noShadow so it takes no part in shadow work - a backdrop that
+   catches shadows from the machine in front of it reads as a painted flat.
+   ------------------------------------------------------------------------- */
+function buildBackdrop(ctx) {
+  const B = CFG.backdrop;
+  if (!B.enabled) return null;
+
+  const group = new THREE.Group();
+
+  function add(mesh) {
+    mesh.userData.noShadow = true;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    group.add(mesh);
+    return mesh;
+  }
+
+  function glowMat(colour, strength) {
+    return new THREE.MeshStandardMaterial({
+      color: colour,
+      emissive: new THREE.Color(colour),
+      emissiveIntensity: strength,
+      roughness: 0.4,
+      metalness: 0.0
+    });
+  }
+
+  /* Back wall: a big video screen. A vertical gradient with a few brighter
+     bands is enough at this distance - it never comes into focus. */
+  const wallTex = (function () {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, 0, 64);
+    grad.addColorStop(0.00, '#0a2f7a');
+    grad.addColorStop(0.45, '#154fb8');
+    grad.addColorStop(0.75, '#0b2f78');
+    grad.addColorStop(1.00, '#05143a');
+    g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+    g.globalAlpha = 0.35;
+    for (let i = 0; i < 22; i++) {
+      g.fillStyle = i % 2 ? '#3f8ae0' : '#0a1f52';
+      g.fillRect(0, Math.random() * 64, 64, 0.8);
+    }
+    const t = new THREE.CanvasTexture(c);
+    if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  })();
+
+  const wall = add(new THREE.Mesh(
+    new THREE.PlaneGeometry(B.wallSize, B.wallSize * 0.6),
+    new THREE.MeshStandardMaterial({
+      map: wallTex, emissive: 0x1b4fa8, emissiveMap: wallTex,
+      emissiveIntensity: 0.55, roughness: 0.9, metalness: 0.0
+    })
+  ));
+  wall.position.set(0, B.wallSize * 0.16, B.wallZ);
+
+  /* Stage floor, running back under the frames. */
+  const floor = add(new THREE.Mesh(
+    new THREE.PlaneGeometry(B.wallSize, Math.abs(B.wallZ) * 2.2),
+    mat(P.setFloorBack, { roughness: 0.45, metalness: 0.5 })
+  ));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, B.floorY, B.wallZ / 2);
+
+  /* Nested light frames, each smaller and further back, so they narrow into
+     the distance rather than staying the same size on screen. */
+  const frameMat = glowMat(0xF2F6FF, B.frameGlow);
+  const t = B.frameThickness;
+
+  B.frames.forEach(function (f) {
+    const w = f.halfW * 2, h = f.halfH * 2;
+    [[0,  f.halfH, w + t, t], [0, -f.halfH, w + t, t]].forEach(function (r) {
+      const bar = add(new THREE.Mesh(new THREE.BoxGeometry(r[2], r[3], t), frameMat));
+      bar.position.set(r[0], r[1] + f.halfH * 0.15, f.z);
+    });
+    [-f.halfW, f.halfW].forEach(function (x) {
+      const bar = add(new THREE.Mesh(new THREE.BoxGeometry(t, h, t), frameMat));
+      bar.position.set(x, f.halfH * 0.15, f.z);
+    });
+  });
+
+  /* Rigged lamps above, in rows going back. */
+  const lampMat = glowMat(0xEAF2FF, B.lampGlow);
+  const lampGeo = new THREE.SphereGeometry(0.16, 10, 8);
+  for (let r = 0; r < B.lampRows; r++) {
+    for (let i = 0; i < B.lampsPerRow; i++) {
+      const lamp = add(new THREE.Mesh(lampGeo, lampMat));
+      lamp.position.set(
+        (i / (B.lampsPerRow - 1) - 0.5) * B.wallSize * 0.62,
+        6.2 + r * 0.8,
+        -2.5 - r * 3.6
+      );
+    }
+  }
+
+  ctx.scene.add(group);
+  return group;
+}
+
 export function buildMachine(ctx) {
   const width = DIMS.width, D = DIMS.D, deckThick = DIMS.deckThick;
   const parts = { shelves: [], panels: [] };
@@ -808,6 +911,7 @@ export function buildMachine(ctx) {
   }
 
   parts.tubes = buildLightTubes(ctx);
+  parts.backdrop = buildBackdrop(ctx);
 
   return parts;
 }
