@@ -67,7 +67,12 @@ window.COIN_PUSHER_CONFIG = {
     /* How far the cabinet extends below the front lip, in coins. Items are
        removed as they fall off, so this only needs to be deep enough to see
        them go. */
-    skirtBelowLipInCoins: 0.55,
+    /* 0.55 left the machine stopping dead just under the lip - a cliff edge.
+       2.05 carries the red fascia and the cabinet sides down past the bottom
+       of the frame so the machine reads as continuing rather than ending. The
+       camera fit deliberately does NOT include this, so it bleeds off the
+       edge instead of shrinking the playfield to make room for it. */
+    skirtBelowLipInCoins: 2.05,
 
     deckStepInCoins: 1.4,
 
