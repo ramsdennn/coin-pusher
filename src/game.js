@@ -184,6 +184,19 @@ function presettle() {
   ctx.items.forEach(function (it) {
     it.body.setAngularDamping(PHY.presettleAngularDamping);
     it.body.setLinearDamping(PHY.presettleLinearDamping);
+
+    /* Lock tipping while the starting pile settles, so items can only spin
+       about the vertical axis. They still stack on each other freely - they
+       just cannot come to rest standing on edge, which looks wrong on a
+       machine nobody has played yet. Rotation is handed back below, and an
+       item already lying flat has no reason to stand itself up.
+
+       Only the starting pile passes through here. Items dropped later are
+       free to tip from the moment they enter the chute, which is what the
+       glass release depends on. */
+    if (PHY.flatStartingPile) {
+      it.body.setEnabledRotations(false, true, false, true);
+    }
   });
 
   let used = 0;
@@ -201,6 +214,9 @@ function presettle() {
   ctx.items.forEach(function (it) {
     it.body.setAngularDamping(PHY.angularDamping);
     it.body.setLinearDamping(PHY.linearDamping);
+    if (PHY.flatStartingPile) {
+      it.body.setEnabledRotations(true, true, true, true);
+    }
   });
 
   presettleSteps = used;

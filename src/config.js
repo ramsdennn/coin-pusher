@@ -251,6 +251,13 @@ window.COIN_PUSHER_CONFIG = {
        never settle, and a pile that never settles is a pile that visibly
        shivers. This was half the wobble. */
     wakeAllWhileRunning: false,
+
+    /* The starting pile lies flat. Items can stack on each other, but none of
+       them may come to rest standing on edge - on a machine nobody has played
+       yet that reads as a glitch. Enforced by locking tipping while the pile
+       settles, not by nudging items afterwards. Applies to the starting pile
+       only; anything dropped later tips freely. */
+    flatStartingPile: true,
     /* How far an item must actually drift before its mesh is redrawn. A
        resting pile never goes perfectly still - the solver regenerates a
        little contact noise every step - and below these thresholds that noise
