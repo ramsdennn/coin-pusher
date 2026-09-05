@@ -495,16 +495,12 @@ export function buildMachine(ctx) {
         if (r % 2 === 0) { xs.push(cx); }
         else { xs.push(cx - pairDx); xs.push(cx + pairDx); }
 
-        /* Edge pegs, on the zone boundary. Neighbouring zones share a
-           divider, so the two that meet there would land on the same spot -
-           dedupe rather than stack two colliders in one place. */
+        /* Edge pegs, set inboard of the zone edge so items actually strike
+           them. On the divider itself they were unreachable. */
         if (r === CFG.chute.edgePegRow) {
-          [cx - DIMS.zoneWidth / 2, cx + DIMS.zoneWidth / 2].forEach(function (ex) {
-            for (let k = 0; k < xs.length; k++) {
-              if (Math.abs(xs[k] - ex) < 1e-6) return;
-            }
-            xs.push(ex);
-          });
+          const ex = D * CFG.chute.edgePegOffsetInCoins;
+          xs.push(cx - ex);
+          xs.push(cx + ex);
         }
       });
 

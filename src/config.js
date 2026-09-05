@@ -386,9 +386,20 @@ window.COIN_PUSHER_CONFIG = {
     pairOffsetInCoins:      0.61,
 
     /* One row also carries a peg hard against each edge of the zone, sitting
-       on the divider itself so it reads as a half peg from the front. Counted
-       from the top, zero-based, so 2 is the third row down. */
+       from the top, zero-based, so 2 is the third row down.
+
+       Sat exactly on the divider they were never hit - an item's rim reaches
+       the divider before its centre can get near a peg buried in it - so they
+       are set inboard instead.
+
+       Note only ONE of the two gaps either side of them can pass an item.
+       Clearing a whole coin outside AND inside needs the offset to be at once
+       under 0.68 and over 1.07 coins. So these deflect rather than sort: the
+       outer gap is deliberately far too tight to enter (0.33 of a coin at
+       this offset, well clear of the 0.53 that wedged items in an earlier
+       attempt) and everything is funnelled through the inner gap. */
     edgePegRow:             2,
+    edgePegOffsetInCoins:   1.35,
     entryJitterInCoins:     0.30,  // scatter on where the coin enters
 
     /* The coin does not enter at rest. Dropped dead vertical it lands square
