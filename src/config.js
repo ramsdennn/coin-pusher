@@ -466,6 +466,10 @@ window.COIN_PUSHER_CONFIG = {
      as a stripe across the machine rather than a slab of colour. The greys
      are cooled very slightly towards blue so they sit against the red rather
      than muddying into it. */
+  /* Exposure for the filmic tone mapping. Raise to lift the whole image,
+     lower if the greys start clipping to white under the key light. */
+  render: { exposure: 1.15, envIntensity: 0.85 },
+
   palette: {
     background: 0x0B0616,
     deck:       0xC9CDD4,   // shelf top - items rest on this
@@ -476,6 +480,8 @@ window.COIN_PUSHER_CONFIG = {
     cabinet:    0x6E7681,
     panel:      0xF6F2F4,
     panelEdge:  0x9AA1AB,
+    chrome:     0xDCE2E8,   // bezel, mullions and peg studs
+    panelGlow:  0xFFFFFF,   // the lit face behind the glass
     peg:        0x3E454E,
     tray:       0x1A1030
   }

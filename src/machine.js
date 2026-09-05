@@ -18,8 +18,12 @@ function mat(color, opts) {
   opts = opts || {};
   return new THREE.MeshStandardMaterial({
     color: color,
-    roughness: opts.roughness !== undefined ? opts.roughness : 0.75,
-    metalness: 0.0,
+    roughness: opts.roughness !== undefined ? opts.roughness : 0.55,
+    /* A little metalness on everything. Nothing in an arcade cabinet is a
+       pure matte dielectric - painted steel and moulded plastic both pick up
+       a broad highlight, and that highlight sliding across the shelf as it
+       moves is most of what makes it read as a real surface. */
+    metalness: opts.metalness !== undefined ? opts.metalness : 0.2,
     side: THREE.DoubleSide,
     transparent: opts.opacity !== undefined,
     opacity: opts.opacity !== undefined ? opts.opacity : 1
@@ -185,7 +189,7 @@ function buildShelf(ctx, tier) {
     colliderDesc = ctx.RAPIER.ColliderDesc.convexHull(new Float32Array(flat));
   }
 
-  const deckMat = mat(P.deck, { roughness: 0.55 });
+  const deckMat = mat(P.deck, { roughness: 0.42, metalness: 0.35 });
   deckMat.side = THREE.DoubleSide;      // hand-wound profile; do not risk it
   const mesh = new THREE.Mesh(geo, deckMat);
   mesh.position.set(0, cy, homeCz);
@@ -199,7 +203,7 @@ function buildShelf(ctx, tier) {
     const faceBottom = tier.y - cy;                // branch above
     const plate = new THREE.Mesh(
       new THREE.PlaneGeometry(width, faceTop - faceBottom),
-      mat(P.deckFace, { roughness: 0.45 })
+      mat(P.deckFace, { roughness: 0.30, metalness: 0.05 })
     );
     plate.position.set(0, (faceTop + faceBottom) / 2, hz + DIMS.D * 0.004);
     mesh.add(plate);
@@ -386,7 +390,7 @@ export function buildMachine(ctx) {
     const top = DIMS.tierLast.y, bottom = DIMS.trayY;
     const fascia = new THREE.Mesh(
       new THREE.PlaneGeometry(width, top - bottom),
-      mat(P.fascia, { roughness: 0.45 })
+      mat(P.fascia, { roughness: 0.30, metalness: 0.05 })
     );
     fascia.position.set(0, (top + bottom) / 2, DIMS.tierLast.fixedLipZ + D * 0.004);
     ctx.scene.add(fascia);
@@ -419,8 +423,40 @@ export function buildMachine(ctx) {
     return m;
   }
 
-  const glassMat = mat(P.panel, { roughness: 0.15, opacity: CFG.chute.glassOpacity });
-  const backMat  = mat(P.panel, { roughness: 0.5 });
+  /* The backing panel is LIT, not painted. A flat fill is what makes the
+     chute read as a rectangle on a screen: real backlit acrylic is brightest
+     near the top where the lamp sits and falls away down the panel, and that
+     gradient alone does most of the work. Drawn to a canvas rather than
+     shipped as an image so there is nothing to load. */
+  function panelTexture() {
+    const c = document.createElement('canvas');
+    c.width = 8; c.height = 256;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0.00, '#ffffff');
+    grad.addColorStop(0.38, '#f4f7fa');
+    grad.addColorStop(0.78, '#dbe2ea');
+    grad.addColorStop(1.00, '#c3ccd6');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 8, 256);
+    const t = new THREE.CanvasTexture(c);
+    if (THREE.SRGBColorSpace) t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  const panelTex = panelTexture();
+
+  /* Glass: barely there in tint, but smooth and slightly metallic so it
+     catches a specular streak off the key light. That highlight is the only
+     thing that says there is a pane here at all. */
+  const glassMat = mat(P.panel, { roughness: 0.22, opacity: CFG.chute.glassOpacity });
+  glassMat.metalness = 0.0;
+
+  const backMat = mat(P.panelGlow, { roughness: 0.85, metalness: 0.0 });
+  backMat.map = panelTex;
+  backMat.emissive = new THREE.Color(P.panelGlow);
+  backMat.emissiveMap = panelTex;
+  backMat.emissiveIntensity = 0.5;
 
   /* Back pane: solid, and the surface the peg dots read against. */
   chuteWall(0, chuteCy, DIMS.panelZ - DIMS.chuteDepth / 2 - glassT / 2,
@@ -443,7 +479,32 @@ export function buildMachine(ctx) {
               D * 0.05,
               edge ? chuteH : slotH,
               DIMS.chuteDepth + glassT * 2,
-              mat(P.panelEdge));
+              mat(P.chrome, { roughness: 0.18, metalness: 0.95 }));
+  }
+
+  /* A chrome bezel round the opening: a head rail across the top, a bright
+     rail along the bottom where the glass meets the playfield, and a post up
+     each side. Without a frame the panels just stop, which is most of why
+     the whole assembly looked drawn on rather than built. */
+  {
+    const bez = mat(P.chrome, { roughness: 0.15, metalness: 0.95 });
+    const t = D * 0.09;
+    const zc = DIMS.panelZ + DIMS.chuteDepth / 2 + glassT;
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(width + t * 2, t, t * 1.6), bez);
+    head.position.set(0, DIMS.chuteTop + t / 2, zc);
+    ctx.scene.add(head);
+
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(width + t * 2, t * 1.2, t * 2.0), bez);
+    sill.position.set(0, DIMS.chuteBottom - t * 0.6, zc);
+    ctx.scene.add(sill);
+
+    [-1, 1].forEach(function (sx) {
+      const post = new THREE.Mesh(
+        new THREE.BoxGeometry(t, DIMS.chuteTop - DIMS.chuteBottom + t * 2, t * 1.6), bez);
+      post.position.set(sx * (width / 2 + t / 2), chuteCy, zc);
+      ctx.scene.add(post);
+    });
   }
 
   /* Pegs. CYLINDERS spanning the full chute depth, not spheres.
@@ -480,7 +541,10 @@ export function buildMachine(ctx) {
   const pegGeo = new THREE.CylinderGeometry(DIMS.pegRadius, DIMS.pegRadius, pegLen, 12);
   pegGeo.rotateX(Math.PI / 2);                 // lie the cylinder along z
   const pegQuat = { x: Math.sin(Math.PI / 4), y: 0, z: 0, w: Math.cos(Math.PI / 4) };
-  const pegMat = mat(P.peg, { roughness: 0.4 });
+  /* Polished studs, not dark dots. A peg that catches a highlight reads as a
+     round metal pin standing off the panel; a matte one reads as a printed
+     spot, which is exactly how they looked. */
+  const pegMat = mat(P.chrome, { roughness: 0.12, metalness: 0.95 });
   /* Spread the rows through the open part of the chute, leaving a run-out at
      the bottom so a coin is falling clear before it leaves. */
   /* The first peg row must clear the dividers by more than a whole coin.

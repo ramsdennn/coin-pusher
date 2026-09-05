@@ -27,8 +27,8 @@ function materialFor(typeId) {
   if (matCache[typeId]) return matCache[typeId];
   const m = new THREE.MeshStandardMaterial({
     color: CFG.itemTypes[typeId].color,
-    roughness: 0.45,
-    metalness: 0.25
+    roughness: 0.34,
+    metalness: 0.35
   });
   matCache[typeId] = m;
   return m;
@@ -42,6 +42,8 @@ export function createItem(ctx, typeId, x, y, z, yaw, opts) {
   const rot = opts.quat || quatFromYaw(yaw || 0);
 
   const mesh = new THREE.Mesh(geometryFor(typeId), materialFor(typeId));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   mesh.position.set(x, y, z);
   mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w);
   ctx.scene.add(mesh);

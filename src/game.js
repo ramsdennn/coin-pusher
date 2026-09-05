@@ -59,15 +59,93 @@ function buildScene() {
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(host.clientWidth, host.clientHeight);
+
+  /* ---------------------------------------------------------------------
+     An environment for the metals to reflect.
+
+     A metallic surface has NO diffuse response - all it can show is what it
+     reflects. With nothing to reflect, metalness 0.95 renders almost black,
+     which is why the chrome bezel and the peg studs came out as dark marks
+     rather than polished metal. This builds a cheap studio: bright overhead
+     falling to a dark floor, drawn to a canvas and prefiltered. Nothing is
+     loaded from disk, and every metal in the scene picks it up.
+     --------------------------------------------------------------------- */
+  {
+    const c = document.createElement('canvas');
+    c.width = 16; c.height = 64;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, 0, 64);
+    grad.addColorStop(0.00, '#ffffff');   // ceiling light
+    grad.addColorStop(0.30, '#cfd8e4');
+    grad.addColorStop(0.55, '#7d879a');   // horizon
+    grad.addColorStop(1.00, '#1a1626');   // floor
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 16, 64);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromEquirectangular(tex).texture;
+    scene.environmentIntensity = CFG.render.envIntensity;
+    pmrem.dispose();
+    tex.dispose();
+  }
+
+  /* Shadows are what stop items looking like stickers floating above the
+     deck. A contact shadow is the only cue that tells you an object is
+     RESTING on a surface rather than hovering in front of it. */
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  /* Filmic tone mapping rolls off the highlights instead of clipping them
+     to flat white, so a lit surface reads as lit rather than as a swatch. */
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = CFG.render.exposure;
+
   host.appendChild(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a2a4a, 1.5));
-  const key = new THREE.DirectionalLight(0xffffff, 1.7);
-  key.position.set(1.4, 3.2, 3.0);
+  /* Ambient is deliberately low. A strong hemisphere light fills every
+     crevice evenly, which is precisely what makes a scene look flat - it
+     erases the shading gradient that tells you a surface has a direction. */
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x3a2a4a, 0.55));
+
+  const key = new THREE.DirectionalLight(0xffffff, 2.4);
+  key.position.set(1.6, 3.6, 2.6);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.bias = -0.0006;
+  key.shadow.normalBias = 0.015;
+
+  /* Aim the light at the PLAYFIELD, not the world origin, and size its shadow
+     camera to just that. The bounds are in the light's own space, so guessing
+     them from world dimensions misses - and spending the map on the full
+     height of the chute wastes almost all of it on a backdrop that never
+     shows a shadow anyway. Concentrating it here is what makes the contact
+     shadows under the coins sharp enough to read. */
+  key.target.position.set(0, DIMS.tierTop.y + DIMS.deckStep, DIMS.playDepth * 0.5);
+  scene.add(key.target);
+  {
+    const c = key.shadow.camera;
+    const r = DIMS.width / 2 + DIMS.D * 2;
+    c.left = -r; c.right = r; c.bottom = -r; c.top = r;
+    c.near = 0.5; c.far = 14;
+    c.updateProjectionMatrix();
+  }
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xbfd4ff, 0.5);
-  fill.position.set(-2.0, 1.6, 0.6);
+
+  /* Cool fill from the opposite side, no shadow - it exists to keep the
+     shadowed faces from going dead, not to light the scene twice. */
+  const fill = new THREE.DirectionalLight(0xbfd4ff, 0.45);
+  fill.position.set(-2.2, 1.4, 1.2);
   scene.add(fill);
+
+  /* A dim light from below and in front lifts the underside of the shelf lip
+     and the fascia, which the key light cannot reach at all. */
+  const bounce = new THREE.DirectionalLight(0xffd9c0, 0.3);
+  bounce.position.set(0, -1.5, 3.0);
+  scene.add(bounce);
 }
 
 /* The one static camera transform. Frontal and symmetric, so all four drop
@@ -523,6 +601,30 @@ window.startCoinPusher = function (teamA, teamB) {
     };
 
     ctx.machine = buildMachine(ctx);
+
+    /* Everything solid RECEIVES. Almost nothing casts.
+
+       The shadows that matter are the ones items drop onto the deck and the
+       platform - those are the contact cue. The cabinet walls and the drop
+       panels behind them cast nothing anyone can see, and having all hundred
+       meshes cast cost two thirds of the frame rate for no visible gain.
+
+       Skipped entirely: the glass panes and the invisible click targets,
+       which are transparent - a transparent caster drops a solid black
+       shadow as though it were opaque. */
+    scene.traverse(function (o) {
+      if (!o.isMesh) return;
+      const m = o.material;
+      if (m && m.transparent && m.opacity < 0.9) return;
+      o.castShadow = false;
+      o.receiveShadow = true;
+    });
+
+    /* The shelf casts: its front face throws a shadow across the platform as
+       it advances, which is the one piece of machine geometry whose shadow
+       actually tells you something. Items cast too - set in createItem. */
+    ctx.machine.shelves.forEach(function (sh) { sh.mesh.castShadow = true; });
+
     resetPile();
 
     /* Host interaction: a click on one of the four chutes. Hit-tested against
