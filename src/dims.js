@@ -84,6 +84,16 @@ const wallHeight  = tierDrop + D * 3;
 const panelHeight = D * CFG.chute.heightInCoins;   // the drop panes
 const panelZ      = D * 0.15;       // stood just in front of the back wall
 
+/* How wide the machine actually is, tubes included.
+   The light tubes stand OUTSIDE the cabinet walls, each one a gap plus its
+   own thickness further out than the one within it. Framing to the cabinet's
+   half-width alone ran the outermost tube off the left of the screen, because
+   as far as the camera was concerned it was not part of the machine. */
+const LT = CFG.lightTubes;
+const tubeBands = LT && LT.enabled ? LT.colours.length : 0;
+const outerHalfWidth = width / 2 + wallThick +
+  tubeBands * (LT ? LT.gap + LT.radius * 2 : 0);
+
 /* ---- the drop chute ----------------------------------------------------
    A thin vertical volume behind glass, one per drop zone. The coin enters
    ON EDGE at the top and stays roughly in plane because the chute is barely
@@ -155,7 +165,7 @@ export const DIMS = {
   D, width, tierDepth, tierDrop, tierCount, playDepth,
   shelfDepth, fixedDepth, stroke, deckThick, deckStep, chamfer, deckSkirt, deckRake,
   tiers, tierTop, tierLast, trayY,
-  wallThick, wallHeight, panelHeight, panelZ,
+  wallThick, wallHeight, panelHeight, panelZ, outerHalfWidth,
   zoneCount, zoneWidth, zoneCentresX,
   chuteDepth, chuteTop, chuteBottom, pegRadius, pegRowDx, slotBottom, pegCols,
   itemDims

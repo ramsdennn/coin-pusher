@@ -493,10 +493,26 @@ window.COIN_PUSHER_CONFIG = {
        the camera. Turning it would view the machine from an angle, and the
        four drop panes would stop being equally square-on to the viewer, which
        is the whole reason the camera is frontal in the first place. */
-    centreAtScreenX: 0.38,
+    centreAtScreenX: 0.32,
 
     autoFit:      true,
     fitMargin:    0.94,
+
+    /* How much of the screen's WIDTH the machine takes, leaving the rest for
+       the scoreboards and logo. 0.6 is three fifths.
+
+       This is a separate dial from fitMargin on purpose. fitMargin says how
+       close the machine may come to the edge of the frame, so on a 16:9 screen
+       it ends up governing the HEIGHT - and how wide the machine then lands is
+       whatever the aspect ratio happens to make it. That is no good when a
+       fixed slice of the screen has to stay clear for something else: change
+       TV and the space for the scoreboards changes with it.
+
+       Set this and the fit sizes the machine to that width directly, so the
+       space left over is the same on any screen. fitMargin still applies as a
+       ceiling, so a tall narrow window pulls back further rather than running
+       the machine off the top and bottom. */
+    widthFraction: 0.60,
     lookAt: {
       y:         0.38,    // world height the camera is aimed at
       zFraction: 0.45     // how far into the playfield, 0 = back, 1 = front lip

@@ -180,6 +180,45 @@ function applyLensShift() {
   camera.setViewOffset(w, h, w * (0.5 - p), 0, w, h);
 }
 
+/* Points spanning the machine's TRUE width, taken from the built geometry.
+
+   Neither derived box gets this right. The cabinet box leaves out the light
+   tubes, which stand outside the walls - framing to it ran the outer tube off
+   the left of the screen. A box drawn to the tubes' outer corners is wrong the
+   other way: it has corners at the top FRONT that no tube occupies, and to a
+   camera looking down from above those are the nearest points of all, so they
+   project widest and the machine comes out too small.
+
+   Measuring the geometry itself avoids both. Each mesh's own bounding box is
+   tight - the tubes are built as short straight segments - so the union of
+   their corners is an honest outline rather than one big box full of corners
+   that are not really there.
+
+   Width only. Vertical framing still uses fitPoints, which deliberately lets
+   the tube tops and the skirt run off frame. */
+let widthProbe = null;
+
+function captureWidthProbe() {
+  const pts = [];
+  const bb = new THREE.Box3();
+  scene.updateMatrixWorld(true);
+
+  scene.traverse(function (o) {
+    if (!o.isMesh || !o.geometry) return;
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+    bb.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
+    for (let i = 0; i < 8; i++) {
+      pts.push(new THREE.Vector3(
+        i & 1 ? bb.max.x : bb.min.x,
+        i & 2 ? bb.max.y : bb.min.y,
+        i & 4 ? bb.max.z : bb.min.z
+      ));
+    }
+  });
+
+  widthProbe = pts.length ? pts : null;
+}
+
 function aimCamera() {
   const c = CFG.camera;
 
@@ -224,10 +263,13 @@ function aimCamera() {
 
   for (let pass = 0; pass < 8; pass++) {
     let minY = Infinity, maxY = -Infinity, worstX = 0;
+    let minX = Infinity, maxX = -Infinity;
     for (let i = 0; i < pts.length; i++) {
       const v = pts[i].clone().project(camera);
       if (v.y < minY) minY = v.y;
       if (v.y > maxY) maxY = v.y;
+      if (v.x < minX) minX = v.x;
+      if (v.x > maxX) maxX = v.x;
       worstX = Math.max(worstX, Math.abs(v.x));
     }
 
@@ -236,12 +278,32 @@ function aimCamera() {
     const spanY = Math.max(maxY - minY, 1e-3);
     target.y += midY * (worldSpan / spanY);
 
+    /* Two sizing rules, and we obey whichever asks the camera to pull back
+       further: the machine must fit inside the frame margin, AND - if a width
+       has been asked for - it must not be wider than that share of the screen.
+       Taking the larger of the two ratios means neither can be violated. */
     const worst = Math.max(worstX, Math.abs(maxY - midY), Math.abs(minY - midY));
-    if (Math.abs(worst - c.fitMargin) < 0.005 && Math.abs(midY) < 0.01) {
+    let ratio = worst / c.fitMargin;
+
+    if (c.widthFraction) {
+      let wLo = minX, wHi = maxX;
+      if (widthProbe) {
+        wLo = Infinity; wHi = -Infinity;
+        for (let k = 0; k < widthProbe.length; k++) {
+          const x = widthProbe[k].clone().project(camera).x;
+          if (x < wLo) wLo = x;
+          if (x > wHi) wHi = x;
+        }
+      }
+      /* NDC spans 2 units across, so a span of s covers s/2 of the screen. */
+      ratio = Math.max(ratio, (wHi - wLo) / 2 / c.widthFraction);
+    }
+
+    if (Math.abs(ratio - 1) < 0.004 && Math.abs(midY) < 0.01) {
       place(d);
       break;
     }
-    d = Math.max(0.3, d * (worst / c.fitMargin));
+    d = Math.max(0.3, d * ratio);
     place(d);
   }
 
@@ -629,6 +691,10 @@ window.startCoinPusher = function (teamA, teamB) {
     };
 
     ctx.machine = buildMachine(ctx);
+
+    /* Before resetPile, so the probe sees the machine and not the coins. */
+    captureWidthProbe();
+    aimCamera();
 
     /* Everything solid RECEIVES. Almost nothing casts.
 
