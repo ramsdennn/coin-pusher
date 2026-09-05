@@ -307,57 +307,6 @@ export function driveShelves(ctx, phase) {
    The set the cabinet stands in. Decoration only - not one collider here, and
    nothing in this function is raycast for host clicks.
    ------------------------------------------------------------------------- */
-function buildSurround(ctx) {
-  const S = CFG.set;
-  if (!S.enabled) return;
-
-  const D = DIMS.D;
-  const half = DIMS.width / 2 + DIMS.wallThick;
-  const midY = (DIMS.chuteTop + DIMS.trayY) / 2;
-  const tall = (DIMS.chuteTop - DIMS.trayY) * S.heightScale;
-  const zc = DIMS.playDepth * 0.35;
-
-  /* Floor. Kept small and NOT a shadow receiver - a large receiving plane
-     inside the shadow frustum costs a shadow-map lookup per fragment across
-     an area many times the size of the machine, which took this scene to
-     about 1fps before. */
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(16, 16),
-    mat(P.setFloor, { roughness: S.floorGloss, metalness: 0.55 })
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, DIMS.trayY - D * 0.05, DIMS.playDepth * 0.4);
-  floor.receiveShadow = false;
-  ctx.scene.add(floor);
-
-  [-1, 1].forEach(function (sx) {
-    let x = half + S.gapFromCabinet;
-
-    S.bars.forEach(function (bar) {
-      const m = new THREE.MeshStandardMaterial({
-        color: bar.colour,
-        emissive: new THREE.Color(bar.colour),
-        emissiveIntensity: S.glow,
-        roughness: 0.42,
-        metalness: 0.0
-      });
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(bar.width, tall, S.depth), m
-      );
-      mesh.position.set(sx * (x + bar.width / 2), midY, zc);
-      ctx.scene.add(mesh);
-      x += bar.width + bar.gapAfter;
-    });
-
-    /* A little of the nearest bar's colour thrown back on the cabinet, so the
-       grey side picks up an edge rather than sitting flat against the glow. */
-    const spill = new THREE.PointLight(
-      S.bars[0].colour, S.spill, DIMS.width * 1.6, 2);
-    spill.position.set(sx * (half + S.gapFromCabinet * 1.5), midY, zc + D);
-    ctx.scene.add(spill);
-  });
-}
-
 export function buildMachine(ctx) {
   const width = DIMS.width, D = DIMS.D, deckThick = DIMS.deckThick;
   const parts = { shelves: [], panels: [] };
@@ -415,23 +364,53 @@ export function buildMachine(ctx) {
     backWall(top, tier.y + DIMS.deckStep, tier.backZ);
   });
 
-  /* Side walls, spanning both tiers and the full depth. Kept translucent so
-     they do not hide the pile from a front camera. */
+  /* Side walls, in profile rather than as a slab.
+
+     They stand a coin above the shelf surface and hold that height back to
+     the point the shelf reaches at full extension - so nothing spills over
+     the side while it is being pushed - then fall away at a shallow angle to
+     the front edge, which opens up the pile instead of fencing it in.
+
+     Built as an extruded profile in the z-y plane, the same way the shelf is,
+     so the mesh and the collider come from one set of points and cannot drift
+     apart. */
   [-1, 1].forEach(function (sx) {
     const x = sx * (width / 2 + DIMS.wallThick / 2);
-    const h = DIMS.tierTop.y + DIMS.wallHeight - DIMS.trayY;
-    const cy = DIMS.trayY + h / 2, cz = DIMS.playDepth / 2;
+
+    const yBot   = DIMS.trayY;
+    const yBack  = DIMS.tierTop.y + DIMS.deckStep + D * CFG.scale.wallAboveShelfInCoins;
+    const zBack  = -DIMS.wallThick;
+    const zHold  = DIMS.tierTop.shelfHomeZ;          // full shelf extension
+    const zFront = DIMS.tierLast.fixedLipZ;
+    const yFront = yBack -
+      (zFront - zHold) * Math.tan((CFG.scale.wallDescentDeg * Math.PI) / 180);
+
+    const prof = [
+      [zBack,  yBot],
+      [zBack,  yBack],
+      [zHold,  yBack],
+      [zFront, yFront],
+      [zFront, yBot]
+    ];
+
     const m = new THREE.Mesh(
-      new THREE.BoxGeometry(DIMS.wallThick, h, DIMS.playDepth),
+      deckGeometry(DIMS.wallThick / 2, prof),
       mat(P.wall, { roughness: 0.24, metalness: 0.85 })
     );
-    m.position.set(x, cy, cz);
+    m.material.side = THREE.DoubleSide;
+    m.position.set(x, 0, 0);
     ctx.scene.add(m);
+
+    const hull = [];
+    prof.forEach(function (p) {
+      hull.push(-DIMS.wallThick / 2, p[1], p[0]);
+      hull.push( DIMS.wallThick / 2, p[1], p[0]);
+    });
     const b = ctx.world.createRigidBody(
-      ctx.RAPIER.RigidBodyDesc.fixed().setTranslation(x, cy, cz)
+      ctx.RAPIER.RigidBodyDesc.fixed().setTranslation(x, 0, 0)
     );
     ctx.world.createCollider(
-      ctx.RAPIER.ColliderDesc.cuboid(DIMS.wallThick / 2, h / 2, DIMS.playDepth / 2)
+      ctx.RAPIER.ColliderDesc.convexHull(new Float32Array(hull))
         .setFriction(PHY.wallFriction), b
     );
   });
@@ -685,8 +664,6 @@ export function buildMachine(ctx) {
     ctx.scene.add(target);
     parts.panels.push(target);
   }
-
-  buildSurround(ctx);
 
   return parts;
 }

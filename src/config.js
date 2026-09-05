@@ -74,6 +74,14 @@ window.COIN_PUSHER_CONFIG = {
        edge instead of shrinking the playfield to make room for it. */
     skirtBelowLipInCoins: 2.05,
 
+    /* The side walls are not a plain slab. They stand one coin above the
+       shelf surface and hold that height back as far as the shelf reaches at
+       full extension - so nothing can spill over the side while it is being
+       pushed - then fall away at a shallow angle to the front of the machine,
+       which opens up the view of the pile rather than fencing it in. */
+    wallAboveShelfInCoins: 1.0,
+    wallDescentDeg:        20,
+
     deckStepInCoins: 1.4,
 
     /* How far the TOP of the shelf's front face is set back from its bottom,
@@ -475,28 +483,6 @@ window.COIN_PUSHER_CONFIG = {
      which is most of why it reads as a model rather than an object. The
      coloured spill from the flanks onto the cabinet sides does more work here
      than the geometry does. */
-  /* The set beside the cabinet: upright LIT BARS, not angled scenery.
-     Reading outward from the cabinet edge on each side - a yellow bar, a
-     black gap, a purple bar, a black gap, another purple bar. The gaps are
-     simply the background showing through, so they cost nothing.
-
-     The bars glow rather than being lit: emissive means they read as
-     illuminated panels regardless of where the key light happens to fall,
-     which is what they are. */
-  set: {
-    enabled:        true,
-    gapFromCabinet: 0.30,
-    heightScale:    1.65,
-    depth:          0.34,
-    glow:           1.25,   // emissive strength of the bars
-    spill:          3.5,    // colour they throw back onto the cabinet
-    floorGloss:     0.30,
-    bars: [
-      { colour: 0xF7C51A, width: 0.42, gapAfter: 0.32 },
-      { colour: 0x7A1FC4, width: 0.52, gapAfter: 0.26 },
-      { colour: 0x7A1FC4, width: 0.52, gapAfter: 0.00 }
-    ]
-  },
 
   palette: {
     background: 0x0B0616,
@@ -509,10 +495,6 @@ window.COIN_PUSHER_CONFIG = {
     panel:      0xF6F2F4,
     panelEdge:  0x9AA1AB,
     chrome:     0xDCE2E8,   // bezel, mullions and peg studs
-    setFloor:   0x141020,   // studio floor the cabinet stands on
-    setWing:    0xF5C518,   // the bright flanks either side
-    setOuter:   0x6B1FA8,   // panels beyond them
-    setStripe:  0x2A0A45,   // chevrons on those panels
     panelGlow:  0xFFFFFF,   // the lit face behind the glass
     peg:        0x3E454E,
     tray:       0x1A1030
