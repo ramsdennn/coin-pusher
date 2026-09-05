@@ -486,6 +486,15 @@ window.COIN_PUSHER_CONFIG = {
        and a phone held upright crops the machine's sides off, because a
        perspective camera keeps its VERTICAL angle and narrows horizontally.
        `distance` above is the starting guess. */
+    /* Where the machine sits across the screen, 0 = hard left, 0.5 = centred.
+       Below 0.5 it moves left and frees the right-hand side for scoreboards.
+
+       Done as a LENS SHIFT - an off-centre projection - rather than by turning
+       the camera. Turning it would view the machine from an angle, and the
+       four drop panes would stop being equally square-on to the viewer, which
+       is the whole reason the camera is frontal in the first place. */
+    centreAtScreenX: 0.34,
+
     autoFit:      true,
     fitMargin:    0.94,
     lookAt: {

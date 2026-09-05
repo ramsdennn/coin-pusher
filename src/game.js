@@ -54,6 +54,7 @@ function buildScene() {
   camera = new THREE.PerspectiveCamera(
     CFG.camera.fovDeg, host.clientWidth / host.clientHeight, 0.05, 100
   );
+  applyLensShift();
   aimCamera();
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -162,6 +163,22 @@ function fitPoints() {
     });
   });
   return pts;
+}
+
+/* An off-centre projection, so the machine can sit left of centre without the
+   camera turning to look at it. The view offset renders a window taken from a
+   virtual image of the same size, displaced sideways - the machine keeps its
+   square-on perspective and simply moves across the frame. */
+function applyLensShift() {
+  const host = document.getElementById('game');
+  const w = host.clientWidth, h = host.clientHeight;
+  const p = CFG.camera.centreAtScreenX;
+
+  if (p === undefined || Math.abs(p - 0.5) < 0.001) {
+    camera.clearViewOffset();
+    return;
+  }
+  camera.setViewOffset(w, h, w * (0.5 - p), 0, w, h);
 }
 
 function aimCamera() {
@@ -580,6 +597,7 @@ function onResize() {
   camera.aspect = host.clientWidth / host.clientHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(host.clientWidth, host.clientHeight);
+  applyLensShift();                  // offset is in pixels, so it must be redone
   aimCamera();                       // re-fit: the screen shape just changed
 }
 
