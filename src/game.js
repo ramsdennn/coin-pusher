@@ -799,7 +799,10 @@ function onResize() {
 }
 
 window.startCoinPusher = function (teamA, teamB) {
-  return RAPIER.init().then(function () {
+  /* The f64 bundle inlines its wasm and needs no init; the compat build does.
+     Tolerate both so the vendor file can be swapped without touching this. */
+  const ready = RAPIER.init ? RAPIER.init() : Promise.resolve();
+  return ready.then(function () {
     buildScene();
     makeLogo();
     makeHud();
