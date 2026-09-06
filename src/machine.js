@@ -223,18 +223,25 @@ function buildShelf(ctx, tier) {
   }
   ctx.scene.add(mesh);
 
+  /* Kinematic or dynamic - see shelf.drive.mode in config. */
+  const kinematic = CFG.shelf.drive.mode === 'kinematic';
   const body = ctx.world.createRigidBody(
-    ctx.RAPIER.RigidBodyDesc.dynamic().setTranslation(0, cy, homeCz)
+    (kinematic
+      ? ctx.RAPIER.RigidBodyDesc.kinematicPositionBased()
+      : ctx.RAPIER.RigidBodyDesc.dynamic()).setTranslation(0, cy, homeCz)
   );
-  /* Free to slide along z and nothing else. Gravity cannot drop it, items
-     cannot shove it sideways, and it cannot tip. */
-  body.setEnabledTranslations(false, false, true, true);
-  body.setEnabledRotations(false, false, false, true);
-  body.setLinearDamping(0);
 
+  if (!kinematic) {
+    /* Free to slide along z and nothing else. Gravity cannot drop it, items
+       cannot shove it sideways, and it cannot tip. */
+    body.setEnabledTranslations(false, false, true, true);
+    body.setEnabledRotations(false, false, false, true);
+    body.setLinearDamping(0);
+  }
+
+  if (!kinematic) colliderDesc.setMass(CFG.shelf.drive.mass);
   ctx.world.createCollider(
     colliderDesc
-      .setMass(CFG.shelf.drive.mass)
       .setFriction(PHY.shelfFriction)
       .setRestitution(PHY.itemRestitution)
       .setCollisionGroups(GROUP_SHELF),
@@ -342,6 +349,14 @@ export function liftTrapped(ctx) {
 export function driveShelves(ctx, phase) {
   const dz = shelfOffset(phase);
   const dr = CFG.shelf.drive;
+
+  if (dr.mode === 'kinematic') {
+    for (let i = 0; i < ctx.machine.shelves.length; i++) {
+      const sh = ctx.machine.shelves[i];
+      sh.body.setNextKinematicTranslation({ x: 0, y: sh.cy, z: sh.homeCz + dz });
+    }
+    return;
+  }
 
   for (let i = 0; i < ctx.machine.shelves.length; i++) {
     const sh = ctx.machine.shelves[i];

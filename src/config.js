@@ -566,6 +566,19 @@ window.COIN_PUSHER_CONFIG = {
        position - stiff enough to track a 7s stroke closely, soft enough that
        resistance registers. */
     drive: {
+      /* 'kinematic' or 'dynamic'.
+
+         Kinematic is what the reference implementation uses and what this
+         started as: the shelf goes exactly where it is told every step and
+         ignores what the coins do about it. Dynamic came later, driven by a
+         force-limited spring, so the shelf would STALL against a jam rather
+         than drive through it - which cured interpenetration before
+         physics.contactHz existed to do the same job better.
+
+         Suspected of feeding the shimmer: with the shelf lifted out of the
+         field entirely, at-rest drift fell from 0.050 of a coin to 0.0097 and
+         the number of coins drifting fell from 20 to 4. */
+      mode: 'kinematic',
       mass:      5.0,
       stiffness: 2000,
       damping:   200,
