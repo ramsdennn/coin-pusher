@@ -372,6 +372,31 @@ window.COIN_PUSHER_CONFIG = {
          sliding already has real friction doing the job. */
       slideRate: 0,
 
+      /* Vertical-only anti-bounce, units/s shed per second. The same Coulomb
+         trick aimed at what was left after spin was fixed: coins stacked on
+         OTHER COINS, whose remaining motion is 80% up and down.
+
+         A coin on the fixed floor cannot sustain a bounce - the floor has
+         infinite mass and the contact solves at once. A coin on another coin
+         is dynamic against dynamic and the pair can hold a limit cycle.
+         Rapier exposes its soft contacts' natural frequency but not their
+         damping ratio, so the springiness cannot be taken out through the
+         engine.
+
+         Vertical only, and that is the point: the pusher moves coins along z,
+         so bleeding y costs the machine nothing. Measured over a five-seed
+         panel, coins visibly moving with the machine off:
+
+             0        7.8 visible    34.8 still
+             0.02     3.6            43.0
+             0.05     2.6            42.2
+             0.8      3.4            36.8    and 15% less delivery
+
+         Switching it on is what matters; the value barely does. 0.05 is the
+         cheap end - delivery 2.9 coins a stroke against 2.6-3.1 with it off,
+         no chute jams, fall time unchanged. */
+      bounceRate: 0.05,
+
       fallSpeed: 0.45    // above this downward speed, leave the coin alone
     },
 

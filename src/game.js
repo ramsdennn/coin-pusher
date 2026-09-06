@@ -630,8 +630,9 @@ function settleContacts() {
   const S = PHY.staticFriction;
   if (!S || !S.enabled) return;
 
-  const spinDrop  = S.spinRate  * PHY.timestep;   // rad/s shed per step
-  const slideDrop = S.slideRate * PHY.timestep;   // units/s shed per step
+  const spinDrop   = S.spinRate   * PHY.timestep;  // rad/s shed per step
+  const slideDrop  = S.slideRate  * PHY.timestep;  // units/s shed per step
+  const bounceDrop = (S.bounceRate || 0) * PHY.timestep;  // vertical only
 
   for (let i = 0; i < ctx.items.length; i++) {
     const it = ctx.items[i];
@@ -656,13 +657,31 @@ function settleContacts() {
       }
     }
 
-    const slide = Math.hypot(v.x, v.y, v.z);
-    if (slide > 1e-9) {
+    /* Anti-bounce, on the VERTICAL only.
+
+       The coins that still buzz are the ones stacked on other coins, and 80%
+       of their motion is up and down: a coin resting on another coin is a
+       dynamic-against-dynamic contact that can hold a limit cycle, where a
+       coin on the fixed floor cannot. Rapier's soft contacts expose their
+       natural frequency but not their damping ratio, so the springiness
+       cannot be taken out through the engine.
+
+       Vertical only, and that is the point: the pusher moves coins along z,
+       so bleeding y costs the machine nothing. */
+    let vy = v.y;
+    if (bounceDrop > 0 && vy > -S.fallSpeed) {
+      if (Math.abs(vy) <= bounceDrop) vy = 0;
+      else vy -= Math.sign(vy) * bounceDrop;
+      b.setLinvel({ x: v.x, y: vy, z: v.z }, false);
+    }
+
+    const slide = Math.hypot(v.x, vy, v.z);
+    if (slideDrop > 0 && slide > 1e-9) {
       if (slide <= slideDrop) {
         b.setLinvel(ZERO, false);
       } else {
         const k = (slide - slideDrop) / slide;
-        b.setLinvel({ x: v.x * k, y: v.y * k, z: v.z * k }, false);
+        b.setLinvel({ x: v.x * k, y: vy * k, z: v.z * k }, false);
       }
     }
   }
@@ -943,6 +962,24 @@ window.startCoinPusher = function (teamA, teamB) {
     window.CP = {
       ctx: ctx, DIMS: DIMS, TIERS: TIERS, CFG: CFG, M: M,
       camera: camera, aimCamera: aimCamera, resetPile: resetPile,
+
+      /* Rebuild the pile from a fixed seed, so a measurement can be repeated.
+
+         Worth having, because without it nothing here is measurable. The
+         starting pile is randomised, and the run-to-run spread that causes is
+         larger than most of the effects worth chasing: the SAME settings,
+         measured six times, gave 2, 9, 4, 1, 11 and 1 coins visibly moving.
+         Averaging over a fixed panel of seeds turns a coin flip into a
+         result. */
+      resetPileSeeded: function (seed) {
+        const real = Math.random;
+        let s = seed >>> 0;
+        Math.random = function () {
+          s = (s * 1664525 + 1013904223) >>> 0;
+          return s / 4294967296;
+        };
+        try { resetPile(); } finally { Math.random = real; }
+      },
       step: physicsStep,
       setTubeColour: function (i, hex) { return setTubeColour(ctx, i, hex); },
       dropInto: dropInto,
