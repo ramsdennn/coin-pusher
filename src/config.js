@@ -281,6 +281,41 @@ window.COIN_PUSHER_CONFIG = {
        0.0110 and mean spin 0.326; at 1.0 it is 0.0052 and 0.158, and the
        trapped-item guard fires a fraction as often. Do not go below 0.2 - at
        0.08 the solver destabilises badly. */
+    /* Contact stiffness, in Hz. Rapier models a contact as a spring, and this
+       is its natural frequency; the default is 30.
+
+       This is what stops coins visibly sinking into each other while the shelf
+       is pushing. The metric is pairs of flat coins on the field whose rims
+       cross by more than a quarter of a diameter, counted per 100 coins, after
+       8 strokes.
+
+       Measured A/B/A within ONE page load, four runs each, because the first
+       run after a load is reliably the worst and comparing across loads made
+       the warm-up look like a result:
+
+           30 Hz (default)   13.1    spread  6-21    14 delivered
+           180 Hz             3.3    spread  2-4     14 delivered
+           30 Hz again       15.6    spread 12-19    16 delivered
+
+       So it is the setting and not drift over the session: 180 takes out about
+       three quarters of the overlap, and delivery and pile size are unchanged.
+       Note the spread as much as the average - at 30Hz the run to run
+       variation is as large as the whole effect, which is a good part of why
+       earlier attempts at this could not tell whether anything had helped.
+
+       A coarser sweep put 120 Hz at roughly twice the overlap of 180, and 240
+       slightly better again but delivering a third fewer coins - past the knee
+       the pile goes rigid enough that the shelf stops moving it.
+
+       It costs nothing. Contact stiffness changes the error reduction the
+       solver applies, not how many iterations it runs.
+
+       Halving the timestep instead works about as well but costs twice the
+       physics budget AND changes the game: delivery jumped from 30 coins a run
+       to 44-75, because the drive force integrates differently. Not worth it
+       when a free dial does the same job. */
+    contactHz: 180,
+
     lengthUnit: 0.2,
 
     /* A disc's collider is a many-sided prism, not a mathematical

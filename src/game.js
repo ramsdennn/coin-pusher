@@ -317,6 +317,8 @@ function buildWorld() {
   try {
     world.integrationParameters.lengthUnit = PHY.lengthUnit;
     world.integrationParameters.numInternalPgsIterations = PHY.pgsIterations;
+    /* Write-only in this build - there is no getter to read it back. */
+    world.integrationParameters.contact_natural_frequency = PHY.contactHz;
   } catch (e) { /* older Rapier */ }
   return world;
 }
