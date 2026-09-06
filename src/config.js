@@ -433,8 +433,22 @@ window.COIN_PUSHER_CONFIG = {
          stops it quickly.
 
          Applied only to a coin that is slow AND resting on something, so a
-         coin in the air still tumbles. rad/s shed per second. */
-      rockRate:        0,
+         coin in the air still tumbles. rad/s shed per second.
+
+         Found by asking which coins were blocking the island from sleeping. On
+         a pile that would not settle, only 7 coins of 51 were above the rest
+         threshold at all - all near the front lip, all in the second layer,
+         and all turning at 1.2 to 2.7 rad/s, thirty to sixty times the
+         threshold. Flat coins turning about a HORIZONTAL axis: rocking, which
+         the own-axis spin friction above deliberately does not touch.
+
+         Measured on the three seeds that were failing, total pile motion:
+
+             off   0.67 + 1.29 + 2.04 = 4.00,  17 coins moving
+             30    0.74 + 0.70 + 1.14 = 2.57,  12 coins moving
+
+         and delivery went up rather than down, 4.9 a stroke against 4.6. */
+      rockRate:        30.0,
       rockSpeedFactor: 6.0,   // multiples of restLinear that still count as slow
 
       /* Zero the residual BEFORE the step rather than after. Rapier judges
