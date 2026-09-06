@@ -316,6 +316,61 @@ window.COIN_PUSHER_CONFIG = {
        when a free dial does the same job. */
     contactHz: 180,
 
+    /* --------------------------------------------------------------------
+       REST CLAMP
+       Coins must move because the player moved them, and for no other reason.
+       That is the whole game, so this is a rule of the game rather than a
+       physics setting, and it is enforced rather than tuned for.
+
+       A settled pile in Rapier never actually stops. Every coin touching
+       every other forms ONE contact island, so a couple of lively coins keep
+       the sleep timer reset for all of them, and the solver's penetration
+       correction keeps nudging positions inside world.step() forever. Left
+       alone the pile shimmers, and a coin balanced on the lip eventually gets
+       shaken off with nobody having touched it.
+
+       Measured, the two motions overlap, which is why no simple threshold
+       works. Per step, in coin diameters:
+
+           at rest, nothing touching   p90 0.0039   p99 0.0082   max 0.0214
+           in play, shelf pushing      p90 0.0153 (exactly the shelf's speed)
+
+       So the worst jitter step is LARGER than a real push step. What
+       separates them is direction, not size: a push is consistent, jitter is
+       random. So each resting coin is pinned to a reference pose, and what
+       the physics wanted to do is accumulated instead of applied. Random
+       jitter random-walks about the reference and never escapes; a real push
+       adds up in one direction and breaks out within two or three steps,
+       after which the coin is released and behaves completely normally.
+
+       The coin stays a DYNAMIC body throughout. An earlier attempt froze
+       resting coins into static bodies instead, and that failed badly: the
+       pile's job is to carry force from the shelf to the lip, and a static
+       coin cannot pass a push along, so coins dammed up behind the frozen
+       ones and delivery halved. Nothing here removes a coin from the solver.
+
+       Every coin is pinned every step, with no test on how fast it is going.
+       A speed test was tried and dropped: it made the worst drifter nearly
+       four times worse (0.46 of a coin against 0.12 over 15 seconds), because
+       the coins that shimmer worst are exactly the ones moving fast enough to
+       fail it. The deadzone is the better judge and now the only one.
+
+       Measured at rest over 15 seconds, machine held immovable:
+
+           off      median 0.051 coin   17 of 61 moved over a tenth of a coin
+           on       median 0.002 coin    1 of 62
+
+       Delivery is unaffected: 3.3 and 6.6 coins a stroke with it on, 8.5 and
+       0.9 with it off. The machine's throughput swings that much on its own.
+
+       One dial. Below the deadzone a coin cannot move at all; above it, the
+       coin is handed back and behaves exactly as it always did. A shelf push
+       covers half the deadzone in a single step, so it breaks out in two. */
+    rest: {
+      enabled:         true,
+      deadzoneInCoins: 0.030
+    },
+
     lengthUnit: 0.2,
 
     /* A disc's collider is a many-sided prism, not a mathematical

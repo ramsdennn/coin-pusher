@@ -522,6 +522,57 @@ function trackChute() {
   }
 }
 
+/* Hold resting coins still. See physics.rest in config for why this exists
+   and why it is a game rule rather than a physics tweak.
+
+   Runs immediately after world.step, so it corrects that step's result before
+   anything else looks at it. */
+function holdAtRest() {
+  const R = PHY.rest;
+  if (!R || !R.enabled) return;
+
+  const deadzone = DIMS.D * R.deadzoneInCoins;
+  M.parked = 0;
+
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+    const b = it.body;
+
+    /* Not pinned yet - pin it exactly where it stands. Every item is pinned,
+       every step, with no test on how fast it is going. A speed test was tried
+       and thrown away: it made the worst drifter nearly four times worse,
+       because the coins that shimmer worst are the ones jittering hard enough
+       to fail it. The deadzone below is a better judge, and the only one. */
+    if (!it.restRef) {
+      const t = b.translation(), q = b.rotation();
+      it.restRef = { x: t.x, y: t.y, z: t.z };
+      it.restRot = { x: q.x, y: q.y, z: q.z, w: q.w };
+      it.restWant = { x: 0, y: 0, z: 0 };
+      continue;
+    }
+
+    /* Accumulate what the solver WANTED to do, measured from the same pinned
+       pose every step. A push adds up in one direction; jitter cancels. */
+    const t = b.translation();
+    it.restWant.x += t.x - it.restRef.x;
+    it.restWant.y += t.y - it.restRef.y;
+    it.restWant.z += t.z - it.restRef.z;
+
+    if (Math.hypot(it.restWant.x, it.restWant.y, it.restWant.z) > deadzone) {
+      it.restRef = null;          // a real push - hand the coin back, keep the
+      continue;                   // motion it just made, re-pin it next step
+    }
+
+    b.setTranslation(it.restRef, false);
+    b.setRotation(it.restRot, false);
+    b.setLinvel(ZERO, false);
+    b.setAngvel(ZERO, false);
+    M.parked++;
+  }
+}
+
+const ZERO = { x: 0, y: 0, z: 0 };
+
 function physicsStep() {
   if (running) {
     const prev = phase;
@@ -554,6 +605,11 @@ function physicsStep() {
   ctx.world.step();
   stepCount++;
   M.lifted += liftTrapped(ctx);
+  /* AFTER the guard, not before. The guard teleports items, and a coin pinned
+     by the clamp would otherwise be dragged straight back to where the guard
+     just moved it from. Run last and a guard move reads as a large jump, which
+     releases the coin, which is what should happen. */
+  holdAtRest();
   trackChute();
   collectFallen();
 }
