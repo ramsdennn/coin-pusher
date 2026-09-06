@@ -10,6 +10,7 @@ import { GROUP_ITEM } from '@app/machine';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
+const S = CFG.scale;
 
 const geoCache = {};
 const matCache = {};
@@ -188,7 +189,7 @@ export function buildStartingPile(ctx) {
       /* Wrap to a new row when this one is full. */
       if (cursorX + w > usableWidth / 2) {
         cursorX = -usableWidth / 2;
-        rowZ -= rowDepth * 0.82;
+        rowZ -= rowDepth * S.pileSpacing;
         rowDepth = 0;
       }
 
@@ -217,7 +218,7 @@ export function buildStartingPile(ctx) {
       createItem(ctx, typeId, cx, cy, cz,
         d.shape === 'box' ? jitter(0.05) : Math.random() * Math.PI * 2);
 
-      cursorX += w * 0.84;
+      cursorX += w * S.pileSpacing;
       rowDepth = Math.max(rowDepth, dep);
     });
   });

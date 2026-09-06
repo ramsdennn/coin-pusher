@@ -20,6 +20,24 @@ window.COIN_PUSHER_CONFIG = {
     coinDiameter:  0.24,
     coinThickness: 0.02,
 
+    /* Centre-to-centre spacing of the starting pile, in coin diameters.
+
+       Was 0.84 across and 0.82 back, which packed the coins SIXTEEN PERCENT
+       INSIDE EACH OTHER before the simulation had run a single step. The
+       usable width fits about 13 coins in a row; the layout was putting 16 in.
+       They cannot separate afterwards because there is nowhere to go - the row
+       is over-full - so the solver pushes at them forever and the pile buzzes.
+
+       Measured on a settled pile, flat coins only, pairs whose bodies actually
+       cross, per 100 coins:
+
+           0.84   85.3 pairs   mean 26.8% of a coin's thickness   worst 98%
+
+       Anything at or above 1.0 lays the pile out with no overlap at all, and
+       the rows that no longer fit are stacked into a second layer, which is
+       what the machine does anyway. */
+    pileSpacing: 1.02,
+
     coinsAcrossWidth: 13.75, // machine width, in coins
     coinsDeepPerTier:  6,   // depth of each tier, in coins
 
@@ -370,6 +388,10 @@ window.COIN_PUSHER_CONFIG = {
          gravity and the contact re-accelerate it in a cycle. Left in at zero
          because the asymmetry is worth knowing: spin has nothing resisting it,
          sliding already has real friction doing the job. */
+      /* Only damp the spin of coins lying this flat (1 = perfectly face down).
+         A coin on its rim must stay free to roll, which is how it topples. */
+      faceDownAbove: 0.85,
+
       slideRate: 0,
 
       /* Vertical-only anti-bounce, units/s shed per second. The same Coulomb

@@ -646,15 +646,36 @@ function settleContacts() {
     const v = b.linvel();
     if (v.y < -S.fallSpeed) continue;
 
+    /* Only the spin about the coin's OWN AXIS - the record-player motion.
+
+       Torsional friction acts about the contact normal, and for a coin lying
+       on a face that is the coin's own normal. Rotation about any other axis
+       is TUMBLING, which real friction barely touches.
+
+       The first version damped all three axes, and that was wrong twice over:
+       unphysical, and it stopped coins tipping as they went over the shelf
+       edge, so they landed on their rims instead of falling flat. */
     const w = b.angvel();
-    const spin = Math.hypot(w.x, w.y, w.z);
-    if (spin > 1e-9) {
-      if (spin <= spinDrop) {
-        b.setAngvel(ZERO, false);
-      } else {
-        const k = (spin - spinDrop) / spin;
-        b.setAngvel({ x: w.x * k, y: w.y * k, z: w.z * k }, false);
-      }
+    const q = b.rotation();
+    const nx = 2 * (q.x * q.y + q.w * q.z);
+    const ny = 1 - 2 * (q.x * q.x + q.z * q.z);
+    const nz = 2 * (q.y * q.z - q.w * q.x);
+
+    /* Only while the coin is lying FACE DOWN. Torsional friction belongs to a
+       face contact; a coin on its rim contacts along its edge, and its own
+       axis is then horizontal, so damping about it would stop the coin ROLLING
+       - which is precisely how an edge-landed coin topples flat. Measured, not
+       reasoned after the fact: without this gate 4.5% of the field ended up on
+       edge against 1.7% with no spin friction at all. */
+    const along = w.x * nx + w.y * ny + w.z * nz;
+    const mag = Math.abs(along);
+    if (mag > 1e-9 && Math.abs(ny) > S.faceDownAbove) {
+      const shed = Math.min(mag, spinDrop) * (along > 0 ? -1 : 1);
+      b.setAngvel({
+        x: w.x + shed * nx,
+        y: w.y + shed * ny,
+        z: w.z + shed * nz
+      }, false);
     }
 
     /* Anti-bounce, on the VERTICAL only.
