@@ -367,8 +367,43 @@ window.COIN_PUSHER_CONFIG = {
        coin is handed back and behaves exactly as it always did. A shelf push
        covers half the deadzone in a single step, so it breaks out in two. */
     rest: {
-      enabled:         true,
-      deadzoneInCoins: 0.030
+      /* OFF. It works - it removes the shimmer almost completely - but it
+         costs the machine its whole mechanic, and the measurement below says
+         no amount of tuning will fix that.
+
+           the pile's real advance    0.000125 of a coin per step
+           jitter at rest, median     0.000107 per step
+           jitter at rest, p90        0.0039 per step
+
+         The pile creeps forward LESS per step than it jitters. The signal is
+         1.17x the median noise and 3% of the p90. Over a whole stroke the
+         real advance is 0.053 of a coin while jitter random-walks 0.079.
+
+         So no filter on per-coin motion can tell "being pushed" from
+         "shimmering" - not by speed, not by distance, not by accumulating
+         direction, because the noise accumulates faster than the signal. Every
+         version of this was measured killing the machine: with the clamp on,
+         creep runs BACKWARDS at -0.027 a stroke against +0.013, and delivery
+         falls from 6.8 coins a stroke to 0.4.
+
+         Turning it on needs the jitter reduced at source first, or the pile
+         driven hard enough to lift the signal above it. Left here with the
+         numbers so the next attempt starts from them rather than from
+         scratch. */
+      enabled:         false,
+      deadzoneInCoins: 0.030,
+
+      /* Only pin a coin that has been moving too little to be being pushed,
+         for this many steps running. Set from the measured distributions:
+         jitter at rest is under 0.0082 of a coin per step at the 99th
+         percentile, a coin riding the deck moves 0.0153. */
+      pinBelowInCoins: 0.010,
+      pinSteps:        3,
+
+      /* Downward speed above which a coin is falling and must be left alone.
+         Jitter is random in direction and never sustains a fall, so this
+         separates cleanly. Coins in the chute are excluded outright. */
+      fallSpeed:       0.45
     },
 
     lengthUnit: 0.2,

@@ -532,42 +532,75 @@ function holdAtRest() {
   if (!R || !R.enabled) return;
 
   const deadzone = DIMS.D * R.deadzoneInCoins;
+  const pinBelow = DIMS.D * R.pinBelowInCoins;
   M.parked = 0;
 
   for (let i = 0; i < ctx.items.length; i++) {
     const it = ctx.items[i];
     const b = it.body;
+    const t = b.translation();
 
-    /* Not pinned yet - pin it exactly where it stands. Every item is pinned,
-       every step, with no test on how fast it is going. A speed test was tried
-       and thrown away: it made the worst drifter nearly four times worse,
-       because the coins that shimmer worst are the ones jittering hard enough
-       to fail it. The deadzone below is a better judge, and the only one. */
-    if (!it.restRef) {
-      const t = b.translation(), q = b.rotation();
-      it.restRef = { x: t.x, y: t.y, z: t.z };
-      it.restRot = { x: q.x, y: q.y, z: q.z, w: q.w };
-      it.restWant = { x: 0, y: 0, z: 0 };
+    /* Never touch a coin still in the chute. dropStep is set when it enters
+       and cleared when it clears the bottom, so this is exact rather than a
+       guess at a region.
+
+       Pinning these was a disaster: a coin slowing at the top of a bounce, or
+       glancing a peg, fell under the deadzone, got pinned with its velocity
+       zeroed, and had to build the whole fall up again. It jammed 16 drops in
+       18. Falling is the one time a coin is SUPPOSED to move on its own. */
+    if (it.dropStep !== undefined || b.linvel().y < -R.fallSpeed) {
+      it.restRef = null;
+      it.restQuiet = 0;
+      it.restLast = { x: t.x, y: t.y, z: t.z };
       continue;
     }
 
-    /* Accumulate what the solver WANTED to do, measured from the same pinned
-       pose every step. A push adds up in one direction; jitter cancels. */
-    const t = b.translation();
-    it.restWant.x += t.x - it.restRef.x;
-    it.restWant.y += t.y - it.restRef.y;
-    it.restWant.z += t.z - it.restRef.z;
+    if (it.restRef) {
+      /* Accumulate what the solver WANTED, measured from the same pinned pose
+         every step. A push adds up in one direction; jitter cancels. */
+      it.restWant.x += t.x - it.restRef.x;
+      it.restWant.y += t.y - it.restRef.y;
+      it.restWant.z += t.z - it.restRef.z;
 
-    if (Math.hypot(it.restWant.x, it.restWant.y, it.restWant.z) > deadzone) {
-      it.restRef = null;          // a real push - hand the coin back, keep the
-      continue;                   // motion it just made, re-pin it next step
+      if (Math.hypot(it.restWant.x, it.restWant.y, it.restWant.z) > deadzone) {
+        it.restRef = null;          // a real push - hand the coin back and
+        it.restQuiet = 0;           // keep the motion it just made
+        it.restLast = { x: t.x, y: t.y, z: t.z };
+        continue;
+      }
+
+      b.setTranslation(it.restRef, false);
+      b.setRotation(it.restRot, false);
+      b.setLinvel(ZERO, false);
+      b.setAngvel(ZERO, false);
+      M.parked++;
+      continue;
     }
 
-    b.setTranslation(it.restRef, false);
-    b.setRotation(it.restRot, false);
-    b.setLinvel(ZERO, false);
-    b.setAngvel(ZERO, false);
-    M.parked++;
+    /* Only pin a coin that has been moving too little to be pushed.
+
+       This gate is set from measurement, not taste. Per step, jitter at rest
+       is under 0.0082 of a coin at the 99th percentile, while a coin riding
+       the deck moves 0.0153 - the deck's own speed. Anything between the two
+       separates them cleanly.
+
+       Without it the clamp pins coins that ARE being pushed. They then cannot
+       ride the deck, the pile stops advancing, and the machine runs BACKWARDS:
+       measured, creep went to -0.022 a stroke against +0.009, and delivery
+       fell from 6.5 coins a stroke to 0.8. */
+    const last = it.restLast;
+    const step = last
+      ? Math.hypot(t.x - last.x, t.y - last.y, t.z - last.z)
+      : Infinity;
+    it.restLast = { x: t.x, y: t.y, z: t.z };
+    it.restQuiet = step < pinBelow ? (it.restQuiet || 0) + 1 : 0;
+
+    if (it.restQuiet >= R.pinSteps) {
+      const q = b.rotation();
+      it.restRef = { x: t.x, y: t.y, z: t.z };
+      it.restRot = { x: q.x, y: q.y, z: q.z, w: q.w };
+      it.restWant = { x: 0, y: 0, z: 0 };
+    }
   }
 }
 
