@@ -674,21 +674,41 @@ function separateCoins() {
       for (let j = i + 1; j < cand.length; j++) {
         const b = cand[j];
 
-        if (Math.abs(a.y - b.y) >= a.h + b.h) continue;   // one sits on the other
+        const dy = a.y - b.y;
+        const overlapY = (a.h + b.h) - Math.abs(dy);
+        if (overlapY <= 0) continue;                       // one sits on the other
+
         let dx = a.x - b.x, dz = a.z - b.z;
         let dh = Math.hypot(dx, dz);
         const minH = a.r + b.r;
-        if (dh >= minH) continue;                          // rims already clear
+        const overlapH = minH - dh;
+        if (overlapH <= 0) continue;                       // rims already clear
 
-        /* Dead centre on top of each other: no direction to separate along,
-           so pick one from the index. Deterministic, so a replay stays a
-           replay. */
-        if (dh < 1e-6) { dx = Math.cos(i * 2.399); dz = Math.sin(i * 2.399); dh = 1; }
+        /* Separate along whichever axis they overlap LEAST - the standard
+           minimum-translation choice, and the one that keeps stacks.
 
-        const push = Math.min((minH - dh) * 0.5 * S.strength, maxPush);
-        const ux = dx / dh, uz = dz / dh;
-        a.x += ux * push; a.z += uz * push;
-        b.x -= ux * push; b.z -= uz * push;
+           Always pushing horizontally destroyed stacking outright: a coin
+           resting on another sits a shade under a full thickness above it,
+           because contacts allow a little penetration, which tripped the test
+           and slid the top coin off. Measured, coins resting on another went
+           from 9 to 0. Resolved along the smaller overlap, a stacked pair has
+           a tiny vertical overlap against a large horizontal one, so it gets a
+           small lift and stays stacked. */
+        if (overlapY < overlapH) {
+          /* The upper coin takes the whole correction; the lower one is
+             normally supported from below and would only fight the floor. */
+          const lift = Math.min(overlapY * S.strength, maxPush);
+          if (dy >= 0) a.y += lift; else b.y += lift;
+        } else {
+          /* Dead centre on top of each other: no direction to separate along,
+             so pick one from the index. Deterministic, so a replay stays a
+             replay. */
+          if (dh < 1e-6) { dx = Math.cos(i * 2.399); dz = Math.sin(i * 2.399); dh = 1; }
+          const push = Math.min(overlapH * 0.5 * S.strength, maxPush);
+          const ux = dx / dh, uz = dz / dh;
+          a.x += ux * push; a.z += uz * push;
+          b.x -= ux * push; b.z -= uz * push;
+        }
         moved = true;
       }
     }
@@ -698,8 +718,10 @@ function separateCoins() {
   for (let i = 0; i < cand.length; i++) {
     const c = cand[i];
     const t = c.it.body.translation();
-    if (Math.abs(t.x - c.x) > 1e-9 || Math.abs(t.z - c.z) > 1e-9) {
-      c.it.body.setTranslation({ x: c.x, y: t.y, z: c.z }, false);
+    if (Math.abs(t.x - c.x) > 1e-9 ||
+        Math.abs(t.y - c.y) > 1e-9 ||
+        Math.abs(t.z - c.z) > 1e-9) {
+      c.it.body.setTranslation({ x: c.x, y: c.y, z: c.z }, false);
     }
   }
 }
