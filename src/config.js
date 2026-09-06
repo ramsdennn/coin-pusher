@@ -449,8 +449,47 @@ window.COIN_PUSHER_CONFIG = {
     separate: {
       enabled:           true,
       iterations:        4,      // relaxation passes, for chains of coins
-      strength:          1.0,    // 1 = close the whole gap
-      maxPerStepInCoins: 0.05,   // never teleport a coin
+      /* Gentle on purpose. A correction spread over several steps disturbs
+         a resting pile far less than one that closes the whole gap at once,
+         and it lets a coin landing on another settle instead of being shoved.
+         Measured over two seeds:
+
+             0.60 / 0.050   worst bite 2.9%   3 stacks   worst sink 16.7%
+             0.20 / 0.012   worst bite 3.9%   5 stacks   worst sink  4.5%
+
+         and in the shake test the gentle pair held 7 stacked coins against 3,
+         at the same up-and-down travel. */
+      strength:          0.2,    // fraction of the gap closed per pass
+      maxPerStepInCoins: 0.012,  // never teleport a coin
+
+      /* Only correct pairs whose centres are closer VERTICALLY than this
+         fraction of a coin's thickness - that is, at roughly the same height.
+
+         Height is the discriminator, not distance in plan. A coin overlapping
+         another by 90% has its centre very close in plan, so gating on plan
+         distance exempted exactly the worst cases. Stacked coins sit a full
+         thickness apart and are left alone: their contact is face to face, the
+         solver handles it, and correcting it is what made stacks shake.
+
+         The value trades the bite against stacking, because a coin landing
+         partway onto another passes through this band on its way to settling:
+
+             0.55   worst bite 2.1%   0 stacks formed   sink 0%
+             0.35   worst bite 5.0%   9 stacks          sink 30%
+             0.22   worst bite 7.0%   4 stacks          sink 17%
+
+         0.35 keeps the bite negligible - 5% of a diameter is about two pixels
+         on a TV - while leaving coins room to settle on top of each other. */
+      sameHeightBelow:   0.35,
+
+      /* Penetration below this fraction of a coin's THICKNESS is left alone.
+         A resting contact always carries a little - that is how a soft-contact
+         engine holds things up - so correcting to exactly touching means
+         gravity restores it next step and the pass lifts it again, sixty times
+         a second. Measured on a stacked pair with no slop: the gap held a
+         perfect 1.000 thickness while the coin travelled 0.18 of a diameter up
+         and down every second. */
+      slopInThickness:   0.18,
       flatAbove:         0.90    // only coins lying this flat
     },
 

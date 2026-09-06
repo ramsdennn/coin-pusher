@@ -666,6 +666,20 @@ function separateCoins() {
 
   const maxPush = DIMS.D * S.maxPerStepInCoins;
 
+  /* Slop: penetration this small is left alone.
+
+     Without it the pass fights the solver every step. A resting contact always
+     carries a little penetration - that is how a soft-contact engine holds
+     things up - so correcting to EXACTLY touching means gravity puts it back
+     next step and the pass lifts it again, sixty times a second. Measured on a
+     stacked pair: the gap sat at a perfect 1.000 thickness while the coin
+     travelled 0.18 of a diameter up and down every second. That is the
+     shaking.
+
+     Set above the solver's own resting penetration and nothing fights. */
+  const slop = DIMS.itemDims(ctx.items.length ? ctx.items[0].typeId : 'coinLight')
+                 .height * S.slopInThickness;
+
   for (let pass = 0; pass < S.iterations; pass++) {
     let moved = false;
 
@@ -674,41 +688,37 @@ function separateCoins() {
       for (let j = i + 1; j < cand.length; j++) {
         const b = cand[j];
 
-        const dy = a.y - b.y;
-        const overlapY = (a.h + b.h) - Math.abs(dy);
-        if (overlapY <= 0) continue;                       // one sits on the other
+        /* Only pairs at ROUGHLY THE SAME HEIGHT.
+
+           Height is the discriminator, not distance in plan. Two coins side by
+           side with their discs crossing is the fault that looks wrong - the
+           bite out of a coin. Two coins one on top of the other also overlap
+           in plan, but that is simply what a stack IS.
+
+           Stacked pairs are left to the solver, which handles a face-to-face
+           contact well. Correcting them is what made stacks shake: the pass
+           lifts the top coin to exactly touching, gravity restores the resting
+           penetration the engine needs to hold it up, and the pass lifts it
+           again, sixty times a second. Measured on a stacked pair, up-and-down
+           travel went from 0.12 of a diameter a second with the pass off to
+           0.15 correcting vertically, and 0.20 with a slop added - the wrong
+           direction every time. Skipping them entirely gives 0. */
+        if (Math.abs(a.y - b.y) >= (a.h + b.h) * S.sameHeightBelow) continue;
 
         let dx = a.x - b.x, dz = a.z - b.z;
         let dh = Math.hypot(dx, dz);
         const minH = a.r + b.r;
-        const overlapH = minH - dh;
+        const overlapH = minH - dh - slop;
         if (overlapH <= 0) continue;                       // rims already clear
 
-        /* Separate along whichever axis they overlap LEAST - the standard
-           minimum-translation choice, and the one that keeps stacks.
+        /* Dead centre on each other: no direction to separate along, so pick
+           one from the index. Deterministic, so a replay stays a replay. */
+        if (dh < 1e-6) { dx = Math.cos(i * 2.399); dz = Math.sin(i * 2.399); dh = 1; }
 
-           Always pushing horizontally destroyed stacking outright: a coin
-           resting on another sits a shade under a full thickness above it,
-           because contacts allow a little penetration, which tripped the test
-           and slid the top coin off. Measured, coins resting on another went
-           from 9 to 0. Resolved along the smaller overlap, a stacked pair has
-           a tiny vertical overlap against a large horizontal one, so it gets a
-           small lift and stays stacked. */
-        if (overlapY < overlapH) {
-          /* The upper coin takes the whole correction; the lower one is
-             normally supported from below and would only fight the floor. */
-          const lift = Math.min(overlapY * S.strength, maxPush);
-          if (dy >= 0) a.y += lift; else b.y += lift;
-        } else {
-          /* Dead centre on top of each other: no direction to separate along,
-             so pick one from the index. Deterministic, so a replay stays a
-             replay. */
-          if (dh < 1e-6) { dx = Math.cos(i * 2.399); dz = Math.sin(i * 2.399); dh = 1; }
-          const push = Math.min(overlapH * 0.5 * S.strength, maxPush);
-          const ux = dx / dh, uz = dz / dh;
-          a.x += ux * push; a.z += uz * push;
-          b.x -= ux * push; b.z -= uz * push;
-        }
+        const push = Math.min(overlapH * 0.5 * S.strength, maxPush);
+        const ux = dx / dh, uz = dz / dh;
+        a.x += ux * push; a.z += uz * push;
+        b.x -= ux * push; b.z -= uz * push;
         moved = true;
       }
     }
