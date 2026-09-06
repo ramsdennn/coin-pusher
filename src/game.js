@@ -606,6 +606,68 @@ function holdAtRest() {
 
 const ZERO = { x: 0, y: 0, z: 0 };
 
+/* The static friction Rapier's contact model does not have.
+
+   A contact resists SLIDING but not SPINNING. A disc lying flat can therefore
+   rotate about its own axis with nothing to stop it, and any stray torque from
+   the contact solve spins it up and stays there. Measured on a settled pile
+   with the machine switched off, over ten seconds: the median coin walked a
+   third of a diameter while ending up where it started, and turned 53 degrees;
+   the worst turned 1188 degrees - over three full revolutions - while moving
+   almost nowhere. Not one coin in sixty-one was still. That is the fidgeting.
+
+   Real coins do not do this: the friction that stops a spun coin on a table is
+   exactly the torsional friction the solver is missing.
+
+   Coulomb, not damping. Damping scales with speed, so it decays a spin towards
+   zero without ever arriving and cannot beat a torque that is re-applied every
+   step. This removes a FIXED amount of angular speed per step, so a spin
+   actually stops - which is how dry friction behaves.
+
+   Coins still in the chute are exempt: they are meant to tumble off the pegs,
+   and that is what makes a drop unpredictable. */
+function settleContacts() {
+  const S = PHY.staticFriction;
+  if (!S || !S.enabled) return;
+
+  const spinDrop  = S.spinRate  * PHY.timestep;   // rad/s shed per step
+  const slideDrop = S.slideRate * PHY.timestep;   // units/s shed per step
+
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+    const b = it.body;
+
+    /* Exempt anything that is meant to be moving under its own weight: coins
+       in the chute, which have to tumble off the pegs, and anything in free
+       fall. Only downward speed counts - buzzing is random in direction and
+       never sustains a fall. */
+    if (it.dropStep !== undefined) continue;
+    const v = b.linvel();
+    if (v.y < -S.fallSpeed) continue;
+
+    const w = b.angvel();
+    const spin = Math.hypot(w.x, w.y, w.z);
+    if (spin > 1e-9) {
+      if (spin <= spinDrop) {
+        b.setAngvel(ZERO, false);
+      } else {
+        const k = (spin - spinDrop) / spin;
+        b.setAngvel({ x: w.x * k, y: w.y * k, z: w.z * k }, false);
+      }
+    }
+
+    const slide = Math.hypot(v.x, v.y, v.z);
+    if (slide > 1e-9) {
+      if (slide <= slideDrop) {
+        b.setLinvel(ZERO, false);
+      } else {
+        const k = (slide - slideDrop) / slide;
+        b.setLinvel({ x: v.x * k, y: v.y * k, z: v.z * k }, false);
+      }
+    }
+  }
+}
+
 function physicsStep() {
   if (running) {
     const prev = phase;
@@ -637,6 +699,7 @@ function physicsStep() {
 
   ctx.world.step();
   stepCount++;
+  settleContacts();
   M.lifted += liftTrapped(ctx);
   /* AFTER the guard, not before. The guard teleports items, and a coin pinned
      by the clamp would otherwise be dragged straight back to where the guard

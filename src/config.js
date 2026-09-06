@@ -330,6 +330,51 @@ window.COIN_PUSHER_CONFIG = {
        physics budget AND changes the game: delivery jumped from 30 coins a run
        to 44-75, because the drive force integrates differently. Not worth it
        when a free dial does the same job. */
+    /* Spin friction - see settleSpin() in game.js.
+
+       Rapier contacts resist sliding but not spinning, so a disc lying flat
+       spins freely and any stray torque from the solve stays in it forever.
+       This is the fidgeting: measured with the machine off, the median coin
+       turned 53 degrees in ten seconds and the worst turned 1188, while
+       barely moving from the spot.
+
+       stopRate is in radians per second, shed per second, Coulomb style - a
+       fixed amount removed each step rather than a proportion, so a spin
+       actually reaches zero. 8 stops a 1 rad/s spin in about an eighth of a
+       second, which is roughly how a coin spun on a table behaves. */
+    staticFriction: {
+      enabled:   true,
+
+      /* Radians per second of spin shed each second, Coulomb style: a fixed
+         amount removed per step rather than a proportion, so a spin actually
+         reaches zero. Damping cannot do this - it scales with speed, so it
+         approaches zero without arriving and never beats a torque that is
+         re-applied every step.
+
+         Measured on a settled pile, machine off, ten seconds, two runs each -
+         coins that turned more than 5 degrees, and the distance the median
+         coin walked while going nowhere:
+
+             off    30.5 coins spinning    median path 0.046 of a coin
+             25     25.0                                 0.087
+             80      2.0                                 0.012
+             200     0.0                                 0.036
+
+         80 is the knee. Above it the correction starts disturbing the contact
+         solve and the linear buzz creeps back. */
+      spinRate:  80.0,
+
+      /* The same trick for SLIDING, and it does not work - measured, it makes
+         things worse: median path 0.007 with it off, 0.020 at 0.05 and 0.081
+         at 0.10. Removing linear speed from a supported coin appears to let
+         gravity and the contact re-accelerate it in a cycle. Left in at zero
+         because the asymmetry is worth knowing: spin has nothing resisting it,
+         sliding already has real friction doing the job. */
+      slideRate: 0,
+
+      fallSpeed: 0.45    // above this downward speed, leave the coin alone
+    },
+
     contactHz: 180,
 
     /* --------------------------------------------------------------------
