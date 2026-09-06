@@ -419,6 +419,32 @@ window.COIN_PUSHER_CONFIG = {
          no chute jams, fall time unchanged. */
       bounceRate: 0.05,
 
+      /* Below these, a coin is stopped dead so the island can sleep. Set at
+         Rapier's own resting thresholds - below them the engine already counts
+         the motion as rest, so nothing real is lost, but the pile can finally
+         cross the bar instead of hovering under it. */
+      /* Rocking: a coin tilting back and forth on an uneven support, which
+         is what the last few moving coins in a settled pile are doing - 88% of
+         their motion vertical while turning 120 to 580 degrees in ten seconds.
+
+         The spin friction above only damps rotation about the coin's own axis,
+         so that tumbling stays free and coins still tip off the shelf. Rocking
+         is about a HORIZONTAL axis and went completely undamped. Real friction
+         stops it quickly.
+
+         Applied only to a coin that is slow AND resting on something, so a
+         coin in the air still tumbles. rad/s shed per second. */
+      rockRate:        0,
+      rockSpeedFactor: 6.0,   // multiples of restLinear that still count as slow
+
+      /* Zero the residual BEFORE the step rather than after. Rapier judges
+         whether a body may sleep from the velocities it sees during its own
+         step, so tidying up afterwards never reaches that decision. */
+      quietenBeforeStep: true,
+
+      restLinear:  0.02,   // units/s
+      restAngular: 0.04,   // rad/s
+
       fallSpeed: 0.45    // above this downward speed, leave the coin alone
     },
 

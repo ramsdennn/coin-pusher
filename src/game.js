@@ -666,6 +666,42 @@ const ZERO = { x: 0, y: 0, z: 0 };
    overlapping anything, so a sleeping coin can never lock in a penetration. */
 const RAY = { origin: { x: 0, y: 0, z: 0 }, dir: { x: 0, y: -1, z: 0 } };
 
+/* Zero the residual of already-resting coins BEFORE the step, not after.
+
+   This is the piece that lets a pile actually fall asleep. Rapier decides
+   whether a body may sleep from the velocities it sees DURING its own step, so
+   tidying up afterwards - which is what everything else here does - never
+   reaches the decision. The body starts each step carrying a hair of solver
+   noise, that noise is what the sleep test measures, and the timer resets
+   forever. Sleeping is island-wide, so one such coin keeps sixty awake.
+
+   Zeroing first costs nothing real: the thresholds are Rapier's own, so this
+   is motion the engine already counts as rest. Anything falling, in the chute,
+   or being pushed apart is left alone. */
+function quietenBeforeStep() {
+  const S = PHY.staticFriction;
+  if (!S || !S.enabled || !S.quietenBeforeStep) return;
+
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+    if (it.dropStep !== undefined) continue;
+    if (it.sepMoved === stepCount - 1) continue;
+
+    const b = it.body;
+    if (b.isSleeping()) continue;
+
+    const v = b.linvel();
+    if (v.y < -S.fallSpeed) continue;
+
+    const w = b.angvel();
+    if (Math.hypot(v.x, v.y, v.z) < S.restLinear &&
+        Math.hypot(w.x, w.y, w.z) < S.restAngular) {
+      b.setLinvel(ZERO, false);
+      b.setAngvel(ZERO, false);
+    }
+  }
+}
+
 function sleepSettled() {
   const S = PHY.sleep;
   if (!S || !S.enabled) return;
@@ -864,6 +900,41 @@ function settleContacts() {
        - which is precisely how an edge-landed coin topples flat. Measured, not
        reasoned after the fact: without this gate 4.5% of the field ended up on
        edge against 1.7% with no spin friction at all. */
+    /* ROCKING. A coin tilting back and forth on an uneven support - the rim
+       of another coin, or two coins with a dip between them - is the last
+       thing left moving in a settled pile. Measured: of 51 coins only 4 still
+       moved, and 88% of their motion was vertical while they turned between
+       120 and 580 degrees in ten seconds. That is a rock, not a spin and not a
+       slide.
+
+       Spin friction above only damps rotation about the coin's OWN axis, so
+       tumbling stays free and coins can still tip off the shelf. But rocking
+       is rotation about a HORIZONTAL axis, so nothing touched it. Real
+       friction stops a rocking coin quickly.
+
+       Damped only while the coin is resting on something, so a coin in the air
+       still tumbles freely. The ray is cheap: it is only cast for a coin that
+       is already moving slowly. */
+    const speedNow = Math.hypot(v.x, v.y, v.z);
+    if (S.rockRate > 0 && speedNow < S.restLinear * S.rockSpeedFactor) {
+      const t = b.translation();
+      RAY.origin.x = t.x; RAY.origin.y = t.y; RAY.origin.z = t.z;
+      const d2 = DIMS.itemDims(it.typeId);
+      if (ctx.world.castRay(RAY, d2.halfHeight * 1.6, true,
+                            undefined, undefined, b.collider(0), b)) {
+        const rockDrop = S.rockRate * PHY.timestep;
+        const spinAll = Math.hypot(w.x, w.y, w.z);
+        if (spinAll > 1e-9) {
+          if (spinAll <= rockDrop) {
+            b.setAngvel(ZERO, false);
+          } else {
+            const k = (spinAll - rockDrop) / spinAll;
+            b.setAngvel({ x: w.x * k, y: w.y * k, z: w.z * k }, false);
+          }
+        }
+      }
+    }
+
     const along = w.x * nx + w.y * ny + w.z * nz;
     const mag = Math.abs(along);
     if (mag > 1e-9 && Math.abs(ny) > S.faceDownAbove) {
@@ -891,6 +962,31 @@ function settleContacts() {
       if (Math.abs(vy) <= bounceDrop) vy = 0;
       else vy -= Math.sign(vy) * bounceDrop;
       b.setLinvel({ x: v.x, y: vy, z: v.z }, false);
+    }
+
+    /* Deadband: a coin already slower than the engine would call "at rest"
+       is stopped dead.
+
+       This is the piece that lets the pile SLEEP. Rapier sleeps by island, and
+       an island only sleeps once every body in it has stayed under the
+       threshold continuously - so a single coin carrying a hair of residual
+       velocity keeps sixty others awake, forever. The residual is solver noise
+       that never quite decays, so the pile hovers just under the bar and never
+       crosses it.
+
+       Below the engine's own threshold there is nothing to lose: it already
+       considers this motion to be rest. Zeroing it is what turns "nearly
+       asleep" into asleep. A coin being separated from a neighbour, falling,
+       or in the chute is excluded above, so nothing that should be moving is
+       stopped. */
+    if (it.sepMoved !== stepCount) {
+      const speed = Math.hypot(v.x, vy, v.z);
+      const spinAll = Math.hypot(w.x, w.y, w.z);
+      if (speed < S.restLinear && spinAll < S.restAngular) {
+        b.setLinvel(ZERO, false);
+        b.setAngvel(ZERO, false);
+        continue;
+      }
     }
 
     const slide = Math.hypot(v.x, vy, v.z);
@@ -934,6 +1030,7 @@ function physicsStep() {
     }
   }
 
+  quietenBeforeStep();
   ctx.world.step();
   stepCount++;
   settleContacts();
