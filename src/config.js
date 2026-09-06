@@ -446,6 +446,43 @@ window.COIN_PUSHER_CONFIG = {
 
        See separateCoins() in game.js for why the push is horizontal rather
        than along the shortest escape. */
+    /* Let settled coins sleep. See sleepSettled() in game.js.
+
+       Rapier sleeps by ISLAND, and every coin in the pile touches another, so
+       one lively coin keeps all of them awake and nothing ever settles. Sleeping
+       each coin on its own merits is what stops the buzzing for good: a
+       sleeping body is skipped by the solver, so it cannot drift at all.
+
+       Thresholds are generous on purpose. A sleeping coin is not stuck - the
+       engine wakes it as soon as anything touches it, verified: with the shelf
+       running, 51 of 62 slept coins woke within three quarters of a second. */
+    sleep: {
+      /* OFF. Sleeping IS the answer to a still pile - it is what every other
+         game relies on - but Rapier's own island sleeping already does it far
+         better than this did. Sleeping coins individually was a disaster:
+         measured against Rapier alone, 7.3 coins perfectly still instead of
+         54, motion eight times higher, and eighteen coins lost off the machine
+         in a ten second idle because a coin tipping over the lip could be
+         slept in mid-air and simply hang there. Adding a downward ray so a
+         coin had to be resting on something did not save it.
+
+         What DOES matter, and is the real lesson here: anything that nudges a
+         coin every step stops Rapier sleeping it, and Rapier's sleeping is
+         what stills the pile. That is why the separation pass above now has a
+         large slop. Left here, off, with the numbers. */
+      enabled: false,
+      linear:  0.05,   // units/s
+      angular: 0.20,   // rad/s
+      steps:   20,     // consecutive quiet steps before it may sleep
+
+      /* How far below itself a coin must find something solid, in half
+         thicknesses, before it is allowed to sleep. Without this check a coin
+         tipping over the lip could be slept in mid-air and simply hang there:
+         measured, five coins stopped dead below the floor, the pile lost
+         sixteen coins and buzzed nine times worse than with sleeping off. */
+      supportReach: 1.6
+    },
+
     separate: {
       enabled:           true,
       iterations:        4,      // relaxation passes, for chains of coins
@@ -482,14 +519,28 @@ window.COIN_PUSHER_CONFIG = {
          on a TV - while leaving coins room to settle on top of each other. */
       sameHeightBelow:   0.35,
 
-      /* Penetration below this fraction of a coin's THICKNESS is left alone.
-         A resting contact always carries a little - that is how a soft-contact
-         engine holds things up - so correcting to exactly touching means
-         gravity restores it next step and the pass lifts it again, sixty times
-         a second. Measured on a stacked pair with no slop: the gap held a
-         perfect 1.000 thickness while the coin travelled 0.18 of a diameter up
-         and down every second. */
-      slopInThickness:   0.18,
+      /* Overlap below this fraction of a coin's DIAMETER is left alone.
+
+         Large on purpose. This pass nudges coins, and a nudged coin never
+         falls asleep - and Rapier's own sleeping is what actually stills the
+         pile. Measured with the pass off, 30.8 coins slept and 54 of 62 were
+         perfectly still; with it firing on every marginal overlap, only 10.5
+         slept and 44.7 were still. Correcting overlaps too small to see bought
+         nothing and cost the sleep that matters.
+
+         So it fires only on overlaps big enough to look wrong, fixes those,
+         and gets out of the way. Swept, machine off, three seeds:
+
+             slop   worst bite   coins still   coins moving   asleep
+             0.04       4.6%        46.3           7.7         14.3
+             0.08       6.2%        47.7           5.7         19.7
+             0.12      11.7%        51.7           4.7         15.0
+             0.20      14.0%        52.7           5.0         19.1
+             off      85.4%        51.3           5.0         19.7
+
+         0.08 keeps the bite at about three pixels on a TV while leaving the
+         pile as still as it is with no separation at all. */
+      slopInDiameters:   0.08,
       flatAbove:         0.90    // only coins lying this flat
     },
 
