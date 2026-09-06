@@ -478,7 +478,24 @@ window.COIN_PUSHER_CONFIG = {
     linearDamping:  0.20,
     angularDamping: 3.50,
 
-    itemFriction:    0.32,  // coin on coin. Too high and the pile locks up
+    /* Coin on coin, and half of coin-on-floor (Rapier averages the two).
+
+       Raised from 0.32 because the coins that drift on their own are the ones
+       at the FRONT LIP - measured, the drifters sit 0.6 to 0.8 of a coin from
+       the edge while the settled ones sit further back. A coin half over the
+       edge is only marginally supported, and Rapier models no STATIC friction
+       at all, so any residual force slides it. More friction resists that.
+
+       Measured at rest over 15 seconds, three runs each:
+
+           0.32   median drift 0.0193 of a coin   13.7 coins drifting
+           0.80   median drift 0.0073             8.7
+           1.50   median drift 0.0951             29     (much worse)
+
+       0.8 won all three pairs. 1.5 is past the point where the pile locks up
+       and starts fighting itself. Delivery is unchanged at 3.2 coins a stroke
+       against 3.0, the chute is untouched, and overlap is the same. */
+    itemFriction:    0.80,
     itemRestitution: 0.04,  // keep low for a weighty feel
     shelfFriction:   1.00,  // the moving deck needs grip to carry its coins
     floorFriction:   0.30,  // fixed floor ahead of the shelf
