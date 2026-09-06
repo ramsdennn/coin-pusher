@@ -439,6 +439,21 @@ window.COIN_PUSHER_CONFIG = {
        rediscovered. */
     contactSkinInCoins: 0,
 
+    /* Coins are SOLID and may not occupy the same space. Enforced as a
+       constraint after each step rather than left to the solver, which is
+       soft-contact based and resolves penetration over time instead of
+       forbidding it - under a pushed pile it never catches up.
+
+       See separateCoins() in game.js for why the push is horizontal rather
+       than along the shortest escape. */
+    separate: {
+      enabled:           true,
+      iterations:        4,      // relaxation passes, for chains of coins
+      strength:          1.0,    // 1 = close the whole gap
+      maxPerStepInCoins: 0.05,   // never teleport a coin
+      flatAbove:         0.90    // only coins lying this flat
+    },
+
     contactHz: 180,
 
     /* --------------------------------------------------------------------

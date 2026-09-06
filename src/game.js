@@ -626,6 +626,86 @@ const ZERO = { x: 0, y: 0, z: 0 };
 
    Coins still in the chute are exempt: they are meant to tumble off the pegs,
    and that is what makes a drop unpredictable. */
+/* Hard separation: coins are solid and may not occupy the same space.
+
+   The solver permits overlap - it is a soft-contact engine, it resolves
+   penetration over time rather than forbidding it, and under a pile being
+   pushed it never catches up. Measured, a settled pile still had a pair
+   overlapping by 65% of a diameter and one pushed pile reached 96%: two coins
+   very nearly in the same place.
+
+   So this is a constraint rather than a force. After the solver has run, any
+   two coins that are closer vertically than their combined half-thickness AND
+   overlapping in plan are pushed apart in the horizontal plane until their
+   rims touch. Horizontally, not along the shortest escape: the shortest escape
+   is usually vertical, which would lift a coin into the air to fall back next
+   step, whereas sliding apart is stable under gravity.
+
+   Position only - velocities are left alone for the solver to sort out, so
+   this adds no energy.
+
+   Restricted to coins lying flat: for a tilted coin the disc-versus-disc test
+   below is not its shape, and correcting it would be guesswork. Coins in the
+   chute are exempt, being held on edge between the glass and the panel. */
+function separateCoins() {
+  const S = PHY.separate;
+  if (!S || !S.enabled) return;
+
+  const cand = sepScratch;
+  cand.length = 0;
+
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+    if (it.dropStep !== undefined) continue;
+    const q = it.body.rotation();
+    if (Math.abs(1 - 2 * (q.x * q.x + q.z * q.z)) < S.flatAbove) continue;
+    const d = DIMS.itemDims(it.typeId);
+    const t = it.body.translation();
+    cand.push({ it: it, x: t.x, y: t.y, z: t.z, r: d.radius, h: d.halfHeight });
+  }
+
+  const maxPush = DIMS.D * S.maxPerStepInCoins;
+
+  for (let pass = 0; pass < S.iterations; pass++) {
+    let moved = false;
+
+    for (let i = 0; i < cand.length; i++) {
+      const a = cand[i];
+      for (let j = i + 1; j < cand.length; j++) {
+        const b = cand[j];
+
+        if (Math.abs(a.y - b.y) >= a.h + b.h) continue;   // one sits on the other
+        let dx = a.x - b.x, dz = a.z - b.z;
+        let dh = Math.hypot(dx, dz);
+        const minH = a.r + b.r;
+        if (dh >= minH) continue;                          // rims already clear
+
+        /* Dead centre on top of each other: no direction to separate along,
+           so pick one from the index. Deterministic, so a replay stays a
+           replay. */
+        if (dh < 1e-6) { dx = Math.cos(i * 2.399); dz = Math.sin(i * 2.399); dh = 1; }
+
+        const push = Math.min((minH - dh) * 0.5 * S.strength, maxPush);
+        const ux = dx / dh, uz = dz / dh;
+        a.x += ux * push; a.z += uz * push;
+        b.x -= ux * push; b.z -= uz * push;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
+  for (let i = 0; i < cand.length; i++) {
+    const c = cand[i];
+    const t = c.it.body.translation();
+    if (Math.abs(t.x - c.x) > 1e-9 || Math.abs(t.z - c.z) > 1e-9) {
+      c.it.body.setTranslation({ x: c.x, y: t.y, z: c.z }, false);
+    }
+  }
+}
+
+const sepScratch = [];
+
 function settleContacts() {
   const S = PHY.staticFriction;
   if (!S || !S.enabled) return;
@@ -741,6 +821,7 @@ function physicsStep() {
   stepCount++;
   settleContacts();
   M.lifted += liftTrapped(ctx);
+  separateCoins();
   /* AFTER the guard, not before. The guard teleports items, and a coin pinned
      by the clamp would otherwise be dragged straight back to where the guard
      just moved it from. Run last and a guard move reads as a large jump, which
