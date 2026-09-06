@@ -361,7 +361,16 @@ window.COIN_PUSHER_CONFIG = {
        actually reaches zero. 8 stops a 1 rad/s spin in about an eighth of a
        second, which is roughly how a coin spun on a table behaves. */
     staticFriction: {
-      enabled:   true,
+      /* OFF. This whole pass - Coulomb spin friction, rock damping, the
+         velocity quietening before each step - existed to fight the prism
+         collider's invented contacts. With a true cylinder it is not needed
+         and it is very slightly harmful: on seeds where Rapier puts all 62
+         coins to sleep by itself, switching this on dropped that to 26.
+
+         Kept, with its numbers, because it is the right shape of fix if a
+         future change ever brings the problem back. Nothing in it was wrong
+         except that it was treating a symptom. */
+      enabled:   false,
 
       /* Radians per second of spin shed each second, Coulomb style: a fixed
          amount removed per step rather than a proportion, so a spin actually
@@ -524,7 +533,17 @@ window.COIN_PUSHER_CONFIG = {
     },
 
     separate: {
-      enabled:           true,
+      /* OFF. A hard positional constraint that shoved interpenetrating coins
+         apart every step, because the prism collider let them merge and never
+         pushed them out again. The cylinder resolves a 65%-deep overlap on
+         its own in well under a second, so this now has nothing to do, and
+         anything that nudges a coin every step is something that stops the
+         pile ever falling asleep.
+
+         Left in place with its tuning intact - it took a lot of measuring to
+         stop it slinging coins off stacks and shaking them - in case a future
+         collider change needs it again. */
+      enabled:           false,
       iterations:        4,      // relaxation passes, for chains of coins
       /* Gentle on purpose. A correction spread over several steps disturbs
          a resting pile far less than one that closes the whole gap at once,
@@ -678,12 +697,61 @@ window.COIN_PUSHER_CONFIG = {
 
     lengthUnit: 0.2,
 
-    /* A disc's collider is a many-sided prism, not a mathematical
-       cylinder. Rapier's cylinder-vs-cylinder contacts collapse to a
-       single point and the pile never stops shivering; flat facets give
-       it a proper multi-point manifold. 16 sides is visually identical.
-       Set to 0 to go back to a true cylinder and see the difference. */
-    discColliderSides: 16,
+    /* 0 = a true cylinder. Anything 3 or more builds the disc as a convex
+       hull prism with that many sides instead.
+
+       THIS IS THE SETTING THAT STOPS THE COINS MOVING ON THEIR OWN, and the
+       comment that used to sit here said the exact opposite, so it is worth
+       being precise about what was measured.
+
+       The prism is broken. Not marginal - broken. Put two coins alone in the
+       world, nothing else, one starting 65% sunk into the other, and let it
+       run for ten seconds:
+
+           16-gon + chamfer   never separates, passes THROUGH, spins at
+                              3.9 rad/s forever, neither body ever sleeps
+           16-gon, no chamfer  same
+           32-gon + chamfer    same, spins harder
+           true cylinder       resolves to a clean stack, both asleep,
+                               zero spin - from either starting depth
+
+       Two coins. Nothing else in the world. Perpetual motion. Rapier's
+       hull-vs-hull contact generation cannot resolve a deep overlap between
+       two coaxial prisms, so it invents a normal, the pair never separates,
+       and because every coin in a pile is in one contact island, one such
+       pair keeps all sixty-odd awake and jittering. That was the shimmer.
+
+       With a true cylinder Rapier has an analytic contact for the case and
+       the whole thing evaporates. Eight seeded piles, 496 coins, settled and
+       then watched for five seconds:
+
+           16-gon + chamfer, with the stabilisation passes below
+                              3 of 62 asleep, worst coin turned 172 deg
+           true cylinder, no stabilisation passes at all
+                              8/8 piles fully asleep, 496/496 coins,
+                              worst coin turned 0.1 deg
+
+       Play a real session and switch the machine off and the pile does not
+       move by one part in a hundred thousand of a coin. */
+    discColliderSides: 0,
+
+    /* Rim rounding for the true cylinder, as a fraction of a coin's HALF
+       thickness. A real coin's edge is a rounded band, not a sharp corner,
+       and a rounded rim is a knife edge to balance on - which is the whole
+       reason a dropped coin falls flat instead of standing up. 0 for a sharp
+       cylinder. Ignored when discColliderSides is 3 or more.
+
+       A sharp cylinder brings back the on-edge landings the prism's chamfer
+       existed to cure - measured over 75 tracked drops, 10.8% of coins ended
+       up standing on their rim. Rounding the rim fixes it without touching
+       the stillness above:
+
+           sharp        10.8% on edge
+           round 0.5     8.0%
+           round 0.9     2.7%
+
+       0.9 is very nearly a half-torus rim, which is what a real coin has. */
+    discRimRound: 0.9,
 
     /* How much of the radius the flat faces are pulled in by, leaving the
        rim as a ridge rather than a flat band.
@@ -724,13 +792,24 @@ window.COIN_PUSHER_CONFIG = {
        Set 0 for the old square-rimmed prism. */
     discRimChamfer: 0.08,
 
-    /* Damping stands in for the spin friction a real coin gets from its
-       contact patch, which a point-contact solver does not model at all:
-       without it a coin spinning on its own axis never slows down. Too
-       high and coins get sluggish about tipping over the lip, so this is
-       a knob to revisit once the shelf is moving. */
-    linearDamping:  0.20,
-    angularDamping: 3.50,
+    /* Damping used to stand in for the spin friction the prism collider never
+       generated - a coin spinning on its own axis otherwise never slowed down.
+       It was 0.20 / 3.50, which is enormous, and it was propping up a broken
+       collider rather than modelling anything.
+
+       The cylinder does not need it. Measured across five seeds for stillness
+       and a hundred tracked drops for landing:
+
+           0.20 / 3.50   5/5 piles asleep   10% land on edge
+           0.02 / 0.30   5/5 piles asleep    3% land on edge
+           0.05 / 0.50   5/5 piles asleep    7% land on edge
+
+       Stillness is untouched at every setting - it was never damping that was
+       holding the pile together - and the heavy damping was making coins
+       sluggish about tipping flat when they fall off the shelf. Delivery is
+       unchanged at 3.7 coins a stroke. */
+    linearDamping:  0.02,
+    angularDamping: 0.30,
 
     /* Coin on coin, and half of coin-on-floor (Rapier averages the two).
 
@@ -790,7 +869,11 @@ window.COIN_PUSHER_CONFIG = {
        is not movement, it is shimmer. Purely a drawing decision; the physics
        is untouched. Raise if the pile still shivers, lower if slow genuine
        motion looks steppy. */
-    renderDeadzone:      0.0012,   // world units, coin is 0.24 across
+    /* Was 0.0012, hiding solver noise that no longer exists: a sleeping body
+       does not move at all, so at rest this now does nothing. Kept small and
+       non-zero purely so a coin creeping under the pusher is not redrawn for
+       sub-micron changes. */
+    renderDeadzone:      0.0002,   // world units, coin is 0.24 across
     renderDeadzoneAngle: 0.00002,  // 1 - dot(q1,q2); about 0.4 degrees
 
 

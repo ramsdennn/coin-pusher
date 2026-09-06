@@ -27,6 +27,7 @@ let renderer, scene, camera, hud;
 let acc = 0, last = 0, fps = 0;
 let stepCount = 0, presettleSteps = 0;
 let phase = 0, running = CFG.shelf.startRunning;
+let autoStep = true;   // render loop drives physics; the harness takes this off it
 
 const M = {
   strokes: 0,
@@ -1062,7 +1063,11 @@ function frame(now) {
 
   acc += dt;
   let steps = 0;
-  while (acc >= PHY.timestep && steps < 5) {
+  /* The measurement harness turns this off so it can own the step count.
+     Without it a panel's own stepping is interleaved with the render loop's
+     and every number it produces is measuring some other number of steps. */
+  if (!autoStep) acc = 0;
+  while (autoStep && acc >= PHY.timestep && steps < 5) {
     physicsStep();
     acc -= PHY.timestep;
     steps++;
@@ -1301,6 +1306,19 @@ window.startCoinPusher = function (teamA, teamB) {
       setTubeColour: function (i, hex) { return setTubeColour(ctx, i, hex); },
       dropInto: dropInto,
       setRunning: function (v) { running = v; },
+      setAutoStep: function (v) { autoStep = v; },
+      createItem: function (typeId, x, y, z, yaw, opts) {
+        const it = createItem(ctx, typeId, x, y, z, yaw, opts);
+        scene.add(it.mesh);
+        return it;
+      },
+      clearItems: function () {
+        ctx.items.forEach(function (it) {
+          scene.remove(it.mesh);
+          ctx.world.removeRigidBody(it.body);
+        });
+        ctx.items.length = 0;
+      },
       getPhase: function () { return phase; }
     };
 

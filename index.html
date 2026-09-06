@@ -97,9 +97,51 @@
   startBtn.disabled = true;
   startBtn.textContent = 'LOADING...';
 
+  /* ------------------------------------------------------------------
+     MEASUREMENT HARNESS (dev only, does nothing unless you ask for it)
+
+     ?cfg={"physics":{"lengthUnit":1.0}}   deep-merges JSON into the config
+                                           AFTER config.js loads, so an A/B
+                                           is one URL rather than an edit,
+                                           a save and a hand-reload.
+     ?auto=1                               skips the team-name screen.
+
+     Both exist because comparing two settings honestly needs the same pile,
+     the same warm-up and the same number of steps on each side, and doing
+     that by hand is how you end up comparing a cold first run against a warm
+     second one and believing the difference.
+     ------------------------------------------------------------------ */
+  const QS = new URLSearchParams(location.search);
+
+  function deepMerge(target, patch) {
+    for (const k of Object.keys(patch)) {
+      const v = patch[k];
+      if (v && typeof v === 'object' && !Array.isArray(v) &&
+          target[k] && typeof target[k] === 'object' && !Array.isArray(target[k])) {
+        deepMerge(target[k], v);
+      } else {
+        target[k] = v;
+      }
+    }
+    return target;
+  }
+
+  function applyOverrides() {
+    const raw = QS.get('cfg');
+    if (!raw) return;
+    const patch = JSON.parse(raw);
+    deepMerge(window.COIN_PUSHER_CONFIG, patch);
+    window.COIN_PUSHER_OVERRIDES = patch;
+    console.log('[cfg] overrides applied:', patch);
+  }
+
   loadScript('src/config.js')
+    .then(applyOverrides)
     .then(() => import('@app/game'))
-    .then(() => { startBtn.disabled = false; startBtn.textContent = 'START'; })
+    .then(() => {
+      startBtn.disabled = false; startBtn.textContent = 'START';
+      if (QS.has('auto')) begin();
+    })
     .catch(err => {
       startBtn.textContent = 'FAILED TO LOAD';
       document.getElementById('fs').textContent =

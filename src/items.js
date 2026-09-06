@@ -99,7 +99,23 @@ export function createItem(ctx, typeId, x, y, z, yaw, opts) {
    on their edge when a real one would fall over. */
 function discCollider(ctx, d) {
   const n = PHY.discColliderSides | 0;
-  if (n < 3) return ctx.RAPIER.ColliderDesc.cylinder(d.halfHeight, d.radius);
+
+  if (n < 3) {
+    /* A true cylinder. See physics.discColliderSides for why this is now the
+       default and the prism is the fallback rather than the other way round.
+
+       physics.discRimRound rounds the rim, which is what a real coin's edge
+       actually is. Rapier builds it as a Minkowski sum, so the cylinder has
+       to be shrunk by the border radius first or the coin comes out fatter
+       than it is drawn. */
+    const rr = Math.min((PHY.discRimRound || 0) * d.halfHeight,
+                        d.halfHeight * 0.9, d.radius * 0.4);
+    if (rr > 0) {
+      return ctx.RAPIER.ColliderDesc.roundCylinder(
+        d.halfHeight - rr, d.radius - rr, rr);
+    }
+    return ctx.RAPIER.ColliderDesc.cylinder(d.halfHeight, d.radius);
+  }
 
   /* Circumscribe, so the prism has the same width across the flats as the
      drawn cylinder does across its diameter and the pile packs the same. */
