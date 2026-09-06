@@ -400,6 +400,23 @@ window.COIN_PUSHER_CONFIG = {
       fallSpeed: 0.45    // above this downward speed, leave the coin alone
     },
 
+    /* Contact skin: a soft margin, in coin diameters, making a contact engage
+       just BEFORE the shapes touch. In principle it steadies a stack, since
+       the contact is live by the time weight arrives instead of being found
+       after the shapes have interpenetrated.
+
+       OFF, because measured it is either useless or catastrophic. Five-seed
+       panel, coins visibly moving with the machine off:
+
+           0       2.8 visible    42.4 still
+           0.005   3.2            39.6
+           0.02   52.6             1.6      the whole pile churns
+           0.05   53.8             0
+
+       Left plumbed in at zero so the result is on record rather than being
+       rediscovered. */
+    contactSkinInCoins: 0,
+
     contactHz: 180,
 
     /* --------------------------------------------------------------------

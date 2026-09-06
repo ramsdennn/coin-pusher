@@ -71,6 +71,12 @@ export function createItem(ctx, typeId, x, y, z, yaw, opts) {
     ? ctx.RAPIER.ColliderDesc.cuboid(d.hx, d.hy, d.hz)
     : discCollider(ctx, d);
 
+  /* A contact skin makes contacts engage a hair BEFORE the shapes touch, which
+     is what steadies a stack - see physics.contactSkinInCoins in config. */
+  if (PHY.contactSkinInCoins && desc.setContactSkin) {
+    desc.setContactSkin(DIMS.D * PHY.contactSkinInCoins);
+  }
+
   ctx.world.createCollider(
     desc.setDensity(type.density)
       .setFriction(PHY.itemFriction)
