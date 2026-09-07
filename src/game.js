@@ -449,8 +449,7 @@ function collectFallen() {
     const t = it.body.translation();
     if (t.y < DIMS.tierLast.y - DIMS.D) {
       M.fallen++;
-      /* Something went over the edge - the moment the music was held for. */
-      endResolve();
+      noteDelivery();
       M.fallenByType[it.typeId] = (M.fallenByType[it.typeId] || 0) + 1;
       scene.remove(it.mesh);
       ctx.world.removeRigidBody(it.body);
@@ -517,7 +516,7 @@ let resolving = false;
    frozen playfield and, on resume, a drop that never happened is already over.
    Counting steps means the timer only advances when the coin does. */
 let resolveDeadline = 0;     // stepCount at which to give up; 0 when not resolving
-let resolveEarliest = 0;     // before this step, a fall is not the payoff
+let quietSince      = 0;     // stepCount of the last delivery; 0 = not counting yet
 
 function paintZones() {
   const A = CFG.arming;
@@ -549,28 +548,25 @@ export function selectZone(zone) {
     /* litZone is deliberately NOT cleared - the lights hold through the fall
        and go out with the music. */
 
-    /* The music steps aside for the drop sting and comes back under the fall.
-       How long it is away is the clip's own length, so replacing the file
-       re-times this on its own. */
-    stopMusic(A.duckFadeOut);
-    playCue('drop', 0);
+    /* A drop sting, if one is configured, plays alone: the bed steps out of
+       its way and comes back when the coin clears the chute. There is no
+       sting at the moment - see audio.samples in config for why it was taken
+       out - so the bed simply runs straight through the release. */
+    if (hasSample('drop')) {
+      stopMusic(A.duckFadeOut);
+      playCue('drop', 0);
+      const gap = sampleDuration('drop');
+      musicResumeAt = gap > 0 ? stepCount + gap / PHY.timestep : 0;
+    }
 
     droppedItem = dropInto(zone);
 
-    /* The bed comes back when the COIN clears the chute, not when the clip
-       runs out. Measured, the drop sting is 3.41s against a 1.94s fall, so
-       waiting for the file left the sting playing over every peg strike on the
-       way down - which is exactly why the pegs could not be heard.
-
-       The clip's length is still the backstop: if that coin never clears the
-       chute, because it jammed or was removed, this is what stops the sequence
-       hanging. */
-    const gap = sampleDuration('drop');
-    musicResumeAt = gap > 0 ? stepCount + gap / PHY.timestep : 0;
-    if (!musicResumeAt) playMusic('tense', { loop: true, fadeIn: A.duckFadeIn });
     resolving = true;
-    resolveEarliest = stepCount + A.minResolveSeconds    / PHY.timestep;
     resolveDeadline = stepCount + A.resolveTimeoutSeconds / PHY.timestep;
+    /* NOT counting quiet yet. The window starts when the coin lands, so a
+       stroke that happens to end while it is still in the air cannot finish
+       the sequence before the coin has had a chance to do anything. */
+    quietSince = 0;
     return;
   }
 
@@ -580,11 +576,11 @@ export function selectZone(zone) {
   litZone   = zone;
   resolving = false;
   resolveDeadline = 0;
-  resolveEarliest = 0;
   /* A new selection supersedes a pending un-duck: start the bed now rather
      than letting the old timer bring it in again a moment later. */
   musicResumeAt = 0;
   droppedItem = null;
+  quietSince = 0;
   stopCue(CFG.arming.stingFadeOut);
   paintZones();
   playMusic('tense', { loop: true });
@@ -593,14 +589,11 @@ export function selectZone(zone) {
 /* Called when a coin goes over the front edge - the payoff the music has been
    waiting for - and from the timeout, so a drop that delivers nothing does not
    leave the bed running for ever. */
-function endResolve(fromTimeout) {
+function endResolve() {
   if (!resolving) return;
-  /* A coin going over the edge in the first couple of seconds is one the
-     pusher was already carrying, not the payoff for this drop. Ignore it. */
-  if (!fromTimeout && stepCount < resolveEarliest) return;
   resolving = false;
   resolveDeadline = 0;
-  resolveEarliest = 0;
+  quietSince = 0;
   musicResumeAt = 0;
   droppedItem = null;
   if (armedZone < 0) {
@@ -622,19 +615,39 @@ function unduck() {
 }
 
 function tickArming() {
+  const A = CFG.arming;
+
   if (droppedItem) {
-    /* Gone from the world - collected, or cleared away - so it will never
-       report clearing the chute. */
-    if (ctx.items.indexOf(droppedItem) < 0) unduck();
-    else if (droppedItem.body.translation().y <= DIMS.chuteBottom) unduck();
+    /* The coin is down. Everything from here is the outcome, so this is where
+       the quiet window starts counting. Gone from the world counts as landed
+       too - collected, or cleared away - since it will never report arriving. */
+    const gone = ctx.items.indexOf(droppedItem) < 0;
+    if (gone || droppedItem.body.translation().y <= DIMS.chuteBottom) {
+      quietSince = stepCount;
+      unduck();
+    }
   }
 
   /* Bring the bed back once the drop sting has run its course - but only if
      the drop has not already resolved in the meantime, which would mean the
      music was about to stop anyway. */
   if (musicResumeAt && stepCount >= musicResumeAt) unduck();
-  if (!resolving || !resolveDeadline) return;
-  if (stepCount >= resolveDeadline) endResolve(true);
+  if (!resolving) return;
+
+  /* A WHOLE STROKE HAS PASSED WITH NOTHING GOING OVER THE EDGE, so the machine
+     has stopped delivering and the outcome is known. See arming.quietStrokes
+     for why it is a stroke and why anything shorter brings back the bug this
+     replaced - stopping at the first coin, a fifth of the way through. */
+  const quietSteps = A.quietStrokes * (CFG.shelf.periodMs / 1000) / PHY.timestep;
+  if (quietSince && stepCount - quietSince >= quietSteps) { endResolve(); return; }
+
+  if (resolveDeadline && stepCount >= resolveDeadline) endResolve();
+}
+
+/* A coin went over the edge: the machine is still delivering, so the quiet
+   window restarts from here. */
+function noteDelivery() {
+  if (resolving) quietSince = stepCount;
 }
 
 export function armedZoneIndex() { return armedZone; }

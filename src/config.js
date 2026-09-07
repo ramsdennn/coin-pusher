@@ -261,19 +261,18 @@ window.COIN_PUSHER_CONFIG = {
        peg and surface are measured off real footage. The other three are
        derived from them by ear - see the note in src/audio.js. */
     levels: {
-      /* Above 1.0 deliberately: the pegs are the sound the whole drop is built
-         around and they were being lost under the drop sting. The limiter is
-         what stops this simply making everything louder.
+      /* Well above 1.0, deliberately. The pegs are the sound the whole drop is
+         built around and everything else in the mix sits under them now. The
+         limiter is what stops this simply making the machine louder.
 
-         Note that the real cure was cutting the sting short - see
-         arming.stingFadeOut. If the pegs now sound harsh rather than
-         inaudible, this is the number to pull back, not the sting. */
-      peg:     1.60,
+         It took three goes to get here, and the first two were treating the
+         symptom: the pegs were not quiet, they were being covered by a 3.41s
+         sting playing over the whole fall. That sting is gone, so this is now
+         doing what it says. */
+      peg:     2.20,
       surface: 0.70,
       tense:   0.55,      // a bed, not a feature - it sits under the machine
-      /* Quiet. It was at 1.00 and buried the coin rattling down the pegs,
-         which is the sound the drop is actually about. */
-      drop:    0.22,
+      drop:    0.22,      // unused unless a drop sting is put back in samples
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -319,11 +318,18 @@ window.COIN_PUSHER_CONFIG = {
     samples: {
       peg:     'assets/audio/peg-hit.mp3',
       surface: 'assets/audio/surface-hit.mp3',
-      /* Held while a zone is armed and all the way through the fall, until a
-         coin goes over the edge. Loops - a player can deliberate for as long
-         as they like and the bed must not just stop. */
-      tense:   'assets/audio/tense.mp3',
-      drop:    'assets/audio/drop.mp3'
+      /* Held while a zone is armed and all the way through the fall, until the
+         outcome is settled. Loops - a player can deliberate for as long as
+         they like and the bed must not just stop. */
+      tense:   'assets/audio/tense.mp3'
+
+      /* NO DROP STING. There was one and it is gone: at 3.41s against a 1.94s
+         fall it played straight over the coin rattling down the pegs, which is
+         the sound the drop is actually about.
+
+         The machinery for it is still here and still works - put a file back
+         as `drop:` and it returns, along with the music ducking out of its way
+         and back in when the coin lands. Nothing else needs changing. */
     },
 
     /* Contact force below which the ENGINE does not even report a peg hit.
@@ -1180,22 +1186,46 @@ window.COIN_PUSHER_CONFIG = {
        chopping a sound off mid-waveform clicks. */
     stingFadeOut: 0.09,
 
-    /* The music keeps playing after the coin is released, all the way through
-       the fall, and stops when a coin goes over the front edge - the payoff.
+    /* WHEN THE OUTCOME IS SETTLED.
 
-       But NOT the first coin over the edge regardless of when. The pusher is
-       running the whole time and coins go over on most strokes, so without a
-       floor the bed would be cut off a fraction of a second after release by
-       something the player had nothing to do with. Hold it for at least this
-       long, which is about the time the dropped coin needs to reach the
-       bottom of the chute - measured at 1.94s - so the music always covers
-       the fall itself. */
-    minResolveSeconds: 2.2,
+       The old rule was "stop at the first coin over the edge", and it was
+       badly wrong. Measured across four drops, the first coin goes over at
+       3.2 to 3.8 seconds - but coins keep going over until 10 to 18 seconds.
+       The music was ending about a fifth of the way through the result.
 
-    /* If NOTHING goes over the edge it would otherwise play for ever, so it
-       gives up after this long. Generous: a coin can rattle down the chute,
-       land, and be pushed for a stroke or two before anything falls. */
-    resolveTimeoutSeconds: 12
+       Falls are not spread evenly. They arrive in CLUSTERS, one per pusher
+       stroke, and the stroke is 7 seconds:
+
+           seed 1   3.2, 3.8,  9.5, 18.0
+           seed 2   3.8, 3.9,  9.5, 17.8
+           seed 3   3.6, 3.8, 16.5
+           seed 4   3.8, 10.0, 10.4
+
+       So the machine delivers its answer a stroke at a time, and the honest
+       statement of "it has finished" is A WHOLE STROKE PRODUCED NOTHING. That
+       is what this is: the quiet window is one stroke, in the machine's own
+       rhythm rather than a number picked by feel.
+
+       Anything shorter ends BETWEEN clusters and brings the original bug
+       straight back, because the gaps between clusters are a stroke wide. */
+    quietStrokes: 1.0,
+
+    /* Coming to rest is NOT usable as the signal, which is worth recording so
+       nobody reaches for it later. With the pusher running the pile never
+       settles: 13 to 14 coins are moving at any moment - the ones riding the
+       deck - pulsing to 40 or 50 on every stroke whether or not anything
+       falls. There were motion spikes at 18s and 25s in a run where nothing
+       went over at all. Falls are the only reliable signal here. */
+
+    /* Hard stop. A true backstop now rather than a participant: it only fires
+       if the machine delivers nothing at all. It also has to exist because
+       coins go over on their own about once every 13 seconds even with no
+       drop, so without a cap a run of background falls could chain the quiet
+       window along indefinitely.
+
+       Was 12s, which was cutting off three runs out of four - they still had
+       coins falling at 16 to 18 seconds. */
+    resolveTimeoutSeconds: 35
   },
 
   /* --------------------------------------------------------------------
