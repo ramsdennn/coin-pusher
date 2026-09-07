@@ -614,13 +614,22 @@ window.COIN_PUSHER_CONFIG = {
     min: 0,
     max: 9999,
 
-    /* Bottom right, under the scoreboards. Bounded on both axes like the
-       right-hand column, so a short window shrinks it rather than pushing it
-       off the screen - the same trap the logo and the panels fell into. */
-    widthFraction:     0.155,
-    maxHeightFraction: 0.26,
-    centreAtScreenX:   0.805,
-    bottomFraction:    0.060
+    /* Deliberately smaller than a scoreboard, and quieter. It is a setting the
+       host reaches for occasionally, not something the room should be reading,
+       so the text is a smaller fraction of the box as well as the box being
+       smaller. */
+    labelSize: 0.100,   // of the box's height
+    valueSize: 0.300,
+
+    /* Tucked into the bottom-right CORNER rather than centred under the
+       scoreboards, anchored to the right edge with a margin so it never sits
+       hard against it. Bounded on both axes like the right-hand column, so a
+       short window shrinks it rather than pushing it off screen - the trap the
+       logo and the panels both fell into. */
+    widthFraction:     0.105,
+    maxHeightFraction: 0.20,
+    rightFraction:     0.030,
+    bottomFraction:    0.055
   },
 
   /* What actually drops when the host clicks a drop zone. */

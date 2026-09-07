@@ -381,9 +381,14 @@ def swatch_sheet():
 TEAM_A = 0x2F7550          # G2, mid green
 TEAM_B = 0xCE6067          # R4, light red
 
-# The points-per-coin box. Deliberately the ORIGINAL blue - it is a setting,
-# not a team, and giving it either team's colour would say it belonged to them.
-NEUTRAL = 0x2C3E63
+# The points-per-coin box: near-black. It is a setting rather than part of the
+# game, and it should sit quietly in the corner - either team's colour would
+# say it belonged to them, and the blue it started as was still bright enough
+# to read as a third scoreboard.
+#
+# Not pure black. The gradient still has to show, or the screen stops looking
+# like a lit panel behind glass and becomes a hole cut in the bezel.
+NEUTRAL = 0x232327
 
 
 def document(panels, w, h, background=None, base=0x2C3E63):

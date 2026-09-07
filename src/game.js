@@ -2083,9 +2083,8 @@ function makePointsBox() {
     'width:min(' + (P.widthFraction * 100).toFixed(2) + 'vw,' +
                    (P.maxHeightFraction * 100).toFixed(2) + 'vh);' +
     'aspect-ratio:' + S.aspect + ';' +
-    'left:' + (P.centreAtScreenX * 100).toFixed(3) + '%;' +
+    'right:' + (P.rightFraction * 100).toFixed(3) + '%;' +
     'bottom:' + (P.bottomFraction * 100).toFixed(3) + '%;' +
-    'transform:translateX(-50%);' +
     'pointer-events:auto;' +
     'background:url(' + P.src + ') center/100% 100% no-repeat;';
   box.style.containerType = 'size';
@@ -2112,7 +2111,7 @@ function makePointsBox() {
   label.style.cssText =
     'width:100%;text-align:center;letter-spacing:0.05em;' +
     'text-shadow:' + shadow + ';white-space:nowrap;' +
-    'font-size:' + (S.nameSize * 68).toFixed(2) + 'cqh;';
+    'font-size:' + (P.labelSize * 100).toFixed(2) + 'cqh;';
 
   /* A real input, styled to look like the score. type=text with a numeric
      inputmode rather than type=number: the spinner arrows are ugly at this
@@ -2125,7 +2124,7 @@ function makePointsBox() {
     'width:100%;text-align:center;background:transparent;border:0;outline:0;' +
     'font-family:inherit;font-weight:bold;color:#fff;padding:0;' +
     'text-shadow:' + shadow + ';' +
-    'font-size:' + (S.scoreSize * 100).toFixed(2) + 'cqh;';
+    'font-size:' + (P.valueSize * 100).toFixed(2) + 'cqh;';
 
   function commit() {
     const n = setCoinPoints(parseInt(input.value, 10));
