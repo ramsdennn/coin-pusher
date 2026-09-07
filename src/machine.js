@@ -523,13 +523,59 @@ export function setTubeColour(ctx, index, colour) {
   return true;
 }
 
+/* Drop any peg in a row that would leave a gap a coin cannot fall through.
+
+   The config states this rule for the spacing BETWEEN ROWS - "rows must sit
+   further apart than a coin is wide, or coins jam between two rows at once" -
+   and derives the rows so the machine cannot be configured into that state.
+   The same rule applies ACROSS a row and was never enforced there, which is
+   how the edge-peg row ended up with twelve pegs, gaps of 0.334 of a coin to
+   each side wall and 0.667 between neighbours. A coin is 1.0 across. It
+   cannot pass any of those, so it arches across them and stays there for
+   good - and unlike a coin balanced on a peg, nothing dislodges it, because
+   it is not balanced, it is supported.
+
+   Worked outward from the centreline rather than left to right, so a
+   symmetric row of candidates stays symmetric after filtering. Filtering left
+   to right keeps a peg on one side and drops its mirror on the other, which
+   is instantly visible on a machine this wide. */
+function spacePegRow(xs, minGap, halfWidth, pegR) {
+  const abs = [];
+  xs.forEach(function (x) {
+    const a = Math.abs(x);
+    if (!abs.some(function (b) { return Math.abs(b - a) < 1e-6; })) abs.push(a);
+  });
+  abs.sort(function (a, b) { return a - b; });
+
+  const kept = [];
+  let prevEdge = null;                        // outer edge of the last peg kept
+  abs.forEach(function (a) {
+    if (a < 1e-6) { kept.push(0); prevEdge = pegR; return; }
+    /* With nothing kept yet the neighbour is this peg's own mirror, so the
+       gap to clear is the one straddling the centreline. */
+    const inboard = (prevEdge === null) ? -(a - pegR) : prevEdge;
+    if ((a - pegR) - inboard < minGap) return;
+    kept.push(a);
+    prevEdge = a + pegR;
+  });
+  while (kept.length && halfWidth - (kept[kept.length - 1] + pegR) < minGap) kept.pop();
+
+  const out = [];
+  kept.forEach(function (a) {
+    if (a < 1e-6) out.push(0); else { out.push(-a); out.push(a); }
+  });
+  return out.sort(function (p, q) { return p - q; });
+}
+
 export function buildMachine(ctx) {
   const width = DIMS.width, D = DIMS.D, deckThick = DIMS.deckThick;
   const parts = { shelves: [], panels: [] };
 
   /* Collider handles of the drop-chute pegs, so a contact event can be
-     recognised as a coin striking one. */
+     recognised as a coin striking one, and their centres, so the unjam pass
+     can work out which peg a coin has become impaled on. */
   ctx.pegColliders = new Set();
+  ctx.pegPositions = [];
 
   TIERS.forEach(function (tier) {
     if (DIMS.deckStep > 0) {
@@ -845,7 +891,14 @@ export function buildMachine(ctx) {
         }
       });
 
-      xs.forEach(function (px) {
+      const spaced = spacePegRow(
+        xs,
+        D * CFG.chute.minPegGapInCoins,
+        DIMS.width / 2,
+        DIMS.pegRadius
+      );
+
+      spaced.forEach(function (px) {
         const m = new THREE.Mesh(pegGeo, pegMat);
         m.position.set(px, py, DIMS.panelZ);
         ctx.scene.add(m);
@@ -878,8 +931,10 @@ export function buildMachine(ctx) {
             .setContactForceEventThreshold(CFG.audio.pegForceThreshold),
           b
         );
-        /* The audio side needs to recognise a peg when an event names one. */
+        /* The audio side needs to recognise a peg when an event names one;
+           the unjam pass needs to know where they are. */
         ctx.pegColliders.add(pegCol.handle);
+        ctx.pegPositions.push({ x: px, y: py });
         parts.pegs.push(m);
       });
     }

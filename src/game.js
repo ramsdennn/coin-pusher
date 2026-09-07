@@ -37,6 +37,7 @@ const M = {
   fallenByType: {},
   dropped: 0,
   pegHits: 0,          // peg sounds actually played, for the HUD
+  unjammed: 0,         // coins slid off a peg they were impaled on
   lifted: 0,
   landed: 0,
   jammed: 0,
@@ -522,6 +523,114 @@ function trackChute() {
     } else if (stepCount - it.dropStep > 600) {
       M.jammed++;
       it.dropStep = undefined;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------
+   UNJAM THE CHUTE
+
+   Slide a coin off a peg it has become impaled on. See chute.unjam in config
+   for the mechanism and for the list of physics settings that were measured
+   NOT to fix it - it is geometry, not friction and not sleep, so no amount of
+   tuning will ever undo it and it has to be undone by hand.
+
+   Horizontally, because horizontal is the one direction that is not blocked:
+   the shortest way out of the overlap is sideways along z, and the chute
+   glass and back panel are exactly there.
+   ------------------------------------------------------------------------- */
+function unjamChute() {
+  const U = CFG.chute.unjam;
+  if (!U || !U.enabled || !ctx.pegPositions) return;
+
+  const slop = DIMS.D * U.slopInCoins;
+
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+
+    const b = it.body;
+    const t = b.translation();
+    /* Position, NOT dropStep. trackChute clears dropStep once a coin has been
+       up here for 600 steps, to stop it counting the same jam forever - so
+       keying off dropStep meant this pass gave up on exactly the coins that
+       most needed it, the moment they were declared jammed. */
+    if (t.y <= DIMS.chuteBottom) { it.stuckSteps = 0; it.unjamTries = 0; continue; }
+
+    const v = b.linvel();
+    if (Math.hypot(v.x, v.y, v.z) > U.stuckSpeed) { it.stuckSteps = 0; continue; }
+
+    it.stuckSteps = (it.stuckSteps || 0) + 1;
+    if (it.stuckSteps < U.stuckSteps) continue;
+
+    /* Which peg is inside it? The coin falls face-on, so the test is a flat
+       circle-in-circle one in the x-y plane; the peg spans the whole depth so
+       z never enters into it. */
+    const d = DIMS.itemDims(it.typeId);
+    const need = d.radius + DIMS.pegRadius;
+
+    let freed = false;
+    for (let p = 0; p < ctx.pegPositions.length; p++) {
+      const peg = ctx.pegPositions[p];
+      const dx = t.x - peg.x, dy = t.y - peg.y;
+      if (Math.abs(dx) > need || Math.abs(dy) > need) continue;
+      if (dx * dx + dy * dy >= need * need) continue;
+
+      /* Horizontal distance that clears the peg at this height. If the peg
+         sits above or below the coin's centre by more than the clearance
+         needed, any sideways move at all frees it. */
+      const span = need * need - dy * dy;
+      const outX = span > 0 ? Math.sqrt(span) : 0;
+      const dir  = dx >= 0 ? 1 : -1;
+
+      b.setTranslation({ x: peg.x + dir * (outX + slop), y: t.y, z: t.z }, true);
+      /* A touch of downward speed so it resumes falling rather than hanging
+         where it was put. */
+      b.setLinvel({ x: dir * 0.15, y: -0.3, z: 0 }, true);
+      b.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      b.wakeUp();
+      it.stuckSteps = 0;
+      M.unjammed++;
+      freed = true;
+      break;
+    }
+
+    /* Nothing impaling it, and it is still not moving. Coins can also ARCH -
+       two or three of them bridging a gap, each holding the others up, which
+       is how grain bridges in a silo and how this jams in a corner. The peg
+       spacing rule should have removed the places that can happen, but an
+       arch needs no peg at all, so this is the catch-all: shove it and let
+       the pile fall in on itself.
+
+       Deliberately weak and sideways-biased. It only has to break the
+       symmetry an arch depends on; anything stronger would fling coins around
+       the chute and be far more obvious than the jam it is fixing. */
+    if (!freed && it.stuckSteps >= U.stuckSteps + U.archExtraSteps) {
+      /* MOVE it, do not push it. This is the same lesson as the impalement
+         above and it was learned twice: a wedged coin does not respond to
+         velocity at all. Measured on real survivors, the earlier version set
+         a velocity and escalated the strength, and coins sat through 28, 33
+         and 34 attempts without shifting by so much as a millimetre. Geometry
+         does not care how hard you push at it.
+
+         So displace it bodily: mostly downward, since an arch is broken by
+         dropping one of its stones below the line, with a sideways component
+         that alternates each attempt so a coin that needs to go the other way
+         gets a turn. Escalating, because the first move is deliberately small
+         - almost every arch gives at the first touch, and a big jump is far
+         more visible than the jam it fixes. */
+      it.unjamTries = (it.unjamTries || 0) + 1;
+      const scale = Math.min(U.nudgeMaxScale, 1 + (it.unjamTries - 1) * 0.6);
+      const side  = (it.unjamTries % 2 ? 1 : -1) * (t.x >= 0 ? -1 : 1);
+      const step  = DIMS.D * U.archStepInCoins * scale;
+
+      b.setTranslation({ x: t.x + side * step * 0.8,
+                         y: t.y - step,
+                         z: t.z }, true);
+      b.setLinvel({ x: side * 0.1, y: -0.3, z: 0 }, true);
+      b.setAngvel({ x: 0, y: 0, z: 0 }, true);
+      b.wakeUp();
+      it.stuckSteps = 0;
+      M.unjammed++;
     }
   }
 }
@@ -1048,6 +1157,7 @@ function physicsStep() {
      releases the coin, which is what should happen. */
   holdAtRest();
   trackChute();
+  unjamChute();
   collectFallen();
 }
 
@@ -1206,6 +1316,7 @@ function updateHud() {
     /* So a silent machine can be told apart from a machine that is not
        detecting hits at all. */
     ' &nbsp; <b>peg snd</b> ' + M.pegHits +
+    (M.unjammed ? ' &nbsp; <b>unjammed</b> ' + M.unjammed : '') +
     ' &nbsp; <b>through</b> ' + M.landed + '/' + M.dropped +
     ' &nbsp; <b>chute fall</b> ' + (mean(M.fallSteps) === null ? '-' :
         (mean(M.fallSteps) / 60).toFixed(2) + 's (' +

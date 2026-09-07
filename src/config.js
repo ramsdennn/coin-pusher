@@ -1127,6 +1127,92 @@ window.COIN_PUSHER_CONFIG = {
        nothing caught it, and it simply rode along upright and useless. */
     exitHeightInCoins:      0.92,
     pegRadiusInCoins:       0.035,
+
+    /* Narrowest gap a peg row may leave, in coin diameters - to a side wall
+       or between neighbours. Anything at or below 1.0 is a gap a coin cannot
+       fall through, and a gap a coin cannot fall through is a shelf it sits
+       on permanently.
+
+       The edge-peg row is built with twelve pegs, gaps of 0.334 to each wall
+       and 0.667 between neighbours, and coins DO arch across them and stay.
+
+       DEFAULTED OFF ANYWAY, at 0, because enforcing it costs more than it
+       saves. Set to 1.12 it drops that row from twelve pegs to six and trims
+       two others, and measured over 160 fast drops the jam rate went the
+       wrong way:
+
+           every peg kept, no unjam pass      1.3%
+           rule at 1.12, no unjam pass       10.0%
+
+       Fewer pegs means fewer deflections, so coins free-fall further, arrive
+       at the lower rows faster, and impale themselves on pegs far more often
+       than they ever arched on the narrow gaps. The trap the rule removes is
+       real and rarer than the problem it creates.
+
+       Left here, working and configurable, because the observation stands: a
+       gap narrower than a coin is a shelf, not a gap. If the peg field is
+       ever redesigned, redistribute the row to keep the count and widen the
+       gaps - eleven pegs fit across this machine at 1.05 - rather than
+       deleting pegs as this does. */
+    minPegGapInCoins:       0,
+
+    /* --------------------------------------------------------------------
+       UNJAMMING
+
+       A coin can end up IMPALED on a peg, and when it does it is stuck there
+       permanently. Worth spelling out, because it is not the failure anyone
+       expects and none of the obvious fixes touch it:
+
+       The pegs are cylinders lying along z, spanning the full chute depth.
+       The coin falls face-on down a slot only 1.35 coin-thicknesses deep. A
+       coin near terminal velocity covers about five peg-diameters in a single
+       60Hz step, so despite CCD it can end a step with the peg's axis INSIDE
+       its disc. Once there, the shortest way out is sideways along z - and
+       the chute glass and the back panel are exactly there. The solver sees a
+       perfectly legitimate resting contact, generates no push-out at all, and
+       the body falls asleep impaled.
+
+       Measured on one such coin: zeroing the coin's friction, the walls'
+       friction, the pegs' restitution, forcing it awake every step, and
+       raising the CCD substeps ALL left it at exactly the same height. It is
+       not friction and it is not sleep - it is geometry, and nothing in the
+       physics will ever undo it.
+
+       So it is undone here instead: spot a chute coin that has stopped with a
+       peg inside its disc, and slide it out HORIZONTALLY, which is the one
+       direction that is not blocked. */
+    unjam: {
+      enabled: true,
+
+      /* Speed below which a coin in the chute counts as not falling. Well
+         under the speed of a coin merely grazing a peg on its way down. */
+      stuckSpeed: 0.05,
+
+      /* Consecutive steps at that speed before acting. A coin can legitimately
+         pause for a moment balanced on a peg before toppling off, and jumping
+         in too early would rob the drop of exactly the hesitation that makes
+         it worth watching. 45 steps is three quarters of a second. */
+      stuckSteps: 45,
+
+      /* Extra clearance when ejecting, in coin diameters, so the coin comes
+         out genuinely free rather than resting exactly on the surface. */
+      slopInCoins: 0.03,
+
+      /* Coins can also ARCH - two or three bridging a gap, each holding the
+         others up, with no peg inside any of them. Give those longer before
+         intervening, since they are rarer and a shove is cruder than sliding
+         a coin off a peg. */
+      archExtraSteps: 75,
+
+      /* How far an arch-breaking move displaces the coin, in coin diameters,
+         before escalation. Small: almost every arch gives at the first touch,
+         and a big jump is more visible than the jam it fixes. */
+      archStepInCoins: 0.10,
+
+      /* How much further each successive attempt moves it, capped here. A coin
+         still stuck after several small moves needs a bigger one. */
+      nudgeMaxScale:  4.0
+    },
     /* Peg offset from the zone centreline, alternating side each row.
 
        One peg per row per zone is the maximum: two side by side is

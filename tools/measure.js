@@ -153,6 +153,47 @@
              worstBiteOfDiameter: +worst.toFixed(3) };
   }
 
-  window.CPM = { runSeed, panel, overlap, snap };
+
+  /* Chute jam rate. Drop N coins, let everything that can fall fall, then
+     count what is still up in the chute.
+
+     A jam here is not a coin balanced on a peg - it is a coin IMPALED on one.
+     The peg is a cylinder lying along z spanning the full chute depth; the
+     coin falls face-on in a slot only 1.35 coin-thicknesses deep. If the coin
+     tunnels far enough in one step that the peg's axis ends up inside the
+     coin's disc, the shortest way out is sideways along z - and the chute
+     glass and back panel are exactly there. So the coin cannot escape, the
+     solver sees a legitimate resting contact, generates no push-out, and the
+     body goes to sleep impaled. */
+  async function jamRate(drops, seeds) {
+    let jams = 0, total = 0, sites = [];
+    for (const seed of seeds) {
+      CP.setAutoStep(false);
+      CP.resetPileSeeded(seed);
+      CP.setRunning(true);
+      for (let d = 0; d < drops; d++) {
+        CP.dropInto(d % 4);
+        for (let i = 0; i < 70; i++) CP.step();
+        if ((d & 3) === 0) await new Promise(r => setTimeout(r, 0));
+      }
+      for (let i = 0; i < 1200; i++) {
+        CP.step();
+        if ((i & 255) === 0) await new Promise(r => setTimeout(r, 0));
+      }
+      for (const it of CP.ctx.items) {
+        const t = it.body.translation();
+        if (t.y > CP.DIMS.chuteBottom) {
+          jams++;
+          sites.push({ x: +(t.x / CP.DIMS.D).toFixed(2),
+                       y: +(t.y / CP.DIMS.D).toFixed(2) });
+        }
+      }
+      total += drops;
+      CP.setRunning(false);
+    }
+    return { drops: total, jams, pct: +(100 * jams / total).toFixed(1), sites };
+  }
+
+  window.CPM = { runSeed, panel, overlap, snap, jamRate };
   console.log('[CPM] harness ready');
 })();
