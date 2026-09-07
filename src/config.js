@@ -474,7 +474,7 @@ window.COIN_PUSHER_CONFIG = {
     widthFraction:   0.133,  // each panel, of the window's width
     gapFraction:     0.020,  // between the two
     centreAtScreenX: 0.805,  // centre of the PAIR
-    topFraction:     0.370,  // of the window's height
+    topFraction:     0.282,  // of the window's height
 
     /* Text geometry, as fractions of the panel's HEIGHT. These are printed by
        tools/build-scoreboard.py rather than matched by eye, so the live text
@@ -485,6 +485,15 @@ window.COIN_PUSHER_CONFIG = {
     lineGap:      0.055,
     screenInsetX: 0.0625,
     screenInsetY: 0.075,
+
+    /* Glow AND a cast shadow. The glow on its own left the text flat and
+       printed on: a lit panel throws light around a letter, but a letter in
+       front of one also casts a shadow onto it, and without the second half
+       there is no depth. Down and slightly right, matching the light the
+       chrome is lit by - a shadow disagreeing with the metal beside it is
+       worse than no shadow. */
+    shadowDy:   0.0175,
+    shadowBlur: 0.0125,
 
     /* Same stack as the SVG, so the two versions cannot drift apart. */
     font: "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"

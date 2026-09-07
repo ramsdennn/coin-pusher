@@ -126,9 +126,21 @@ def defs():
     <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
   </filter>
 
-  <filter id="textglow" x="-30%%" y="-30%%" width="160%%" height="160%%">
-    <feGaussianBlur stdDeviation="3.5" result="b"/>
-    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%%" y="-35%%" width="170%%" height="180%%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
   </filter>
 
   <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
@@ -280,6 +292,7 @@ def main():
     print('  lineGap      : %.4f' % (LINE_GAP / float(H)))
     print('  screenInsetX : %.4f' % (BEZEL / float(W)))
     print('  screenInsetY : %.4f' % (BEZEL / float(H)))
+    print('  shadowDy     : %.4f   blur %.4f' % (7 / float(H), 5 / float(H)))
 
     # A review sheet: both teams, on the game's own background, plus the
     # extremes the panel has to survive - a long name and a four-digit score.

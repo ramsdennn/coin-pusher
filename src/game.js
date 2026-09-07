@@ -1827,15 +1827,23 @@ function makeScoreboards() {
       'gap:' + (S.lineGap * 100).toFixed(2) + 'cqh;' +
       'font-family:' + S.font + ';font-weight:bold;color:#fff;line-height:1;';
 
+    /* Shadow first, then glow. Order matters in text-shadow: they paint back
+       to front, so the glow has to come second or the shadow sits on top of
+       it and reads as a dirty edge. */
+    const shadow =
+      '0 ' + (S.shadowDy * 100).toFixed(2) + 'cqh ' +
+      (S.shadowBlur * 100).toFixed(2) + 'cqh rgba(4,7,14,.72), ' +
+      '0 0 4cqh rgba(190,220,255,.5)';
+
     const name = document.createElement('div');
     name.style.cssText =
       'letter-spacing:0.06em;text-align:center;' +
-      'text-shadow:0 0 3cqh rgba(190,220,255,.55);' +
+      'text-shadow:' + shadow + ';' +
       'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;';
 
     const score = document.createElement('div');
     score.style.cssText =
-      'text-align:center;text-shadow:0 0 4cqh rgba(190,220,255,.55);' +
+      'text-align:center;text-shadow:' + shadow + ';' +
       'font-size:' + (S.scoreSize * 100).toFixed(2) + 'cqh;';
 
     inner.appendChild(name);
