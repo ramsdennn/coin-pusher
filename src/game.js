@@ -38,6 +38,7 @@ const M = {
   dropped: 0,
   pegHits: 0,          // peg sounds actually played, for the HUD
   unjammed: 0,         // coins slid off a peg they were impaled on
+  surfaceHits: 0,      // surface / coin-on-coin sounds played
   lifted: 0,
   landed: 0,
   jammed: 0,
@@ -1144,9 +1145,11 @@ function physicsStep() {
   }
 
   quietenBeforeStep();
+  captureImpactSpeeds();
   ctx.world.step(ctx.eventQueue);
   stepCount++;
   soundContacts();
+  soundCollisions();
   settleContacts();
   M.lifted += liftTrapped(ctx);
   separateCoins();
@@ -1179,6 +1182,40 @@ function physicsStep() {
    Pan follows the coin across the machine, which costs nothing and makes the
    drop field feel wide.
    ------------------------------------------------------------------------- */
+/* How fast every coin is travelling going INTO the step.
+
+   A collision event says two things touched, not how hard. By the time the
+   event is drained the solver has already absorbed the impact and the coin's
+   velocity reads near zero - so the speed has to be taken before the step or
+   every landing sounds identically feeble. */
+function captureImpactSpeeds() {
+  if (!CFG.audio || !CFG.audio.enabled) return;
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+    const v = it.body.linvel();
+    if (!it.preVel) it.preVel = { x: 0, y: 0, z: 0 };
+    it.preVel.x = v.x; it.preVel.y = v.y; it.preVel.z = v.z;
+  }
+}
+
+/* How much speed the step took away from a coin - the size of the impact,
+   not how fast the coin happens to be going.
+
+   Absolute speed was the obvious measure and it was wrong. A coin riding the
+   moving deck travels faster than any sensible landing threshold, so every
+   contact it started while being shoved along fired a sound: measured, eight
+   seconds of the pusher running with nothing dropped produced 38 of them,
+   about five a second of pure noise.
+
+   A coin sliding along with the deck has its velocity unchanged by the step,
+   so this reads near zero. A coin that lands has its fall stopped dead, so it
+   reads large. That is the difference between being carried and being hit. */
+function impactOf(it) {
+  if (!it.preVel) return 0;
+  const v = it.body.linvel();
+  return Math.hypot(v.x - it.preVel.x, v.y - it.preVel.y, v.z - it.preVel.z);
+}
+
 function soundContacts() {
   const A = CFG.audio;
   if (!A || !A.enabled || !audioReady()) { ctx.eventQueue.clear(); return; }
@@ -1209,6 +1246,61 @@ function soundContacts() {
     if (play('peg', energy, half > 0 ? h.x / half : 0)) played++;
   }
   M.pegHits += played;
+}
+
+/* -------------------------------------------------------------------------
+   SURFACE AND COIN-ON-COIN SOUNDS
+
+   Everything a coin can strike except a peg: the moving deck, the fixed
+   floor, the side walls, the chute glass, and other coins. One sound for all
+   of them.
+
+   Driven by collision-STARTED events, so a coin that is merely resting on the
+   pile is silent - see the note in items.js on why force events are wrong
+   here. Loudness comes from the speed captured before the step.
+   ------------------------------------------------------------------------- */
+function soundCollisions() {
+  const A = CFG.audio;
+  if (!A || !A.enabled || !audioReady()) return;
+
+  const byCollider = new Map();
+  for (let i = 0; i < ctx.items.length; i++) {
+    byCollider.set(ctx.items[i].body.collider(0).handle, ctx.items[i]);
+  }
+
+  const hits = [];
+  ctx.eventQueue.drainCollisionEvents(function (h1, h2, started) {
+    if (!started) return;
+    /* Pegs have their own, louder voice and their own event stream. Without
+       this a coin striking one plays both sounds on the same frame. */
+    if (ctx.pegColliders.has(h1) || ctx.pegColliders.has(h2)) return;
+
+    const a = byCollider.get(h1), b = byCollider.get(h2);
+    const it = a || b;
+    if (!it) return;
+
+    /* Coin on coin: score it by whichever of the two took the bigger hit. */
+    let impact = impactOf(it);
+    if (a && b) impact = Math.max(impactOf(a), impactOf(b));
+    if (impact < A.surfaceMinImpact) return;
+
+    hits.push({ handle: it.body.handle, speed: impact,
+                x: it.body.translation().x });
+  });
+  if (!hits.length) return;
+
+  hits.sort(function (a, b) { return b.speed - a.speed; });
+
+  const now = performance.now();
+  const half = DIMS.width * 0.5;
+  let played = 0;
+  for (let i = 0; i < hits.length && played < A.surfacePerFrameBudget; i++) {
+    const h = hits[i];
+    if (!coinReady(h.handle, now)) continue;
+    const energy = Math.min(1, h.speed / A.surfaceImpactForFullHit);
+    if (play('surface', energy, half > 0 ? h.x / half : 0)) played++;
+  }
+  M.surfaceHits += played;
 }
 
 /* -------------------------------------------------------------------------
@@ -1316,6 +1408,7 @@ function updateHud() {
     /* So a silent machine can be told apart from a machine that is not
        detecting hits at all. */
     ' &nbsp; <b>peg snd</b> ' + M.pegHits +
+    ' &nbsp; <b>surf snd</b> ' + M.surfaceHits +
     (M.unjammed ? ' &nbsp; <b>unjammed</b> ' + M.unjammed : '') +
     ' &nbsp; <b>through</b> ' + M.landed + '/' + M.dropped +
     ' &nbsp; <b>chute fall</b> ' + (mean(M.fallSteps) === null ? '-' :

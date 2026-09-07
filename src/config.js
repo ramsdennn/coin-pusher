@@ -262,7 +262,7 @@ window.COIN_PUSHER_CONFIG = {
        derived from them by ear - see the note in src/audio.js. */
     levels: {
       peg:     1.00,
-      surface: 0.85,
+      surface: 0.70,
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -301,7 +301,8 @@ window.COIN_PUSHER_CONFIG = {
        times; the second attempt reached a spectrogram correlation of 0.74
        against this very clip, which was a good number and a bad sound. */
     samples: {
-      peg: 'assets/audio/peg-hit.mp3'
+      peg:     'assets/audio/peg-hit.mp3',
+      surface: 'assets/audio/surface-hit.mp3'
     },
 
     /* Contact force below which the ENGINE does not even report a peg hit.
@@ -313,6 +314,38 @@ window.COIN_PUSHER_CONFIG = {
     /* Contact force that counts as a full-strength hit: at or above this a
        peg sound plays at full volume and full brightness. */
     pegForceForFullHit: 2.5,
+
+    /* --------------------------------------------------------------------
+       SURFACE AND COIN-ON-COIN
+
+       Everything except the pegs: the moving deck, the fixed floor, the side
+       walls, the chute glass, and coins hitting each other.
+
+       These run off collision-STARTED events and are scaled by the coin's
+       speed going into the step, not by contact force. A resting pile carries
+       a steady contact force, so force events would have every settled coin
+       chirping sixty times a second forever; a collision event fires once,
+       when two things begin touching, which is what a hit actually is.
+       -------------------------------------------------------------------- */
+
+    /* How much speed a step must take away from a coin before it counts as a
+       hit. NOT how fast the coin is going - that was tried and it is wrong.
+
+       A coin riding the moving deck travels faster than any sensible landing
+       threshold, so scoring on absolute speed made every contact it started
+       while being shoved along fire a sound: eight seconds of the pusher
+       running with nothing dropped gave 38 of them, five a second of noise.
+       Scoring on the CHANGE in velocity separates the two cleanly - being
+       carried along changes nothing, being hit changes everything. */
+    surfaceMinImpact: 0.30,
+
+    /* Change in speed at which a landing plays at full volume. */
+    surfaceImpactForFullHit: 2.0,
+
+    /* Loudest N per step, rest dropped. Lower than the pegs' budget because a
+       pile collapsing can start dozens of contacts on one frame and a coin
+       pusher should sound busy, not like static. */
+    surfacePerFrameBudget: 3,
 
     /* Quietest a hit can be, as a fraction of full. Without a floor, the long
        tail of feather-light contacts is inaudible and the machine sounds like

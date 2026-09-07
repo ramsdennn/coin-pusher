@@ -29,7 +29,16 @@ let ac = null;                 // AudioContext, made on the first user gesture
 let master = null;             // everything goes through here
 let limiter = null;
 let buffers = {};              // kind -> [AudioBuffer, ...] variants
-let voicesOut = 0;             // how many are sounding right now
+/* Voices are tracked by when they will FINISH, not by counting starts and
+   ends. Counting looked simpler and was wrong: it leaned on the source's
+   onended callback to decrement, and when that did not fire the count only
+   ever went up, hit maxVoices, and the machine went permanently silent with
+   no error anywhere. Measured - after saturating it, audio never came back,
+   not even after seconds of real time with nothing playing.
+
+   A list of end times cannot leak. Anything in the past is gone whether its
+   callback fired or not. */
+let voices = [];               // AudioContext times at which each voice ends
 let lastAt = new Map();        // body handle -> ms, for per-coin cooldown
 
 /* ---------------------------------------------------------------------------
@@ -392,7 +401,14 @@ export function play(kind, energy, panX) {
 
   const lvl = (A.levels && A.levels[kind] != null) ? A.levels[kind] : 1;
   if (lvl <= 0) return false;
-  if (voicesOut >= A.maxVoices) return false;
+
+  const tNow = ac.currentTime;
+  if (voices.length) {
+    let k = 0;
+    for (let i = 0; i < voices.length; i++) if (voices[i] > tNow) voices[k++] = voices[i];
+    voices.length = k;
+  }
+  if (voices.length >= A.maxVoices) return false;
 
   let e = energy;
   if (!(e >= 0)) e = 0;
@@ -431,10 +447,18 @@ export function play(kind, energy, panX) {
 
   src.connect(lp); lp.connect(g); tail.connect(master);
 
-  voicesOut++;
-  src.onended = function () { voicesOut--; };
+  voices.push(tNow + buf.duration / Math.max(0.05, src.playbackRate.value));
   src.start();
   return true;
+}
+
+/* How many voices are sounding, for diagnostics. */
+export function voiceCount() {
+  if (!ac) return 0;
+  const t = ac.currentTime;
+  let n = 0;
+  for (let i = 0; i < voices.length; i++) if (voices[i] > t) n++;
+  return n;
 }
 
 /* Per-coin cooldown. One coin rattling down the peg field can register

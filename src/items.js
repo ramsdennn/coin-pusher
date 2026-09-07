@@ -78,11 +78,25 @@ export function createItem(ctx, typeId, x, y, z, yaw, opts) {
     desc.setContactSkin(DIMS.D * PHY.contactSkinInCoins);
   }
 
+  /* Audio. COLLISION events, not CONTACT FORCE events, and the difference
+     matters more than it sounds.
+
+     A contact-force event fires on every step the force exceeds its
+     threshold - so a coin resting on the pile, carrying nothing but its own
+     weight, would fire one sixty times a second forever. That is right for
+     the pegs, where nothing ever rests, and completely wrong here.
+
+     A collision event fires ONCE, when two colliders begin touching. That is
+     exactly "a coin hit something". The trade is that it carries no force, so
+     how hard the hit was has to come from the coin's own speed just before
+     the step - captured in game.js, because by the time the event is read the
+     solver has already taken that speed away. */
   ctx.world.createCollider(
     desc.setDensity(type.density)
       .setFriction(PHY.itemFriction)
       .setRestitution(PHY.itemRestitution)
-      .setCollisionGroups(GROUP_ITEM),
+      .setCollisionGroups(GROUP_ITEM)
+      .setActiveEvents(ctx.RAPIER.ActiveEvents.COLLISION_EVENTS),
     body
   );
 
