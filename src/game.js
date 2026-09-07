@@ -1861,24 +1861,48 @@ function makeRightColumn() {
        overflow-wrap:anywhere so a single long word breaks instead of refusing
        to wrap. line-clamp is the hard backstop: at most two lines, and
        anything past that is cut with an ellipsis rather than hidden. */
+    /* NO -webkit-line-clamp. It was tried and it does nothing here: measured
+       on a bare div appended to the body, display:-webkit-box computes back as
+       flow-root, so the clamp never applies and a long name simply runs on and
+       is cut off by the bezel with no ellipsis. The truncation is done in
+       JavaScript instead - see fitName - where it can be measured and proved
+       rather than trusted.
+
+       overflow:hidden stays as a belt-and-braces guard: if a name somehow got
+       past the fitting, it would be clipped rather than escape the panel. */
+    const nameWrap = document.createElement('div');
+    nameWrap.style.cssText = 'width:100%;';
+
     const name = document.createElement('div');
     name.style.cssText =
       'letter-spacing:0.06em;text-align:center;text-shadow:' + shadow + ';' +
-      'width:100%;overflow-wrap:anywhere;' +
-      'display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;' +
-      '-webkit-line-clamp:' + (S.nameMaxLines || 2) + ';' +
+      'width:100%;overflow-wrap:anywhere;overflow:hidden;' +
       'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;';
+    nameWrap.appendChild(name);
 
     const score = document.createElement('div');
     score.style.cssText =
       'text-align:center;text-shadow:' + shadow + ';' +
       'font-size:' + (S.scoreSize * 100).toFixed(2) + 'cqh;';
 
-    inner.appendChild(name);
+    inner.appendChild(nameWrap);
     inner.appendChild(score);
     box.appendChild(inner);
     row.appendChild(box);
-    boards.push({ box: box, name: name, score: score, shownName: null, shownScore: null });
+    const board = { box: box, name: name, score: score,
+                    shownName: null, shownScore: null };
+    boards.push(board);
+
+    /* Re-fit when the panel changes size. The size itself is in cqh so it
+       already follows the panel; this is for the one-line DECISION, which is
+       a measurement and can land differently at a very different scale.
+       Cannot loop: the panel's size comes from the row and its aspect ratio,
+       and is not affected by the text inside it. */
+    if (window.ResizeObserver) {
+      new ResizeObserver(function () {
+        if (board.shownName != null) fitName(board);
+      }).observe(box);
+    }
   }
   updateScoreboards();
 }
@@ -1893,31 +1917,86 @@ function makeRightColumn() {
 
    Returns false if the panel has not been laid out yet, so the caller can
    leave the name unrecorded and try again on the next frame.  */
-function fitName(b, text) {
+function fitName(b) {
   const S = CFG.scoreboard, el = b.name;
   const panelH = b.box.getBoundingClientRect().height;
-  if (!panelH) return false;
+  /* Nothing to measure against until the panel has been laid out. The caller
+     leaves the name unrecorded so it is tried again next frame. */
+  if (!panelH || !el.clientWidth) return false;
 
-  el.textContent = text;
-  const full = S.nameSize * panelH;
+  const full = b.fullName == null ? '' : String(b.fullName);
+  el.textContent = full;
 
-  /* Does it fit on one line? Asked with wrapping off, because with wrapping on
-     a name that is about to wrap still reports a width that fits. */
+  /* Always re-fit from the ORIGINAL text, never from what is on screen -
+     otherwise a truncated name gets truncated again on the next pass and
+     erodes a few characters every time the window changes. */
+
+  /* One line at full size? Asked with wrapping off, because with wrapping on a
+     name that is about to wrap still reports a width that fits. */
   el.style.whiteSpace = 'nowrap';
-  el.style.fontSize = full + 'px';
+  el.style.fontSize = (S.nameSize * 100).toFixed(3) + 'cqh';
   const oneLine = el.scrollWidth <= el.clientWidth;
   el.style.whiteSpace = 'normal';
+  if (oneLine) return true;
 
-  if (oneLine) { el.style.fontSize = full + 'px'; return true; }
-
-  /* It wraps. Give it whatever is left after the score and the gap, split
-     across two lines, and never below the floor - past that the clamp cuts it
-     with an ellipsis instead. */
-  const inner = el.parentElement;
+  /* It wraps, and two lines do not fit at the full size - measured, the block
+     goes to 283.8 against 263 of screen and shoves the score out through the
+     bezel. Give the name whatever is left after the score and the gap, split
+     across two lines, never below the floor. */
+  const inner = el.parentElement.parentElement;
   const gap = parseFloat(getComputedStyle(inner).rowGap) || 0;
-  const budget = inner.clientHeight - b.score.getBoundingClientRect().height - gap;
-  el.style.fontSize =
-    Math.max(S.nameMinSize * panelH, Math.min(full, budget / 2)) + 'px';
+  /* The score's height is CALCULATED, not measured.
+
+     Measuring it was a real bug: the name is fitted before the score's text has
+     been written, so on the first pass the score element is empty and measures
+     ZERO. The budget came out as 146 instead of 56, three lines appeared to
+     fit, and the name ran straight out of the panel. Every later pass looked
+     correct, because by then the score had content - which is exactly the kind
+     of fault that survives being tested.
+
+     The score is one line at a known size, so this needs no measurement and no
+     ordering between the two. */
+  const budget = inner.clientHeight - S.scoreSize * panelH - gap;
+  const lines = S.nameMaxLines || 2;
+  let frac = Math.max(S.nameMinSize, Math.min(S.nameSize, (budget / panelH) / lines));
+  el.style.fontSize = (frac * 100).toFixed(3) + 'cqh';
+
+  /* Correct against the REAL line height rather than trusting the arithmetic.
+     budget/lines lands exactly on the boundary, and line boxes round: measured,
+     two lines came to 56.6 against a budget of 56, so the second line was
+     rejected and a name that should have wrapped was truncated on one line
+     instead. Scaling by the measured overshoot fixes it in one step and needs
+     no guess about how the font rounds. */
+  /* HEADROOM, or two lines never actually happen.
+
+     budget/lines makes the two lines exactly fill the budget, so the smallest
+     rounding tips them over and the text gets truncated onto one line instead.
+     Measured: a line box came back as 35px for a 34.7px font, and every long
+     name was being cut to a single line as a result.
+
+     Correcting against the REAL line height, with a couple of pixels spare,
+     fixes it in one step and needs no guess about how the font rounds. */
+  const lh = parseFloat(getComputedStyle(el).lineHeight) || frac * panelH;
+  const room = budget - 2;
+  if (lh * lines > room) {
+    frac = Math.max(S.nameMinSize, frac * room / (lh * lines));
+    el.style.fontSize = (frac * 100).toFixed(3) + 'cqh';
+  }
+
+
+  if (el.scrollHeight <= budget + 1) return true;
+
+  /* Still too tall even at the floor size, so it has to lose characters.
+     Binary search the longest prefix that fits with an ellipsis on the end -
+     about six measurements for any name, against one per character if this
+     walked backwards. */
+  let lo = 0, hi = full.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    el.textContent = full.slice(0, mid).replace(/\s+$/, '') + '…';
+    if (el.scrollHeight <= budget + 1) lo = mid; else hi = mid - 1;
+  }
+  el.textContent = full.slice(0, lo).replace(/\s+$/, '') + '…';
   return true;
 }
 
@@ -1935,7 +2014,8 @@ function updateScoreboards() {
       /* Only record it as shown once it has actually been fitted. Before the
          panel is laid out there is nothing to measure against, and recording
          it would leave the name at whatever size it happened to get. */
-      if (fitName(b, team.name)) b.shownName = team.name;
+      b.fullName = team.name;
+      if (fitName(b)) b.shownName = team.name;
     }
     if (b.shownScore !== team.score) {
       b.score.textContent = String(team.score);
@@ -2086,6 +2166,7 @@ window.startCoinPusher = function (teamA, teamB) {
         if (ctx.teams[i]) ctx.teams[i].score = v;
         updateScoreboards();
       },
+      boards: function () { return boards; },
       refreshScores: updateScoreboards,
       dropInto: dropInto,
       selectZone: selectZone,
