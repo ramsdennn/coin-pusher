@@ -1752,70 +1752,89 @@ function updateHud() {
 
    Placed entirely in CSS percentages, so it holds its position through every
    resize without any JavaScript running on resize. */
-function makeLogo() {
-  const L = CFG.logo;
-  if (!L || !L.enabled) return;
-
-  const img = document.createElement('img');
-  img.src = L.src;
-  img.alt = '';
-  img.style.cssText =
-    'position:fixed;z-index:10;pointer-events:none;' +
-    'left:' + ((L.centreAtScreenX - L.widthFraction / 2) * 100).toFixed(3) + '%;' +
-    'top:' + (L.topFraction * 100).toFixed(3) + '%;' +
-    'width:' + (L.widthFraction * 100).toFixed(3) + '%;' +
-    'height:auto;opacity:' + L.opacity + ';';
-  document.body.appendChild(img);
-}
-
 /* -------------------------------------------------------------------------
-   SCOREBOARDS
+   THE RIGHT-HAND COLUMN: logo above, two score panels below.
 
-   Two panels under the logo. See the scoreboard block in config for the
-   placement and for why the chrome is an image and the text is not.
+   Built as ONE flex column so the panels are under the logo by construction at
+   any shape of window. See rightColumn in config for the bug that made this
+   necessary - the two were positioned independently, one off the window's
+   width and one off its height, and slid into each other past an aspect ratio
+   of about 1.37. Full screen is 2.05.
 
-   Positioned entirely in CSS percentages, so they hold their place when the
-   window changes shape without anything having to run on resize.
+   Nothing here measures anything or runs on resize. The column's width is
+   bounded on both axes with min(), so a short window narrows the whole stack
+   instead of pushing it off the bottom, and every size inside is a percentage
+   of the column.
    ------------------------------------------------------------------------- */
 let boards = [];
 
-function makeScoreboards() {
-  const S = CFG.scoreboard;
+function makeRightColumn() {
+  const C = CFG.rightColumn, L = CFG.logo, S = CFG.scoreboard;
+  if (!C) return;
+
+  /* The column's own width, written once and reused. Everything sized against
+     the column has to repeat this expression rather than use a container query
+     unit, because an element is NOT its own query container: cqw inside the
+     column resolves against the nearest ANCESTOR container, and with none it
+     silently falls back to the viewport. Measured, gap:5cqw came out as 5vw -
+     96px where 34 was intended. */
+  const COLW = 'min(' + (C.widthFraction * 100).toFixed(2) + 'vw,' +
+                        (C.maxHeightFraction * 100).toFixed(2) + 'vh)';
+
+  const col = document.createElement('div');
+  col.style.cssText =
+    'position:fixed;z-index:10;pointer-events:none;' +
+    'display:flex;flex-direction:column;align-items:center;' +
+    /* Not a percentage: a row-gap given as a percentage in a COLUMN flexbox
+       resolves against the container's HEIGHT, and this container's height
+       comes from its content, so it resolves against nothing and collapses.
+       Measured: 0px. This is a fraction of the column's width, spelled out. */
+    'gap:calc(' + C.gapFraction + ' * ' + COLW + ');' +
+    /* Bounded by width AND height. The vh half is what stops a wide, short
+       window - which is what full screen is - running the stack off the
+       bottom. */
+    'width:' + COLW + ';' +
+    'left:' + (C.centreAtScreenX * 100).toFixed(3) + '%;' +
+    'top:'  + (C.topFraction * 100).toFixed(3) + '%;' +
+    'transform:translateX(-50%);';
+  document.body.appendChild(col);
+
+  if (L && L.enabled) {
+    const img = document.createElement('img');
+    img.src = L.src;
+    img.alt = '';
+    img.style.cssText = 'display:block;height:auto;' +
+      'width:' + (L.widthFraction * 100).toFixed(2) + '%;' +
+      'opacity:' + L.opacity + ';';
+    col.appendChild(img);
+  }
+
   if (!S || !S.enabled) return;
 
-  const pairW = S.widthFraction * 2 + S.gapFraction;
-  const left  = S.centreAtScreenX - pairW / 2;
+  const row = document.createElement('div');
+  row.style.cssText =
+    'display:flex;justify-content:center;' +
+    'width:' + (S.rowWidthFraction * 100).toFixed(2) + '%;' +
+    'gap:' + (S.gapFraction * 100).toFixed(2) + '%;';
+  col.appendChild(row);
 
   for (let i = 0; i < 2; i++) {
-    const x = left + i * (S.widthFraction + S.gapFraction);
-
     const box = document.createElement('div');
+    /* flex:1 with a zero basis makes the two share the row exactly, whatever
+       the gap is, so the panel width never has to be worked out by hand. */
     box.style.cssText =
-      'position:fixed;z-index:10;pointer-events:none;' +
-      'left:' + (x * 100).toFixed(3) + '%;' +
-      'top:'  + (S.topFraction * 100).toFixed(3) + '%;' +
-      'width:' + (S.widthFraction * 100).toFixed(3) + '%;' +
-      /* The panel is 560x400, so its height follows its width. aspect-ratio
-         keeps that true at any window size without measuring anything. */
-      'aspect-ratio:' + S.aspect + ';' +
+      'flex:1 1 0;aspect-ratio:' + S.aspect + ';position:relative;' +
       'background:url(' + S.src + ') center/100% 100% no-repeat;';
-
-    /* Text is sized in units of the PANEL, not the window - cqh is a
-       percentage of this box's own height - so it scales with the chrome
-       around it rather than drifting off it as the window changes. */
+    /* Text is sized in cqh - a percentage of this box's own height - so it
+       scales with the chrome around it rather than with the window. */
     box.style.containerType = 'size';
 
     /* The two lines are CENTRED AS A BLOCK inside the screen, not placed at
        fixed heights. Fixed heights were what made them read as two separate
-       things stuck on one panel - a name near the top, a number lower down,
-       and a gap between them belonging to neither.
-
-       A flex column does the centring, so it stays right whatever the text is:
-       a long name that wraps to two lines, or a four-digit score, still sits
-       centred rather than drifting off a baseline computed for something
-       shorter. line-height 1 because the default leaves descender space under
-       each line that nothing is drawn in, which pushes the block visibly
-       high. */
+       things stuck on one panel. A flex column keeps that true whatever the
+       text is - a long name, a four-digit score - where arithmetic on a
+       baseline would not. line-height 1 because the default leaves descender
+       space under each line that nothing is drawn in, pushing the block high. */
     const inner = document.createElement('div');
     inner.style.cssText =
       'position:absolute;display:flex;flex-direction:column;' +
@@ -1827,9 +1846,9 @@ function makeScoreboards() {
       'gap:' + (S.lineGap * 100).toFixed(2) + 'cqh;' +
       'font-family:' + S.font + ';font-weight:bold;color:#fff;line-height:1;';
 
-    /* Shadow first, then glow. Order matters in text-shadow: they paint back
-       to front, so the glow has to come second or the shadow sits on top of
-       it and reads as a dirty edge. */
+    /* Shadow first, then glow. text-shadow paints back to front, so the glow
+       has to come second or the shadow sits on top of it and reads as a dirty
+       edge rather than depth. */
     const shadow =
       '0 ' + (S.shadowDy * 100).toFixed(2) + 'cqh ' +
       (S.shadowBlur * 100).toFixed(2) + 'cqh rgba(4,7,14,.72), ' +
@@ -1837,8 +1856,7 @@ function makeScoreboards() {
 
     const name = document.createElement('div');
     name.style.cssText =
-      'letter-spacing:0.06em;text-align:center;' +
-      'text-shadow:' + shadow + ';' +
+      'letter-spacing:0.06em;text-align:center;text-shadow:' + shadow + ';' +
       'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;';
 
     const score = document.createElement('div');
@@ -1849,7 +1867,7 @@ function makeScoreboards() {
     inner.appendChild(name);
     inner.appendChild(score);
     box.appendChild(inner);
-    document.body.appendChild(box);
+    row.appendChild(box);
     boards.push({ box: box, name: name, score: score, shownName: null, shownScore: null });
   }
   updateScoreboards();
@@ -1858,10 +1876,9 @@ function makeScoreboards() {
 /* Only touches the DOM when a value has actually changed. Called every frame,
    and a layout is far more expensive than the comparison that avoids it. */
 function updateScoreboards() {
-  /* The panels are built alongside the logo, before the world exists, so the
-     first call has no teams to read. The render loop fills them in a frame
-     later; guarding here keeps the build order free rather than tying panel
-     creation to when ctx happens to be assigned. */
+  /* The column is built before the world exists, so the first call has no
+     teams to read. The render loop fills them in a frame later; guarding here
+     keeps the build order free rather than tying it to when ctx is assigned. */
   if (!ctx || !ctx.teams) return;
   for (let i = 0; i < boards.length; i++) {
     const b = boards[i], team = ctx.teams[i];
@@ -1907,8 +1924,7 @@ window.startCoinPusher = function (teamA, teamB) {
   const ready = RAPIER.init ? RAPIER.init() : Promise.resolve();
   return ready.then(function () {
     buildScene();
-    makeLogo();
-    makeScoreboards();
+    makeRightColumn();
     makeHud();
 
     ctx = {

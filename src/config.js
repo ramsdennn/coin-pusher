@@ -438,10 +438,48 @@ window.COIN_PUSHER_CONFIG = {
   logo: {
     enabled: true,
     src: 'assets/logo/tipping-point.svg',
-    widthFraction:   0.34,   // of the window's WIDTH
-    centreAtScreenX: 0.81,   // matches camera.centreAtScreenX in spirit
-    topFraction:     0.05,   // of the window's HEIGHT
-    opacity:         1.0
+    opacity: 1.0,
+    /* Width as a fraction of the COLUMN, not the window - see rightColumn.
+       1.0 makes the logo set the column's width and everything else follow. */
+    widthFraction: 1.0
+  },
+
+  /* --------------------------------------------------------------------
+     THE RIGHT-HAND COLUMN
+
+     The logo and the two score panels are ONE STACK, not three things placed
+     separately. They have to be, and the reason is worth writing down because
+     the bug it caused only appeared at one shape of window.
+
+     The logo is a 2:1 image sized as a fraction of the window's WIDTH, so its
+     height grows with width. The panels used to be placed at a fraction of
+     the window's HEIGHT. Those are different reference dimensions, so the gap
+     between them was not fixed - it closed as the window got wider:
+
+         logo bottom  =  0.05*H + 0.17*W
+         panels top   =  0.282*H
+         they touch when W/H > 1.37
+
+     A laptop window is about 1.2 and full screen is about 2.05, so it looked
+     right while being built and the panels sat on top of the logo the moment
+     anyone went full screen. Anything sized off width, stacked above anything
+     sized off height, can only be correct at one aspect ratio.
+
+     They are now a flex column, so the panels are below the logo BY
+     CONSTRUCTION at any shape of window, with nothing measuring anything and
+     no resize handler.
+
+     The width is bounded on BOTH axes - min() of a slice of the width and a
+     slice of the height - so a short window narrows the whole stack rather
+     than pushing it off the bottom.
+     -------------------------------------------------------------------- */
+  rightColumn: {
+    widthFraction:     0.36,   // of the window's WIDTH
+    maxHeightFraction: 0.94,   // of the window's HEIGHT - the bound that
+                               // stops a short window overflowing
+    centreAtScreenX:   0.805,
+    topFraction:       0.040,  // of the window's HEIGHT
+    gapFraction:       0.050   // logo to panels, as a fraction of column width
   },
 
   /* --------------------------------------------------------------------
@@ -471,10 +509,12 @@ window.COIN_PUSHER_CONFIG = {
        pulled in to match so the panels keep the height they had rather than
        growing to fill the gap. */
     aspect:          '480/400',
-    widthFraction:   0.133,  // each panel, of the window's width
-    gapFraction:     0.020,  // between the two
-    centreAtScreenX: 0.805,  // centre of the PAIR
-    topFraction:     0.282,  // of the window's height
+
+    /* Both are fractions of the COLUMN now, not the window. The panels share
+       whatever width the column has, so they cannot drift away from the logo
+       above them however the window is shaped. */
+    rowWidthFraction: 0.88,  // the pair, within the column
+    gapFraction:      0.055, // between the two, of the row
 
     /* Text geometry, as fractions of the panel's HEIGHT. These are printed by
        tools/build-scoreboard.py rather than matched by eye, so the live text
