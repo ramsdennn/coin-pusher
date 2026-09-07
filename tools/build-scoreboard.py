@@ -70,7 +70,31 @@ SCORE_BASE = SCREEN_Y + TEXT_GAP + NAME_SIZE + TEXT_GAP + SCORE_SIZE * ASCENT
 FONT = "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"
 
 
-def defs():
+# --------------------------------------------------------------------------
+# SCREEN COLOUR
+#
+# The screen is a four-stop gradient - lit at the top, falling away, lifting
+# slightly at the foot. Only the HUE changes between schemes; the shape of the
+# ramp is the same in every one, because that shape is what makes it read as a
+# backlit panel rather than a flat fill.
+#
+# Derived from one base colour by the ratios the original blue used, so a new
+# colour is one hex value rather than four picked by hand.
+# --------------------------------------------------------------------------
+RAMP = (1.00, 0.80, 0.64, 0.88)     # measured off the original blue's stops
+
+
+def shade(base, f):
+    r = (base >> 16) & 255, (base >> 8) & 255, base & 255
+    return '#%02X%02X%02X' % tuple(min(255, int(round(c * f))) for c in r)
+
+
+def lighten(base, t):
+    r = (base >> 16) & 255, (base >> 8) & 255, base & 255
+    return '#%02X%02X%02X' % tuple(int(round(c + (255 - c) * t)) for c in r)
+
+
+def defs(scheme=None, base=0x2C3E63):
     return '''<defs>
   <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
        dark horizon just under the middle, a hard light break beneath it, then
@@ -106,11 +130,11 @@ def defs():
 
   <!-- The screen. Lit from above and falling away, the way a backlit panel
        actually behaves - a flat fill is what makes a screen look painted on. -->
-  <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0.00" stop-color="#2C3E63"/>
-    <stop offset="0.35" stop-color="#22314F"/>
-    <stop offset="0.72" stop-color="#1B283F"/>
-    <stop offset="1.00" stop-color="#243657"/>
+  <linearGradient id="screen%(id)s" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="%(s0)s"/>
+    <stop offset="0.35" stop-color="%(s1)s"/>
+    <stop offset="0.72" stop-color="%(s2)s"/>
+    <stop offset="1.00" stop-color="%(s3)s"/>
   </linearGradient>
 
   <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
@@ -125,10 +149,10 @@ def defs():
   </linearGradient>
 
   <!-- A cool wash across the glass, brightest top-left. -->
-  <linearGradient id="sheen" x1="0" y1="0" x2="0.75" y2="1">
-    <stop offset="0.00" stop-color="#9FC6FF" stop-opacity="0.20"/>
-    <stop offset="0.45" stop-color="#7FA8E8" stop-opacity="0.05"/>
-    <stop offset="1.00" stop-color="#0A1428" stop-opacity="0.18"/>
+  <linearGradient id="sheen%(id)s" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="%(sheenHi)s" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="%(sheenMid)s" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="%(sheenLo)s" stop-opacity="0.18"/>
   </linearGradient>
 
   <filter id="glow" x="-25%%" y="-25%%" width="150%%" height="150%%">
@@ -162,7 +186,7 @@ def defs():
        inherit the top one, which is what a real extrusion does under a light
        that is above it. -->
   <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
-                  x1="0" y1="0" x2="0" y2="%d">
+                  x1="0" y1="0" x2="0" y2="%(bezel)d">
     <stop offset="0.00" stop-color="#FDFEFF"/>
     <stop offset="0.18" stop-color="#DDE3EC"/>
     <stop offset="0.42" stop-color="#AEB6C5"/>
@@ -172,7 +196,7 @@ def defs():
     <stop offset="1.00" stop-color="#B9C1CE"/>
   </linearGradient>
   <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
-                  x1="0" y1="%d" x2="0" y2="%d">
+                  x1="0" y1="%(hMinusBezel)d" x2="0" y2="%(h)d">
     <stop offset="0.00" stop-color="#9098A7"/>
     <stop offset="0.22" stop-color="#C9D0DB"/>
     <stop offset="0.46" stop-color="#F2F5FA"/>
@@ -182,17 +206,23 @@ def defs():
   </linearGradient>
 
   <clipPath id="frameClip">
-    <rect x="1" y="1" width="%d" height="%d" rx="%d"/>
+    <rect x="1" y="1" width="%(wm2)d" height="%(hm2)d" rx="%(rout)d"/>
   </clipPath>
   <clipPath id="screenClip">
-    <rect x="%d" y="%d" width="%d" height="%d" rx="%d"/>
+    <rect x="%(sx)d" y="%(sy)d" width="%(sw)d" height="%(sh)d" rx="%(rin)d"/>
   </clipPath>
-</defs>''' % (BEZEL, H - BEZEL, H,
-              W - 2, H - 2, R_OUT,
-              SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, R_IN)
+</defs>''' % dict(
+        id=('' if scheme is None else '-' + scheme),
+        s0=shade(base, RAMP[0]), s1=shade(base, RAMP[1]),
+        s2=shade(base, RAMP[2]), s3=shade(base, RAMP[3]),
+        sheenHi=lighten(base, 0.72), sheenMid=lighten(base, 0.42),
+        sheenLo=shade(base, 0.22),
+        bezel=BEZEL, hMinusBezel=H - BEZEL, h=H,
+        wm2=W - 2, hm2=H - 2, rout=R_OUT,
+        sx=SCREEN_X, sy=SCREEN_Y, sw=SCREEN_W, sh=SCREEN_H, rin=R_IN)
 
 
-def panel(name, score, x=0, y=0, text=True):
+def panel(name, score, x=0, y=0, text=True, scheme=None):
     """One score panel, translated to (x, y).
 
     text=False leaves the screen empty. That is the version the GAME uses: the
@@ -200,6 +230,7 @@ def panel(name, score, x=0, y=0, text=True):
     because a score that changes cannot be baked into a file, and injecting the
     same SVG twice would collide on every gradient id it contains.
     """
+    sid = '' if scheme is None else '-' + scheme
     g = ['<g transform="translate(%g,%g)">' % (x, y)]
 
     # Frame. The plate carries the broad chrome ramp; the top and bottom rails
@@ -223,11 +254,11 @@ def panel(name, score, x=0, y=0, text=True):
              % (W - 1.5, H - 1.5, R_OUT))
 
     # Screen: fill, sheen, then the recess shading on its opening.
-    g.append('<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="url(#screen)"/>'
-             % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, R_IN))
+    g.append('<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="url(#screen%s)"/>'
+             % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, R_IN, sid))
     g.append('<g clip-path="url(#screenClip)">'
-             '<rect x="%d" y="%d" width="%d" height="%d" fill="url(#sheen)"/></g>'
-             % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H))
+             '<rect x="%d" y="%d" width="%d" height="%d" fill="url(#sheen%s)"/></g>'
+             % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, sid))
     g.append('<g clip-path="url(#screenClip)">'
              '<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="none" '
              'stroke="url(#recess)" stroke-width="13"/></g>'
@@ -263,6 +294,83 @@ def esc(s):
     return (str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
 
 
+# --------------------------------------------------------------------------
+# Candidate screen colours, for choosing between.
+#
+# The reds are deliberately kept AWAY from the red the machine already uses -
+# arming.dimmedGlow, 0x8E1216 - which is a dark, saturated red that appears on
+# the drop zones while a coin is armed. Two different reds on one screen that
+# are nearly but not quite the same read as a mistake, so these run lighter and
+# softer, "on the white side", rather than deeper.
+# --------------------------------------------------------------------------
+REDS = [
+    ('r1', 0x7E2E36, 'deep'),
+    ('r2', 0x9B3B42, 'mid'),
+    ('r3', 0xB84B50, 'bright'),
+    ('r4', 0xCE6067, 'light'),
+    ('r5', 0xDE7F85, 'pale'),
+    ('r6', 0xE99BA0, 'palest'),
+]
+GREENS = [
+    ('g1', 0x255C3F, 'deep'),
+    ('g2', 0x2F7550, 'mid'),
+    ('g3', 0x3B8E61, 'bright'),
+    ('g4', 0x55A87A, 'light'),
+    ('g5', 0x77C097, 'pale'),
+    ('g6', 0x9AD3B2, 'palest'),
+]
+
+
+def swatch_sheet():
+    """Every candidate, labelled, on the game's own background."""
+    COLS, GAP, CAP = 3, 46, 54
+    cw, ch = W + GAP, H + GAP + CAP
+    rows = (len(REDS) + COLS - 1) // COLS + (len(GREENS) + COLS - 1) // COLS
+    w = GAP + COLS * cw
+    h = GAP + rows * ch + 90
+
+    body, ds = [], ['<defs>']
+    # One set of gradients per scheme, all in the same document.
+    for key, base, _ in REDS + GREENS:
+        d = defs(key, base)
+        ds.append(d[len('<defs>'):-len('</defs>')])
+    ds.append('</defs>')
+
+    def heading(text, y):
+        return ('<text x="%d" y="%d" font-family=%s font-size="34" '
+                'font-weight="bold" fill="#EDE7FA">%s</text>'
+                % (GAP, y, '"%s"' % FONT, text))
+
+    y = GAP + 44
+    body.append(heading('TEAM A - reds', y))
+    y += 24
+    for i, (key, base, label) in enumerate(REDS):
+        cx, cy = GAP + (i % COLS) * cw, y + (i // COLS) * ch
+        body.append(panel('TEAM A', 150, cx, cy, scheme=key))
+        body.append('<text x="%d" y="%d" text-anchor="middle" font-family=%s '
+                    'font-size="26" fill="#B9AFD0">%s  -  #%06X  -  %s</text>'
+                    % (cx + W / 2, cy + H + 34, '"%s"' % FONT, key.upper(), base, label))
+
+    y += ((len(REDS) + COLS - 1) // COLS) * ch + 46
+    body.append(heading('TEAM B - greens', y))
+    y += 24
+    for i, (key, base, label) in enumerate(GREENS):
+        cx, cy = GAP + (i % COLS) * cw, y + (i // COLS) * ch
+        body.append(panel('TEAM B', 90, cx, cy, scheme=key))
+        body.append('<text x="%d" y="%d" text-anchor="middle" font-family=%s '
+                    'font-size="26" fill="#B9AFD0">%s  -  #%06X  -  %s</text>'
+                    % (cx + W / 2, cy + H + 34, '"%s"' % FONT, key.upper(), base, label))
+
+    h = y + ((len(GREENS) + COLS - 1) // COLS) * ch + GAP
+    out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
+           'width="%d" height="%d">' % (w, h, w, h)]
+    out.append(chr(10).join(ds))
+    out.append('<rect width="%d" height="%d" fill="#0B0616"/>' % (w, h))
+    out.extend(body)
+    out.append('</svg>')
+    return chr(10).join(out)
+
+
 def document(panels, w, h, background=None):
     out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
            'width="%d" height="%d">' % (w, h, w, h)]
@@ -296,6 +404,9 @@ def main():
     # Where the live text has to sit to match the baked version, as fractions
     # of the panel. Printed rather than guessed at the CSS end.
     # The numbers the game's CSS needs, so they are never matched by eye.
+    io.open(os.path.join(outdir, 'colours.svg'), 'w', encoding='utf-8').write(
+        swatch_sheet())
+
     print('  aspect       : %d/%d' % (W, H))
     print('  nameSize     : %.4f   (of panel height)' % (NAME_SIZE / float(H)))
     print('  scoreSize    : %.4f' % (SCORE_SIZE / float(H)))

@@ -1,0 +1,1591 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1624 1858" width="1624" height="1858">
+<defs>
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-r1" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#7E2E36"/>
+    <stop offset="0.35" stop-color="#65252B"/>
+    <stop offset="0.72" stop-color="#511D23"/>
+    <stop offset="1.00" stop-color="#6F2830"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-r1" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#DBC4C7" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#B4868A" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#1C0A0C" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-r2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#9B3B42"/>
+    <stop offset="0.35" stop-color="#7C2F35"/>
+    <stop offset="0.72" stop-color="#63262A"/>
+    <stop offset="1.00" stop-color="#88343A"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-r2" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#E3C8CA" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#C58D91" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#220D0F" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-r3" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#B84B50"/>
+    <stop offset="0.35" stop-color="#933C40"/>
+    <stop offset="0.72" stop-color="#763033"/>
+    <stop offset="1.00" stop-color="#A24246"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-r3" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#EBCDCE" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#D6979A" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#281012" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-r4" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#CE6067"/>
+    <stop offset="0.35" stop-color="#A54D52"/>
+    <stop offset="0.72" stop-color="#843D42"/>
+    <stop offset="1.00" stop-color="#B5545B"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-r4" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#F1D2D4" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#E3A3A7" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#2D1517" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-r5" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#DE7F85"/>
+    <stop offset="0.35" stop-color="#B2666A"/>
+    <stop offset="0.72" stop-color="#8E5155"/>
+    <stop offset="1.00" stop-color="#C37075"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-r5" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#F6DBDD" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#ECB5B8" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#311C1D" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-r6" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#E99BA0"/>
+    <stop offset="0.35" stop-color="#BA7C80"/>
+    <stop offset="0.72" stop-color="#956366"/>
+    <stop offset="1.00" stop-color="#CD888D"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-r6" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#F9E3E4" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#F2C5C8" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#332223" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-g1" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#255C3F"/>
+    <stop offset="0.35" stop-color="#1E4A32"/>
+    <stop offset="0.72" stop-color="#183B28"/>
+    <stop offset="1.00" stop-color="#215137"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-g1" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#C2D1C9" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#81A090" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#08140E" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-g2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#2F7550"/>
+    <stop offset="0.35" stop-color="#265E40"/>
+    <stop offset="0.72" stop-color="#1E4B33"/>
+    <stop offset="1.00" stop-color="#296746"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-g2" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#C5D8CE" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#86AF9A" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#0A1A12" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-g3" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#3B8E61"/>
+    <stop offset="0.35" stop-color="#2F724E"/>
+    <stop offset="0.72" stop-color="#265B3E"/>
+    <stop offset="1.00" stop-color="#347D55"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-g3" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#C8DFD3" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#8DBDA3" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#0D1F15" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-g4" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#55A87A"/>
+    <stop offset="0.35" stop-color="#448662"/>
+    <stop offset="0.72" stop-color="#366C4E"/>
+    <stop offset="1.00" stop-color="#4B946B"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-g4" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#CFE7DA" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#9CCDB2" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#13251B" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-g5" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#77C097"/>
+    <stop offset="0.35" stop-color="#5F9A79"/>
+    <stop offset="0.72" stop-color="#4C7B61"/>
+    <stop offset="1.00" stop-color="#69A985"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-g5" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#D9EDE2" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#B0DAC3" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#1A2A21" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+
+  <!-- The chrome ramp, copied stop for stop from the logo. Bright crown, a
+       dark horizon just under the middle, a hard light break beneath it, then
+       a second bright pass and a dark heel. That break is what reads as
+       polished metal rather than a grey gradient. -->
+  <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#F6F9FD"/>
+    <stop offset="0.06" stop-color="#E8EDF5"/>
+    <stop offset="0.20" stop-color="#C7CFDC"/>
+    <stop offset="0.36" stop-color="#ADB5C4"/>
+    <stop offset="0.455" stop-color="#7C8496"/>
+    <stop offset="0.495" stop-color="#5A6274"/>
+    <stop offset="0.520" stop-color="#C7CEDA"/>
+    <stop offset="0.60" stop-color="#FBFCFE"/>
+    <stop offset="0.68" stop-color="#FFFFFF"/>
+    <stop offset="0.79" stop-color="#DCE1EA"/>
+    <stop offset="0.89" stop-color="#A5ADBC"/>
+    <stop offset="0.96" stop-color="#79818F"/>
+    <stop offset="1.00" stop-color="#AEB6C4"/>
+  </linearGradient>
+
+  <!-- Same bevel as the logo: white at the crown falling to nothing, then
+       shadow gathering at the heel. Run as a clipped STROKE so it hugs the
+       frame's own edge instead of floating near it. -->
+  <linearGradient id="bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#FFFFFF" stop-opacity="0.95"/>
+    <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.40"/>
+    <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.00"/>
+    <stop offset="0.62" stop-color="#0B0E14" stop-opacity="0.00"/>
+    <stop offset="0.85" stop-color="#0B0E14" stop-opacity="0.30"/>
+    <stop offset="1.00" stop-color="#0B0E14" stop-opacity="0.55"/>
+  </linearGradient>
+
+  <!-- The screen. Lit from above and falling away, the way a backlit panel
+       actually behaves - a flat fill is what makes a screen look painted on. -->
+  <linearGradient id="screen-g6" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#9AD3B2"/>
+    <stop offset="0.35" stop-color="#7BA98E"/>
+    <stop offset="0.72" stop-color="#638772"/>
+    <stop offset="1.00" stop-color="#88BA9D"/>
+  </linearGradient>
+
+  <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
+       at the top and catches light at the bottom - the opposite way round to
+       the frame. That inversion is what makes it read as a hole rather than a
+       panel laid on top. -->
+  <linearGradient id="recess" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0.00" stop-color="#000000" stop-opacity="0.55"/>
+    <stop offset="0.30" stop-color="#000000" stop-opacity="0.18"/>
+    <stop offset="0.70" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#FFFFFF" stop-opacity="0.22"/>
+  </linearGradient>
+
+  <!-- A cool wash across the glass, brightest top-left. -->
+  <linearGradient id="sheen-g6" x1="0" y1="0" x2="0.75" y2="1">
+    <stop offset="0.00" stop-color="#E3F3E9" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#C4E5D2" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#222E27" stop-opacity="0.18"/>
+  </linearGradient>
+
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+    <feGaussianBlur stdDeviation="9" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Glow AND a cast shadow. The glow alone left the text looking flat and
+       printed on: a lit panel throws light around a letter, but a letter
+       sitting in front of one also casts a shadow onto it, and without the
+       second half the text has no depth at all.
+
+       The shadow goes down and slightly right, matching the light the chrome
+       is lit by - a shadow that disagrees with the metal beside it is worse
+       than none. -->
+  <filter id="textglow" x="-35%" y="-35%" width="170%" height="180%">
+    <feDropShadow dx="0" dy="7" stdDeviation="5"
+                  flood-color="#04070E" flood-opacity="0.72"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="b"/>
+    <feFlood flood-color="#BEDCFF" flood-opacity="0.5" result="c"/>
+    <feComposite in="c" in2="b" operator="in" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- The frame's OWN ramp. The chrome gradient above spans the whole panel,
+       which is right for a solid plate and wrong for a bezel: a 34px frame
+       round a 400px panel samples almost none of it, so the metal came out
+       flat grey. This one is mapped in user space across the bezel thickness
+       instead, so the full bright-dark-bright cycle happens within the frame
+       where it can be seen. Top and bottom edges get their own; the sides
+       inherit the top one, which is what a real extrusion does under a light
+       that is above it. -->
+  <linearGradient id="frameTop" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="0" x2="0" y2="30">
+    <stop offset="0.00" stop-color="#FDFEFF"/>
+    <stop offset="0.18" stop-color="#DDE3EC"/>
+    <stop offset="0.42" stop-color="#AEB6C5"/>
+    <stop offset="0.62" stop-color="#767E8E"/>
+    <stop offset="0.72" stop-color="#9AA2B1"/>
+    <stop offset="0.88" stop-color="#E4E9F1"/>
+    <stop offset="1.00" stop-color="#B9C1CE"/>
+  </linearGradient>
+  <linearGradient id="frameBottom" gradientUnits="userSpaceOnUse"
+                  x1="0" y1="277" x2="0" y2="307">
+    <stop offset="0.00" stop-color="#9098A7"/>
+    <stop offset="0.22" stop-color="#C9D0DB"/>
+    <stop offset="0.46" stop-color="#F2F5FA"/>
+    <stop offset="0.64" stop-color="#AAB2C1"/>
+    <stop offset="0.82" stop-color="#6A7180"/>
+    <stop offset="1.00" stop-color="#8F97A5"/>
+  </linearGradient>
+
+  <clipPath id="frameClip">
+    <rect x="1" y="1" width="478" height="305" rx="22"/>
+  </clipPath>
+  <clipPath id="screenClip">
+    <rect x="30" y="30" width="420" height="247" rx="9"/>
+  </clipPath>
+
+</defs>
+<rect width="1624" height="1858" fill="#0B0616"/>
+<text x="46" y="90" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="34" font-weight="bold" fill="#EDE7FA">TEAM A - reds</text>
+<g transform="translate(46,114)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-r1)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-r1)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
+</g>
+<text x="286" y="455" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">R1  -  #7E2E36  -  deep</text>
+<g transform="translate(572,114)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-r2)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-r2)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
+</g>
+<text x="812" y="455" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">R2  -  #9B3B42  -  mid</text>
+<g transform="translate(1098,114)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-r3)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-r3)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
+</g>
+<text x="1338" y="455" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">R3  -  #B84B50  -  bright</text>
+<g transform="translate(46,521)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-r4)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-r4)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
+</g>
+<text x="286" y="862" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">R4  -  #CE6067  -  light</text>
+<g transform="translate(572,521)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-r5)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-r5)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
+</g>
+<text x="812" y="862" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">R5  -  #DE7F85  -  pale</text>
+<g transform="translate(1098,521)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-r6)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-r6)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
+</g>
+<text x="1338" y="862" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">R6  -  #E99BA0  -  palest</text>
+<text x="46" y="974" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="34" font-weight="bold" fill="#EDE7FA">TEAM B - greens</text>
+<g transform="translate(46,998)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-g1)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-g1)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM B</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">90</text>
+</g>
+<text x="286" y="1339" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">G1  -  #255C3F  -  deep</text>
+<g transform="translate(572,998)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-g2)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-g2)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM B</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">90</text>
+</g>
+<text x="812" y="1339" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">G2  -  #2F7550  -  mid</text>
+<g transform="translate(1098,998)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-g3)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-g3)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM B</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">90</text>
+</g>
+<text x="1338" y="1339" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">G3  -  #3B8E61  -  bright</text>
+<g transform="translate(46,1405)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-g4)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-g4)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM B</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">90</text>
+</g>
+<text x="286" y="1746" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">G4  -  #55A87A  -  light</text>
+<g transform="translate(572,1405)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-g5)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-g5)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM B</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">90</text>
+</g>
+<text x="812" y="1746" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">G5  -  #77C097  -  pale</text>
+<g transform="translate(1098,1405)">
+<rect x="1" y="1" width="478" height="305" rx="22" fill="url(#chrome)"/>
+<g clip-path="url(#frameClip)">
+<rect x="0" y="0" width="480" height="30" fill="url(#frameTop)"/>
+<rect x="0" y="277" width="480" height="30" fill="url(#frameBottom)"/>
+<rect x="1" y="1" width="478" height="305" rx="22" fill="none" stroke="url(#bevel)" stroke-width="9"/>
+</g>
+<rect x="0.75" y="0.75" width="478.5" height="305.5" rx="22" fill="none" stroke="#5F6776" stroke-width="1.5" stroke-opacity="0.9"/>
+<rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen-g6)"/>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen-g6)"/></g>
+<g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
+<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM B</text>
+<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">90</text>
+</g>
+<text x="1338" y="1746" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="26" fill="#B9AFD0">G6  -  #9AD3B2  -  palest</text>
+</svg>
