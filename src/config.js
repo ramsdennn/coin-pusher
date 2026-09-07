@@ -230,6 +230,82 @@ window.COIN_PUSHER_CONFIG = {
      Sizes are fractions of the window, so the placement holds at any size
      without a resize handler - the browser does the arithmetic in CSS.
      -------------------------------------------------------------------- */
+  /* --------------------------------------------------------------------
+     AUDIO
+     Everything is synthesised - see src/audio.js. There are no sound files,
+     nothing to load, and nothing to license.
+
+     The coins SOUND metal even though they LOOK plastic. That is a deliberate
+     choice, not an oversight: a metallic ring is more satisfying and reads as
+     more arcade, and nobody watching a quiz night is going to audit it.
+
+     Sound cannot start until the page has had a real user gesture - every
+     browser blocks it - so the audio engine is started by the START button.
+     -------------------------------------------------------------------- */
+  audio: {
+    enabled: true,
+
+    /* This is the one to reach for on the night. It is going through a TV. */
+    masterVolume: 0.65,
+
+    /* Per-voice trim, multiplied on top of masterVolume. 0 silences a voice
+       entirely, which is the quickest way to find out whether one of them is
+       the thing making the machine sound cluttered.
+
+         peg     coin on a steel peg in the drop chute - the brightest
+         coin    coin on coin
+         deck    coin on the moving shelf
+         floor   coin on the fixed floor in front of the shelf
+         glass   coin on the chute glass
+         wall    coin on a side wall */
+    levels: {
+      peg:   1.00,
+      coin:  0.70,
+      deck:  0.55,
+      floor: 0.60,
+      glass: 0.45,
+      wall:  0.40
+    },
+
+    /* THE THROTTLE. A settled pile generates a continuous storm of contacts,
+       and a clink for each one is white noise, not a coin pusher. Three
+       separate limits, because no one of them is enough on its own:
+
+         maxVoices        hard ceiling on sounds playing at once
+         coinCooldownMs   one coin cannot sound twice inside this. A coin
+                          bouncing off a peg registers several contacts in a
+                          single hop; without this, each hop machine-guns
+         perFrameBudget   loudest N impacts in a step, rest dropped. Stops one
+                          collapsing stack drowning everything else
+
+       These are first guesses. Step 2 measures the real event rate and they
+       get set from that rather than from taste. */
+    maxVoices:      16,
+    coinCooldownMs: 55,
+    perFrameBudget: 4,
+
+    /* Impact force that counts as a full-strength hit. Anything at or above
+       this plays at full volume and full brightness. Also set from
+       measurement, not taste. */
+    forceForFullHit: 1.0,
+
+    /* Quietest a hit can be, as a fraction of full. Without a floor, the long
+       tail of feather-light contacts is inaudible and the machine sounds like
+       it only reacts to hard hits. */
+    minGain: 0.10,
+
+    /* A soft hit is not just a quiet hard one - it is duller and slightly
+       lower. Brightness is the strongest of the three cues by a distance. */
+    cutoffSoft:    1400,   // Hz, lowpass on the weakest hit
+    cutoffHard:   17000,   // Hz, on the hardest
+    pitchByEnergy:  0.10,  // +/- this much playback rate across the range
+    pitchJitter:    0.06,  // random, so repeated hits are not identical
+
+    /* Coins are spread right across the machine, so panning them costs
+       nothing and adds a lot. 0 for mono. */
+    stereoWidth: 0.55
+  },
+
   logo: {
     enabled: true,
     src: 'assets/logo/tipping-point.svg',

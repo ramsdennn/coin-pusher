@@ -18,6 +18,8 @@ import * as RAPIER from 'rapier';
 import { DIMS, TIERS } from '@app/dims';
 import { buildMachine, driveShelves, liftTrapped, setTubeColour } from '@app/machine';
 import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
+import { initAudio, auditionAll, play, audioReady, setMasterVolume,
+         VOICE_KINDS } from '@app/audio';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
@@ -1203,6 +1205,13 @@ function onResize() {
 }
 
 window.startCoinPusher = function (teamA, teamB) {
+
+  /* The START click is the user gesture the browser demands before a page is
+     allowed to make any noise at all. There is no second chance at this: an
+     AudioContext created anywhere else starts suspended and stays that way
+     until the next click, so it is created here and nowhere else. */
+  initAudio();
+
   /* The f64 bundle inlines its wasm and needs no init; the compat build does.
      Tolerate both so the vendor file can be swapped without touching this. */
   const ready = RAPIER.init ? RAPIER.init() : Promise.resolve();
@@ -1278,6 +1287,9 @@ window.startCoinPusher = function (teamA, teamB) {
       else if (e.key === 's' || e.key === 'S') {
         const was = running; running = true; physicsStep(); running = was;
       } else if (e.code === 'Space') { running = !running; e.preventDefault(); }
+      /* Audition every voice at three strengths, for judging the sounds by
+         ear without having to coax the machine into producing each one. */
+      else if (e.key === 'z' || e.key === 'Z') auditionAll();
     });
 
     /* Live tuning from the browser console, as the 2D build had. */
@@ -1307,6 +1319,8 @@ window.startCoinPusher = function (teamA, teamB) {
       dropInto: dropInto,
       setRunning: function (v) { running = v; },
       setAutoStep: function (v) { autoStep = v; },
+      audio: { play: play, audition: auditionAll, ready: audioReady,
+               setVolume: setMasterVolume, kinds: VOICE_KINDS },
       createItem: function (typeId, x, y, z, yaw, opts) {
         const it = createItem(ctx, typeId, x, y, z, yaw, opts);
         scene.add(it.mesh);
