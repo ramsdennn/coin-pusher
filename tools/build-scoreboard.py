@@ -20,8 +20,10 @@ import io, os, sys
 # Geometry. The reference photo reads as a chunky bezel round a 4:3-ish screen,
 # with the name in the top third and the score filling the rest.
 # --------------------------------------------------------------------------
-W, H        = 560, 400
-BEZEL       = 34            # frame thickness
+# 560 wide read as too long next to the logo - the panels looked like letter
+# boxes rather than score displays. 480 is squarer without going square.
+W, H        = 480, 400
+BEZEL       = 30            # frame thickness
 R_OUT       = 22            # outer corner radius
 R_IN        = 9             # screen corner radius
 
@@ -30,10 +32,29 @@ SCREEN_Y    = BEZEL
 SCREEN_W    = W - BEZEL * 2
 SCREEN_H    = H - BEZEL * 2
 
-NAME_SIZE   = 62
-NAME_BASE   = 148           # baseline
-SCORE_SIZE  = 158
-SCORE_BASE  = 318
+NAME_SIZE   = 58
+SCORE_SIZE  = 150
+
+# --------------------------------------------------------------------------
+# The two lines are centred AS A BLOCK in the screen, not placed at fixed
+# heights. Fixed heights were tried and the pair read as two separate things
+# stuck on one panel - a name near the top, a number lower down, and a gap
+# between them that belonged to neither.
+#
+# Cap height, not font size, because that is what the eye actually centres on:
+# a line box carries descender space under it that nothing is drawn in, and
+# centring on the box leaves the text sitting visibly high.
+# --------------------------------------------------------------------------
+CAP        = 0.72           # of font size, for this weight of Arial
+LINE_GAP   = 0.055 * H
+
+_cap_n = NAME_SIZE * CAP
+_cap_s = SCORE_SIZE * CAP
+_block = _cap_n + LINE_GAP + _cap_s
+_top   = SCREEN_Y + SCREEN_H / 2.0 - _block / 2.0
+
+NAME_BASE  = _top + _cap_n
+SCORE_BASE = _top + _cap_n + LINE_GAP + _cap_s
 
 # Condensed where it exists, then the ordinary faces every Windows box has.
 FONT = "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"
@@ -198,7 +219,7 @@ def panel(name, score, x=0, y=0, text=True):
 
     # Name. Letter-spaced, because a short word centred in a wide panel reads
     # as lost without it.
-    g.append('<text x="%g" y="%d" text-anchor="middle" font-family=%s '
+    g.append('<text x="%g" y="%.2f" text-anchor="middle" font-family=%s '
              'font-size="%d" font-weight="bold" letter-spacing="4" '
              'fill="#FFFFFF" filter="url(#textglow)">%s</text>'
              % (cx, NAME_BASE, '"%s"' % FONT, NAME_SIZE, esc(name)))
@@ -207,7 +228,7 @@ def panel(name, score, x=0, y=0, text=True):
     # in the reference photo has nothing there and the name and score are
     # already grouped by being the only two things on the screen.
 
-    g.append('<text x="%g" y="%d" text-anchor="middle" font-family=%s '
+    g.append('<text x="%g" y="%.2f" text-anchor="middle" font-family=%s '
              'font-size="%d" font-weight="bold" '
              'fill="#FFFFFF" filter="url(#textglow)">%s</text>'
              % (cx, SCORE_BASE, '"%s"' % FONT, SCORE_SIZE, esc(str(score))))
@@ -252,11 +273,13 @@ def main():
 
     # Where the live text has to sit to match the baked version, as fractions
     # of the panel. Printed rather than guessed at the CSS end.
-    print('  name  : size %.4f of height, baseline %.4f'
-          % (NAME_SIZE / float(H), NAME_BASE / float(H)))
-    print('  score : size %.4f of height, baseline %.4f'
-          % (SCORE_SIZE / float(H), SCORE_BASE / float(H)))
-    print('  screen inset: %.4f x, %.4f y' % (BEZEL / float(W), BEZEL / float(H)))
+    # The numbers the game's CSS needs, so they are never matched by eye.
+    print('  aspect       : %d/%d' % (W, H))
+    print('  nameSize     : %.4f   (of panel height)' % (NAME_SIZE / float(H)))
+    print('  scoreSize    : %.4f' % (SCORE_SIZE / float(H)))
+    print('  lineGap      : %.4f' % (LINE_GAP / float(H)))
+    print('  screenInsetX : %.4f' % (BEZEL / float(W)))
+    print('  screenInsetY : %.4f' % (BEZEL / float(H)))
 
     # A review sheet: both teams, on the game's own background, plus the
     # extremes the panel has to survive - a long name and a four-digit score.

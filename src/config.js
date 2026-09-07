@@ -466,19 +466,25 @@ window.COIN_PUSHER_CONFIG = {
     enabled: true,
     src: 'assets/scoreboard/panel-blank.svg',
 
-    widthFraction:   0.155,  // each panel, of the window's width
+    /* The panel was 560x400 and read as too long next to the logo - more
+       letterbox than score display. It is 480x400 now, and the width here is
+       pulled in to match so the panels keep the height they had rather than
+       growing to fill the gap. */
+    aspect:          '480/400',
+    widthFraction:   0.133,  // each panel, of the window's width
     gapFraction:     0.020,  // between the two
     centreAtScreenX: 0.805,  // centre of the PAIR
     topFraction:     0.370,  // of the window's height
 
-    /* Where the text sits inside the panel, as fractions of its height.
-       These come out of tools/build-scoreboard.py rather than being matched by
-       eye - it prints them - so the live text lands exactly where the baked
-       version has it. Change the panel geometry there and these follow. */
-    nameSize:     0.155,
-    nameBaseline: 0.370,
-    scoreSize:    0.395,
-    scoreBaseline: 0.795,
+    /* Text geometry, as fractions of the panel's HEIGHT. These are printed by
+       tools/build-scoreboard.py rather than matched by eye, so the live text
+       and the baked SVG cannot drift apart. Change the panel there and paste
+       what it prints. */
+    nameSize:     0.145,
+    scoreSize:    0.375,
+    lineGap:      0.055,
+    screenInsetX: 0.0625,
+    screenInsetY: 0.075,
 
     /* Same stack as the SVG, so the two versions cannot drift apart. */
     font: "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"

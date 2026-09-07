@@ -1797,7 +1797,7 @@ function makeScoreboards() {
       'width:' + (S.widthFraction * 100).toFixed(3) + '%;' +
       /* The panel is 560x400, so its height follows its width. aspect-ratio
          keeps that true at any window size without measuring anything. */
-      'aspect-ratio:560/400;' +
+      'aspect-ratio:' + S.aspect + ';' +
       'background:url(' + S.src + ') center/100% 100% no-repeat;';
 
     /* Text is sized in units of the PANEL, not the window - cqh is a
@@ -1805,29 +1805,42 @@ function makeScoreboards() {
        around it rather than drifting off it as the window changes. */
     box.style.containerType = 'size';
 
+    /* The two lines are CENTRED AS A BLOCK inside the screen, not placed at
+       fixed heights. Fixed heights were what made them read as two separate
+       things stuck on one panel - a name near the top, a number lower down,
+       and a gap between them belonging to neither.
+
+       A flex column does the centring, so it stays right whatever the text is:
+       a long name that wraps to two lines, or a four-digit score, still sits
+       centred rather than drifting off a baseline computed for something
+       shorter. line-height 1 because the default leaves descender space under
+       each line that nothing is drawn in, which pushes the block visibly
+       high. */
+    const inner = document.createElement('div');
+    inner.style.cssText =
+      'position:absolute;display:flex;flex-direction:column;' +
+      'align-items:center;justify-content:center;' +
+      'left:'   + (S.screenInsetX * 100).toFixed(3) + '%;' +
+      'right:'  + (S.screenInsetX * 100).toFixed(3) + '%;' +
+      'top:'    + (S.screenInsetY * 100).toFixed(3) + '%;' +
+      'bottom:' + (S.screenInsetY * 100).toFixed(3) + '%;' +
+      'gap:' + (S.lineGap * 100).toFixed(2) + 'cqh;' +
+      'font-family:' + S.font + ';font-weight:bold;color:#fff;line-height:1;';
+
     const name = document.createElement('div');
     name.style.cssText =
-      'position:absolute;left:0;width:100%;text-align:center;' +
-      'font-family:' + S.font + ';font-weight:bold;color:#fff;' +
-      'letter-spacing:0.06em;white-space:nowrap;overflow:hidden;' +
-      'text-shadow:0 0 ' + (0.03 * 100).toFixed(0) + 'cqh rgba(190,220,255,.55);' +
-      'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;' +
-      /* Baselines, not tops. The SVG positions its text by baseline and this
-         has to land in the same place, so the line box is pulled up by roughly
-         the cap height. */
-      'top:' + ((S.nameBaseline - S.nameSize * 0.78) * 100).toFixed(2) + 'cqh;';
+      'letter-spacing:0.06em;text-align:center;' +
+      'text-shadow:0 0 3cqh rgba(190,220,255,.55);' +
+      'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;';
 
     const score = document.createElement('div');
     score.style.cssText =
-      'position:absolute;left:0;width:100%;text-align:center;' +
-      'font-family:' + S.font + ';font-weight:bold;color:#fff;' +
-      'white-space:nowrap;' +
-      'text-shadow:0 0 ' + (0.04 * 100).toFixed(0) + 'cqh rgba(190,220,255,.55);' +
-      'font-size:' + (S.scoreSize * 100).toFixed(2) + 'cqh;' +
-      'top:' + ((S.scoreBaseline - S.scoreSize * 0.78) * 100).toFixed(2) + 'cqh;';
+      'text-align:center;text-shadow:0 0 4cqh rgba(190,220,255,.55);' +
+      'font-size:' + (S.scoreSize * 100).toFixed(2) + 'cqh;';
 
-    box.appendChild(name);
-    box.appendChild(score);
+    inner.appendChild(name);
+    inner.appendChild(score);
+    box.appendChild(inner);
     document.body.appendChild(box);
     boards.push({ box: box, name: name, score: score, shownName: null, shownScore: null });
   }
