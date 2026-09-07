@@ -273,6 +273,7 @@ window.COIN_PUSHER_CONFIG = {
       surface: 0.70,
       tense:   0.55,      // a bed, not a feature - it sits under the machine
       drop:    0.22,      // under the pegs on purpose - it used to bury them
+      scoring: 0.90,      // the payoff, and the loudest thing after the pegs
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -329,7 +330,11 @@ window.COIN_PUSHER_CONFIG = {
          rattling down the pegs. The bed ducks out for it and comes back at
          that same moment. Remove this line and the release is silent, with
          the music simply running through it. */
-      drop:    'assets/audio/drop.mp3'
+      drop:    'assets/audio/drop.mp3',
+
+      /* One per coin over the front lip. Every coin gets its own, so three
+         going over is three sounds, not one louder one. */
+      scoring: 'assets/audio/scoring.mp3'
     },
 
     /* Contact force below which the ENGINE does not even report a peg hit.
@@ -341,6 +346,15 @@ window.COIN_PUSHER_CONFIG = {
     /* Contact force that counts as a full-strength hit: at or above this a
        peg sound plays at full volume and full brightness. */
     pegForceForFullHit: 2.5,
+
+    /* Coins come off the lip in twos and threes on the same step, and three
+       copies of a sound starting on the same sample are not three sounds -
+       they are one, three times louder. Fanning them out a little turns that
+       into the run of separate hits it should be.
+
+       Scheduled on the audio clock rather than with a timer, so the spacing is
+       exact however busy the frame is. */
+    scoringStaggerSeconds: 0.11,
 
     /* --------------------------------------------------------------------
        SURFACE AND COIN-ON-COIN

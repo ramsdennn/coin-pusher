@@ -443,12 +443,29 @@ function mean(arr) {
 
 /* Items that have left the bottom lip. Counted and removed - scoring will
    hook in exactly here, but this pass only needs the rate. */
+/* The earliest step at which the next scoring sound may start. Coins rarely
+   come off the lip on the SAME step - they come off one step apart, which is
+   17ms, and two sounds 17ms apart is not two sounds. Queuing them against a
+   running cursor rather than counting per step is what turns a burst into the
+   run of separate hits it should be. */
+let nextScoringStep = 0;
+
 function collectFallen() {
   for (let i = ctx.items.length - 1; i >= 0; i--) {
     const it = ctx.items[i];
     const t = it.body.translation();
     if (t.y < DIMS.tierLast.y - DIMS.D) {
       M.fallen++;
+      /* One sound per coin, fanned out so a burst reads as several coins
+         rather than one loud thump. Counted per step, not per coin, so the
+         first of a batch is always immediate. */
+      if (CFG.audio && CFG.audio.enabled && audioReady()) {
+        const stagger = CFG.audio.scoringStaggerSeconds / PHY.timestep;
+        const at = Math.max(stepCount, nextScoringStep);
+        play('scoring', 1, DIMS.width > 0 ? t.x / (DIMS.width * 0.5) : 0,
+             (at - stepCount) * PHY.timestep, true);
+        nextScoringStep = at + stagger;
+      }
       noteDelivery();
       M.fallenByType[it.typeId] = (M.fallenByType[it.typeId] || 0) + 1;
       scene.remove(it.mesh);

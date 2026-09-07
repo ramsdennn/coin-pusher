@@ -502,7 +502,7 @@ export function audioReady() { return !!ac && ac.state === 'running'; }
              what makes a synthesised impact believable.
      panX    -1..1 stereo position
    ------------------------------------------------------------------------- */
-export function play(kind, energy, panX) {
+export function play(kind, energy, panX, delaySeconds, mustPlay) {
   const A = cfg();
   if (!ac || !A || !A.enabled) return false;
   /* A loaded sample always wins over the synthesised voice of the same name.
@@ -523,7 +523,13 @@ export function play(kind, energy, panX) {
     for (let i = 0; i < voices.length; i++) if (voices[i] > tNow) voices[k++] = voices[i];
     voices.length = k;
   }
-  if (voices.length >= A.maxVoices) return false;
+  /* mustPlay skips the ceiling. The pool exists to stop a burst of coin
+     impacts flooding the mix - impacts are texture and losing one costs
+     nothing. A coin scoring is an EVENT, and a coin that scores in silence
+     because a busy pile filled the pool would read as a bug. Measured, the
+     pool was sitting at 23 of 24 during a delivery, so this was not a
+     theoretical risk. */
+  if (!mustPlay && voices.length >= A.maxVoices) return false;
 
   let e = energy;
   if (!(e >= 0)) e = 0;
@@ -562,8 +568,13 @@ export function play(kind, energy, panX) {
 
   src.connect(lp); lp.connect(g); tail.connect(master);
 
-  voices.push(tNow + buf.duration / Math.max(0.05, src.playbackRate.value));
-  src.start();
+  /* An optional delay, scheduled on the audio clock rather than with a timer.
+     Used to fan several coins scoring at once into quick succession - three
+     sounds landing on the same sample are not three sounds, they are one
+     louder one. */
+  const at = tNow + (delaySeconds > 0 ? delaySeconds : 0);
+  voices.push(at + buf.duration / Math.max(0.05, src.playbackRate.value));
+  src.start(at);
   return true;
 }
 
