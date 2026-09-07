@@ -127,7 +127,7 @@
 <rect x="30" y="30" width="420" height="263" rx="9" fill="url(#screen)"/>
 <g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="263" fill="url(#sheen)"/></g>
 <g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="263" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
-<text x="240" y="119.50" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
-<text x="240" y="245.26" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
+<text x="240" y="94.73" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM A</text>
+<text x="240" y="244.67" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">150</text>
 </g>
 </svg>

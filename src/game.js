@@ -1838,12 +1838,23 @@ function makeRightColumn() {
     const inner = document.createElement('div');
     inner.style.cssText =
       'position:absolute;display:flex;flex-direction:column;' +
-      'align-items:center;justify-content:center;' +
+      'align-items:center;' +
       'left:'   + (S.screenInsetX * 100).toFixed(3) + '%;' +
       'right:'  + (S.screenInsetX * 100).toFixed(3) + '%;' +
       'top:'    + (S.screenInsetY * 100).toFixed(3) + '%;' +
       'bottom:' + (S.screenInsetY * 100).toFixed(3) + '%;' +
-      'gap:' + (S.lineGap * 100).toFixed(2) + 'cqh;' +
+      /* THREE EQUAL GAPS, not a centred block with a fixed gap between the two
+         lines. space-evenly puts the same distance above the name, between the
+         name and the score, and below the score, so the panel balances itself
+         whatever the text is - one line or two, short name or long - instead
+         of the middle gap being a number that happened to suit one case.
+
+         Line boxes, not ink. Each line carries invisible space above its
+         capitals and below its baseline, so these gaps are equal as the
+         browser lays them out rather than equal to the eye. That was the
+         choice made deliberately; measuring to cap height and baseline is the
+         other option if it ever looks off. */
+      'justify-content:space-evenly;' +
       'font-family:' + S.font + ';font-weight:bold;color:#fff;line-height:1;';
 
     /* Shadow first, then glow. text-shadow paints back to front, so the glow
@@ -1944,7 +1955,6 @@ function fitName(b) {
      bezel. Give the name whatever is left after the score and the gap, split
      across two lines, never below the floor. */
   const inner = el.parentElement.parentElement;
-  const gap = parseFloat(getComputedStyle(inner).rowGap) || 0;
   /* The score's height is CALCULATED, not measured.
 
      Measuring it was a real bug: the name is fitted before the score's text has
@@ -1955,8 +1965,13 @@ function fitName(b) {
      of fault that survives being tested.
 
      The score is one line at a known size, so this needs no measurement and no
-     ordering between the two. */
-  const budget = inner.clientHeight - S.scoreSize * panelH - gap;
+     ordering between the two.
+
+     The three even gaps come off too. space-evenly has already spoken for that
+     space, so sizing the name against it would let the name grow into room the
+     layout is going to take back, and push the score out of the panel. */
+  const budget = inner.clientHeight - S.scoreSize * panelH
+                 - S.evenGapFraction * panelH * 3;
   const lines = S.nameMaxLines || 2;
   let frac = Math.max(S.nameMinSize, Math.min(S.nameSize, (budget / panelH) / lines));
   el.style.fontSize = (frac * 100).toFixed(3) + 'cqh';

@@ -42,25 +42,25 @@ NAME_SIZE   = 58
 SCORE_SIZE  = 150
 
 # --------------------------------------------------------------------------
-# The two lines are centred AS A BLOCK in the screen, not placed at fixed
-# heights. Fixed heights were tried and the pair read as two separate things
-# stuck on one panel - a name near the top, a number lower down, and a gap
-# between them that belonged to neither.
+# THREE EQUAL GAPS: above the name, between the two, and below the score. The
+# panel then balances itself whatever the text is, rather than the middle gap
+# being a number that happened to suit one case.
 #
-# Cap height, not font size, because that is what the eye actually centres on:
-# a line box carries descender space under it that nothing is drawn in, and
-# centring on the box leaves the text sitting visibly high.
+# Equal by LINE BOX, not by ink. Each line carries invisible space above its
+# capitals and below its baseline, so these are equal as text is laid out
+# rather than equal to the eye - a deliberate choice, matching what the game
+# does with justify-content:space-evenly. The alternative is measuring to cap
+# height and baseline, which looks more even but makes a name with a descender
+# sit differently from one without.
+#
+# ASCENT places the baseline within its line box. SVG positions text by
+# baseline; a line box of height F sits its baseline about 0.8F down.
 # --------------------------------------------------------------------------
-CAP        = 0.72           # of font size, for this weight of Arial
-LINE_GAP   = 0.055 * H
+ASCENT     = 0.80
+TEXT_GAP   = (SCREEN_H - NAME_SIZE - SCORE_SIZE) / 3.0
 
-_cap_n = NAME_SIZE * CAP
-_cap_s = SCORE_SIZE * CAP
-_block = _cap_n + LINE_GAP + _cap_s
-_top   = SCREEN_Y + SCREEN_H / 2.0 - _block / 2.0
-
-NAME_BASE  = _top + _cap_n
-SCORE_BASE = _top + _cap_n + LINE_GAP + _cap_s
+NAME_BASE  = SCREEN_Y + TEXT_GAP + NAME_SIZE * ASCENT
+SCORE_BASE = SCREEN_Y + TEXT_GAP + NAME_SIZE + TEXT_GAP + SCORE_SIZE * ASCENT
 
 # Condensed where it exists, then the ordinary faces every Windows box has.
 FONT = "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"
@@ -295,7 +295,8 @@ def main():
     print('  aspect       : %d/%d' % (W, H))
     print('  nameSize     : %.4f   (of panel height)' % (NAME_SIZE / float(H)))
     print('  scoreSize    : %.4f' % (SCORE_SIZE / float(H)))
-    print('  lineGap      : %.4f' % (LINE_GAP / float(H)))
+    print('  evenGap      : %.4f   (what space-evenly will produce)'
+          % (TEXT_GAP / float(H)))
     print('  screenInsetX : %.4f' % (BEZEL / float(W)))
     print('  screenInsetY : %.4f' % (BEZEL / float(H)))
     print('  shadowDy     : %.4f   blur %.4f' % (7 / float(H), 5 / float(H)))

@@ -523,6 +523,18 @@ window.COIN_PUSHER_CONFIG = {
        tools/build-scoreboard.py rather than matched by eye, so the live text
        and the baked SVG cannot drift apart. Change the panel there and paste
        what it prints. */
+    /* MINIMUM gap, as a fraction of panel height. The actual gaps are not set
+       here - space-evenly divides whatever is left over into three equal
+       parts, above the name, between the two, and below the score. This only
+       reserves enough that they cannot collapse to nothing and leave the text
+       touching the bezel, and it is what caps how large a wrapped name may be.
+
+       It costs something, and worth knowing: reserving three gaps instead of
+       one leaves less for a two-line name, so long names come out smaller than
+       they did under the old centred layout. That is the price of the three
+       gaps being genuinely equal. */
+    evenGapFraction: 0.040,
+
     nameSize:     0.1796,
 
     /* A long name WRAPS to a second line, and a second line does not fit at
@@ -537,7 +549,6 @@ window.COIN_PUSHER_CONFIG = {
     nameMinSize:  0.105,
     nameMaxLines: 2,
     scoreSize:    0.4644,
-    lineGap:      0.055,
     screenInsetX: 0.0625,
     screenInsetY: 0.0929,
 
