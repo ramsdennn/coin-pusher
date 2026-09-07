@@ -1824,7 +1824,7 @@ function makeRightColumn() {
        the gap is, so the panel width never has to be worked out by hand. */
     box.style.cssText =
       'flex:1 1 0;aspect-ratio:' + S.aspect + ';position:relative;' +
-      'background:url(' + S.src + ') center/100% 100% no-repeat;';
+      'background:url(' + S.srcs[i] + ') center/100% 100% no-repeat;';
     /* Text is sized in cqh - a percentage of this box's own height - so it
        scales with the chrome around it rather than with the window. */
     box.style.containerType = 'size';

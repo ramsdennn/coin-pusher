@@ -502,7 +502,15 @@ window.COIN_PUSHER_CONFIG = {
      -------------------------------------------------------------------- */
   scoreboard: {
     enabled: true,
-    src: 'assets/scoreboard/panel-blank.svg',
+    /* One per team: they are different colours now, so there is a file each
+       rather than one shared background. Team A green, Team B red, matching
+       how the teams are coloured in the quiz running alongside this.
+
+       The red is deliberately clear of the machine's own red - see
+       arming.dimmedGlow, which the drop zones go while a coin is armed. Two
+       reds on one screen that are nearly the same read as a mistake. */
+    srcs: ['assets/scoreboard/panel-blank-a.svg',
+           'assets/scoreboard/panel-blank-b.svg'],
 
     /* The panel was 560x400 and read as too long next to the logo - more
        letterbox than score display. It is 480x400 now, and the width here is

@@ -35,10 +35,10 @@
   <!-- The screen. Lit from above and falling away, the way a backlit panel
        actually behaves - a flat fill is what makes a screen look painted on. -->
   <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0.00" stop-color="#2C3E63"/>
-    <stop offset="0.35" stop-color="#23324F"/>
-    <stop offset="0.72" stop-color="#1C283F"/>
-    <stop offset="1.00" stop-color="#273757"/>
+    <stop offset="0.00" stop-color="#CE6067"/>
+    <stop offset="0.35" stop-color="#A54D52"/>
+    <stop offset="0.72" stop-color="#843D42"/>
+    <stop offset="1.00" stop-color="#B5545B"/>
   </linearGradient>
 
   <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
@@ -54,9 +54,9 @@
 
   <!-- A cool wash across the glass, brightest top-left. -->
   <linearGradient id="sheen" x1="0" y1="0" x2="0.75" y2="1">
-    <stop offset="0.00" stop-color="#C4C9D3" stop-opacity="0.20"/>
-    <stop offset="0.45" stop-color="#858FA5" stop-opacity="0.05"/>
-    <stop offset="1.00" stop-color="#0A0E16" stop-opacity="0.18"/>
+    <stop offset="0.00" stop-color="#F1D2D4" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#E3A3A7" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#2D1517" stop-opacity="0.18"/>
   </linearGradient>
 
   <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">

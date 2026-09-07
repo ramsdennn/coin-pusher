@@ -371,10 +371,21 @@ def swatch_sheet():
     return chr(10).join(out)
 
 
-def document(panels, w, h, background=None):
+# The chosen pair. Team A green, Team B red - matching how the teams are
+# coloured in the quiz being run alongside this.
+#
+# The red is deliberately NOT the machine's own red (arming.dimmedGlow,
+# 0x8E1216, which the drop zones go while a coin is armed). Two reds on one
+# screen that are nearly the same read as a mistake, so this one sits well
+# clear of it, lighter and softer.
+TEAM_A = 0x2F7550          # G2, mid green
+TEAM_B = 0xCE6067          # R4, light red
+
+
+def document(panels, w, h, background=None, base=0x2C3E63):
     out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
            'width="%d" height="%d">' % (w, h, w, h)]
-    out.append(defs())
+    out.append(defs(None, base))
     if background:
         out.append('<rect width="%d" height="%d" fill="%s"/>' % (w, h, background))
     out.extend(panels)
@@ -389,17 +400,18 @@ def main():
         outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
 
-    # One on its own, for dropping into the game.
-    single = os.path.join(outdir, 'panel-team-a.svg')
-    io.open(single, 'w', encoding='utf-8').write(
-        document([panel('TEAM A', 150)], W, H))
-
+    # With text, for looking at.
+    io.open(os.path.join(outdir, 'panel-team-a.svg'), 'w', encoding='utf-8').write(
+        document([panel('TEAM A', 150)], W, H, base=TEAM_A))
     io.open(os.path.join(outdir, 'panel-team-b.svg'), 'w', encoding='utf-8').write(
-        document([panel('TEAM B', 90)], W, H))
+        document([panel('TEAM B', 90)], W, H, base=TEAM_B))
 
-    # The one the game actually uses: chrome only, no text.
-    io.open(os.path.join(outdir, 'panel-blank.svg'), 'w', encoding='utf-8').write(
-        document([panel('', '', text=False)], W, H))
+    # The ones the GAME uses: chrome only, no text, one per team now that the
+    # two are different colours.
+    io.open(os.path.join(outdir, 'panel-blank-a.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=TEAM_A))
+    io.open(os.path.join(outdir, 'panel-blank-b.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=TEAM_B))
 
     # Where the live text has to sit to match the baked version, as fractions
     # of the panel. Printed rather than guessed at the CSS end.
@@ -421,12 +433,23 @@ def main():
     GAP = 48
     sheet_w = W * 2 + GAP * 3
     sheet_h = H * 2 + GAP * 3
+    # Two schemes in one document, which is what the suffixed gradient ids are
+    # for - without them both panels would take whichever defs came first.
+    ds = ['<defs>']
+    for key, base in (('a', TEAM_A), ('b', TEAM_B)):
+        ds.append(defs(key, base)[len('<defs>'):-len('</defs>')])
+    ds.append('</defs>')
     io.open(os.path.join(outdir, 'review.svg'), 'w', encoding='utf-8').write(
-        document([panel('TEAM A', 150,  GAP,           GAP),
-                  panel('TEAM B', 90,   GAP * 2 + W,   GAP),
-                  panel('TEAM A', 1250, GAP,           GAP * 2 + H),
-                  panel('BUMBLEBEES', 0, GAP * 2 + W,  GAP * 2 + H)],
-                 sheet_w, sheet_h, background='#0B0616'))
+        chr(10).join(
+            ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
+             'width="%d" height="%d">' % (sheet_w, sheet_h, sheet_w, sheet_h),
+             chr(10).join(ds),
+             '<rect width="%d" height="%d" fill="#0B0616"/>' % (sheet_w, sheet_h),
+             panel('TEAM A', 150,  GAP,          GAP,          scheme='a'),
+             panel('TEAM B', 90,   GAP * 2 + W,  GAP,          scheme='b'),
+             panel('TEAM A', 1250, GAP,          GAP * 2 + H,  scheme='a'),
+             panel('BUMBLEBEES', 0, GAP * 2 + W, GAP * 2 + H,  scheme='b'),
+             '</svg>']))
 
     print('wrote %s' % outdir)
 

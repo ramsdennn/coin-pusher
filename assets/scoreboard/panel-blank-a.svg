@@ -35,10 +35,10 @@
   <!-- The screen. Lit from above and falling away, the way a backlit panel
        actually behaves - a flat fill is what makes a screen look painted on. -->
   <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0.00" stop-color="#CE6067"/>
-    <stop offset="0.35" stop-color="#A54D52"/>
-    <stop offset="0.72" stop-color="#843D42"/>
-    <stop offset="1.00" stop-color="#B5545B"/>
+    <stop offset="0.00" stop-color="#2F7550"/>
+    <stop offset="0.35" stop-color="#265E40"/>
+    <stop offset="0.72" stop-color="#1E4B33"/>
+    <stop offset="1.00" stop-color="#296746"/>
   </linearGradient>
 
   <!-- Recess: the screen sits BELOW the bezel, so its opening is shaded dark
@@ -54,9 +54,9 @@
 
   <!-- A cool wash across the glass, brightest top-left. -->
   <linearGradient id="sheen" x1="0" y1="0" x2="0.75" y2="1">
-    <stop offset="0.00" stop-color="#F1D2D4" stop-opacity="0.20"/>
-    <stop offset="0.45" stop-color="#E3A3A7" stop-opacity="0.05"/>
-    <stop offset="1.00" stop-color="#2D1517" stop-opacity="0.18"/>
+    <stop offset="0.00" stop-color="#C5D8CE" stop-opacity="0.20"/>
+    <stop offset="0.45" stop-color="#86AF9A" stop-opacity="0.05"/>
+    <stop offset="1.00" stop-color="#0A1A12" stop-opacity="0.18"/>
   </linearGradient>
 
   <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
@@ -127,7 +127,5 @@
 <rect x="30" y="30" width="420" height="247" rx="9" fill="url(#screen)"/>
 <g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" fill="url(#sheen)"/></g>
 <g clip-path="url(#screenClip)"><rect x="30" y="30" width="420" height="247" rx="9" fill="none" stroke="url(#recess)" stroke-width="13"/></g>
-<text x="240" y="89.40" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="58" font-weight="bold" letter-spacing="4" fill="#FFFFFF" filter="url(#textglow)">TEAM B</text>
-<text x="240" y="234.00" text-anchor="middle" font-family="'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif" font-size="150" font-weight="bold" fill="#FFFFFF" filter="url(#textglow)">90</text>
 </g>
 </svg>
