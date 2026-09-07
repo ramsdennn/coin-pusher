@@ -41,6 +41,8 @@ const M = {
   pegHits: 0,          // peg sounds actually played, for the HUD
   unjammed: 0,         // coins slid off a peg they were impaled on
   surfaceHits: 0,      // surface / coin-on-coin sounds played
+  awarded: 0,          // points credited to a team
+  prizes: 0,           // prize items won
   dividerHits: 0,      // of those, ones that hit the chute chrome
   soundedThisStep: [], // body handles that made a surface sound this step
   lifted: 0,
@@ -456,6 +458,7 @@ function collectFallen() {
     const t = it.body.translation();
     if (t.y < DIMS.tierLast.y - DIMS.D) {
       M.fallen++;
+      award(it);
       /* One sound per coin, fanned out so a burst reads as several coins
          rather than one loud thump. Counted per step, not per coin, so the
          first of a batch is always immediate. */
@@ -779,6 +782,34 @@ function tickArming() {
   /* Nothing scored within the window. Only armed once the coin has landed, so
      a long deliberation cannot eat into it. */
   if (resolveDeadline && stepCount >= resolveDeadline) endResolve();
+}
+
+/* Credit a coin that has just gone over the edge to whoever's turn it is.
+
+   The turn IS the team highlight - the thing that lights the machine green or
+   red - so there is no separate notion of an active team to get out of step
+   with what is on screen. Nobody highlighted means nobody scores: the coin
+   still falls, still makes its noise, still counts in the machine's own tally,
+   it simply credits no one. Points scored with the lights neutral are gone,
+   not held aside.
+
+   What a coin is worth comes from its TYPE, not from a number here, so the
+   50 and 100 tokens already in config score their own value the day they are
+   put into play, and a prize type goes to that team's log instead of their
+   score. */
+function award(it) {
+  if (teamHighlight < 0) return;
+  const team = ctx.teams[teamHighlight];
+  const type = CFG.itemTypes[it.typeId];
+  if (!team || !type || !type.value) return;
+
+  if (type.value.type === 'prize') {
+    team.log.push(type.value.label);
+    M.prizes++;
+  } else {
+    team.score += type.value.amount;
+    M.awarded += type.value.amount;
+  }
 }
 
 /* A coin went over the front lip of the platform - the scoring drop - which
@@ -2187,8 +2218,11 @@ window.startCoinPusher = function (teamA, teamB) {
       teams: [
         { name: teamA || 'Team 1', score: 0, log: [] },
         { name: teamB || 'Team 2', score: 0, log: [] }
-      ],
-      activeTeam: 0
+      ]
+      /* No activeTeam here. There was one, unused, and it would now be a
+         second place for whose turn it is to live - the team highlight is
+         that, and it is also what is lit on the machine, so the two cannot
+         disagree. */
     };
 
     /* Contact-force events for the audio. Only colliders that ask for them
