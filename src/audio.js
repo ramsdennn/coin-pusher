@@ -371,6 +371,67 @@ export async function loadSamples() {
 
 export function hasSample(kind) { return !!samples[kind]; }
 
+/* ---------------------------------------------------------------------------
+   MUSIC
+
+   A separate path from the impact sounds, because it is a different kind of
+   thing: one long looping source rather than a pool of short ones, on its own
+   gain so it can be faded rather than cut. Cutting a music bed dead leaves an
+   audible click; a few tens of milliseconds of ramp does not.
+
+   It deliberately does NOT go through the voice pool. The pool exists to stop
+   a burst of coin impacts flooding the mix, and music is neither a burst nor
+   an impact - counting it there would let a busy pile silence the soundtrack.
+   ------------------------------------------------------------------------- */
+let musicSrc = null, musicGain = null, musicName = null;
+
+export function playMusic(kind, opts) {
+  const A = cfg();
+  if (!ac || !A || !A.enabled) return false;
+  const buf = samples[kind];
+  if (!buf) return false;
+  if (musicName === kind && musicSrc) return true;   // already running
+
+  stopMusic(0.05);
+
+  const o = opts || {};
+  musicGain = ac.createGain();
+  musicGain.gain.value = 0;
+  musicGain.connect(master);
+
+  musicSrc = ac.createBufferSource();
+  musicSrc.buffer = buf;
+  musicSrc.loop = o.loop !== false;
+  musicSrc.connect(musicGain);
+  musicSrc.start();
+  musicName = kind;
+
+  const target = (A.levels && A.levels[kind] != null) ? A.levels[kind] : 1;
+  const t = ac.currentTime;
+  musicGain.gain.setValueAtTime(0, t);
+  musicGain.gain.linearRampToValueAtTime(target, t + (o.fadeIn != null ? o.fadeIn : 0.08));
+  return true;
+}
+
+export function stopMusic(fadeSeconds) {
+  if (!ac || !musicSrc) return false;
+  const src = musicSrc, g = musicGain;
+  musicSrc = null; musicGain = null; musicName = null;
+
+  const f = fadeSeconds != null ? fadeSeconds : 0.25;
+  const t = ac.currentTime;
+  try {
+    g.gain.cancelScheduledValues(t);
+    g.gain.setValueAtTime(g.gain.value, t);
+    g.gain.linearRampToValueAtTime(0, t + f);
+  } catch (e) { /* context torn down */ }
+  /* Stop AFTER the fade, and guard it: a source stopped twice throws. */
+  try { src.stop(t + f + 0.02); } catch (e) { /* already stopped */ }
+  return true;
+}
+
+export function musicPlaying() { return musicName; }
+
 export function setMasterVolume(v) {
   if (master) master.gain.value = v;
 }

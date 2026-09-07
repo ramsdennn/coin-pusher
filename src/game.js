@@ -16,10 +16,11 @@
 import * as THREE from 'three';
 import * as RAPIER from 'rapier';
 import { DIMS, TIERS } from '@app/dims';
-import { buildMachine, driveShelves, liftTrapped, setTubeColour } from '@app/machine';
+import { buildMachine, driveShelves, liftTrapped, setTubeColour,
+         setZoneColour } from '@app/machine';
 import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
 import { initAudio, auditionAll, play, audioReady, setMasterVolume,
-         coinReady, hasSample, VOICE_KINDS } from '@app/audio';
+         coinReady, hasSample, playMusic, stopMusic, VOICE_KINDS } from '@app/audio';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
@@ -447,6 +448,8 @@ function collectFallen() {
     const t = it.body.translation();
     if (t.y < DIMS.tierLast.y - DIMS.D) {
       M.fallen++;
+      /* Something went over the edge - the moment the music was held for. */
+      endResolve();
       M.fallenByType[it.typeId] = (M.fallenByType[it.typeId] || 0) + 1;
       scene.remove(it.mesh);
       ctx.world.removeRigidBody(it.body);
@@ -473,6 +476,95 @@ function nextDropType() {
   if (typeof d === 'string') return d;
   return d[dropTurn++ % d.length];
 }
+
+/* -------------------------------------------------------------------------
+   ARMING
+
+   A drop is two acts, not one: arm a zone, then release it. See the arming
+   block in config for why.
+
+   Three states, and the machine is only ever in one of them:
+
+     idle       nothing selected, every zone lit, no music
+     armed      one zone lit, the other three dark red, music running
+     resolving  the coin is on its way down; music still running, waiting for
+                something to go over the front edge
+
+   Resolving deliberately outlives the drop. The tension is not in the release,
+   it is in watching what the coin does afterwards, so the music carries
+   through the fall and stops on the payoff.
+   ------------------------------------------------------------------------- */
+let armedZone = -1;          // -1 when nothing is armed
+let resolving = false;
+/* Both are STEP COUNTS, not wall-clock times.
+
+   Wall clock was tried and is wrong here. The countdown has to run on the same
+   clock as the machine: tie it to real time and a paused or backgrounded game
+   keeps counting down while nothing moves, so the music expires against a
+   frozen playfield and, on resume, a drop that never happened is already over.
+   Counting steps means the timer only advances when the coin does. */
+let resolveDeadline = 0;     // stepCount at which to give up; 0 when not resolving
+let resolveEarliest = 0;     // before this step, a fall is not the payoff
+
+function paintZones() {
+  const A = CFG.arming;
+  const lit = CFG.palette.panelGlow;
+  for (let i = 0; i < DIMS.zoneCount; i++) {
+    const on = armedZone < 0 || i === armedZone;
+    if (on) setZoneColour(ctx, i, lit, lit, A.litEmissive);
+    else    setZoneColour(ctx, i, A.dimmedColour, A.dimmedGlow, A.dimmedEmissive);
+  }
+}
+
+/* The host pointed at a zone. Whether that arms it or releases it depends on
+   what is already armed. */
+export function selectZone(zone) {
+  const A = CFG.arming;
+  if (!A || !A.enabled) { dropInto(zone); return; }
+  if (zone < 0 || zone >= DIMS.zoneCount) return;
+
+  if (armedZone === zone) {                 // release
+    armedZone = -1;
+    paintZones();
+    play('drop', 1, 0);
+    dropInto(zone);
+    /* The music does NOT stop here. It carries on through the fall. */
+    resolving = true;
+    resolveEarliest = stepCount + A.minResolveSeconds    / PHY.timestep;
+    resolveDeadline = stepCount + A.resolveTimeoutSeconds / PHY.timestep;
+    return;
+  }
+
+  if (armedZone >= 0 && !A.reArmOnOtherZone) return;
+
+  armedZone = zone;                          // arm, or move the selection
+  resolving = false;
+  resolveDeadline = 0;
+  resolveEarliest = 0;
+  paintZones();
+  playMusic('tense', { loop: true });
+}
+
+/* Called when a coin goes over the front edge - the payoff the music has been
+   waiting for - and from the timeout, so a drop that delivers nothing does not
+   leave the bed running for ever. */
+function endResolve(fromTimeout) {
+  if (!resolving) return;
+  /* A coin going over the edge in the first couple of seconds is one the
+     pusher was already carrying, not the payoff for this drop. Ignore it. */
+  if (!fromTimeout && stepCount < resolveEarliest) return;
+  resolving = false;
+  resolveDeadline = 0;
+  resolveEarliest = 0;
+  if (armedZone < 0) stopMusic(0.35);
+}
+
+function tickArming() {
+  if (!resolving || !resolveDeadline) return;
+  if (stepCount >= resolveDeadline) endResolve(true);
+}
+
+export function armedZoneIndex() { return armedZone; }
 
 export function dropInto(zone) {
   const z = Math.max(0, Math.min(DIMS.zoneCount - 1, zone | 0));
@@ -1165,6 +1257,7 @@ function physicsStep() {
   trackChute();
   unjamChute();
   collectFallen();
+  tickArming();
 }
 
 /* -------------------------------------------------------------------------
@@ -1609,12 +1702,12 @@ window.startCoinPusher = function (teamA, teamB) {
       );
       ray.setFromCamera(ndc, camera);
       const hits = ray.intersectObjects(ctx.machine.panels, false);
-      if (hits.length) dropInto(hits[0].object.userData.zone);
+      if (hits.length) selectZone(hits[0].object.userData.zone);
     });
 
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', function (e) {
-      if (e.key >= '1' && e.key <= '4') dropInto(parseInt(e.key, 10) - 1);
+      if (e.key >= '1' && e.key <= '4') selectZone(parseInt(e.key, 10) - 1);
       else if (e.key === 'r' || e.key === 'R') resetPile();
       else if (e.key === 's' || e.key === 'S') {
         const was = running; running = true; physicsStep(); running = was;
@@ -1649,6 +1742,8 @@ window.startCoinPusher = function (teamA, teamB) {
       step: physicsStep,
       setTubeColour: function (i, hex) { return setTubeColour(ctx, i, hex); },
       dropInto: dropInto,
+      selectZone: selectZone,
+      armedZone: armedZoneIndex,
       setRunning: function (v) { running = v; },
       setAutoStep: function (v) { autoStep = v; },
       audio: { play: play, audition: auditionAll, ready: audioReady,

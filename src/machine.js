@@ -513,6 +513,29 @@ function buildLightTubes(ctx) {
 }
 
 /* Recolour a tube in place. Index 0 is the innermost. */
+/* Light one drop zone. See parts.zonePanels for why there is one pane per
+   zone rather than a single slab across the back. */
+/* Diffuse and glow are set SEPARATELY, and both are needed.
+
+   The panel is lit by the scene as well as glowing on its own, and the two
+   behave completely differently. The diffuse colour is multiplied by white
+   key light, so a dark red there comes out brown - washed of all its
+   saturation. The emissive colour is not lit by anything, so it survives
+   intact. The red therefore has to live in the EMISSIVE, with the diffuse
+   kept dark so the key light has little to wash out.
+
+   Both wrong ways were tried on the way here: tinting alone left the zones a
+   dusty pink because the glow stayed white, and simply turning the glow down
+   left them brown because the lit diffuse took over. */
+export function setZoneColour(ctx, index, colour, emissiveColour, emissiveIntensity) {
+  const p = ctx.machine.zonePanels && ctx.machine.zonePanels[index];
+  if (!p) return false;
+  p.material.color.set(colour);
+  p.material.emissive.set(emissiveColour != null ? emissiveColour : colour);
+  if (emissiveIntensity != null) p.material.emissiveIntensity = emissiveIntensity;
+  return true;
+}
+
 export function setTubeColour(ctx, index, colour) {
   const t = ctx.machine.tubes[index];
   if (!t) return false;
@@ -767,9 +790,26 @@ export function buildMachine(ctx) {
   backMat.emissiveMap = panelTex;
   backMat.emissiveIntensity = 0.5;
 
-  /* Back pane: solid, and the surface the peg dots read against. */
-  chuteWall(0, chuteCy, DIMS.panelZ - DIMS.chuteDepth / 2 - glassT / 2,
-            width, chuteH, glassT, backMat);
+  /* Back pane: solid, and the surface the peg dots read against.
+
+     Built as ONE PANE PER ZONE rather than a single slab, so each drop zone
+     can be lit on its own. It was a single mesh with a single material, which
+     is why the four zones could only ever be the same colour as each other.
+     The seams land on the chrome dividers, so nothing shows.
+
+     Each pane gets its OWN material - cloning matters here, because a shared
+     one would put every zone back to a single colour by the back door. The
+     texture is shared, which is fine: it is the same gradient on all four. */
+  parts.zonePanels = [];
+  for (let z = 0; z < DIMS.zoneCount; z++) {
+    const zoneMat = backMat.clone();
+    zoneMat.map = panelTex;
+    zoneMat.emissiveMap = panelTex;
+    parts.zonePanels.push(
+      chuteWall(DIMS.zoneCentresX[z], chuteCy,
+                DIMS.panelZ - DIMS.chuteDepth / 2 - glassT / 2,
+                DIMS.zoneWidth, chuteH, glassT, zoneMat));
+  }
   /* Front pane: glass, so the falling coin is visible. */
   const frontPane = chuteWall(0, chuteCy, DIMS.panelZ + DIMS.chuteDepth / 2 + glassT / 2,
             width, chuteH, glassT, glassMat);

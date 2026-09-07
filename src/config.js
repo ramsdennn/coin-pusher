@@ -263,6 +263,8 @@ window.COIN_PUSHER_CONFIG = {
     levels: {
       peg:     1.00,
       surface: 0.70,
+      tense:   0.55,      // a bed, not a feature - it sits under the machine
+      drop:    1.00,
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -307,7 +309,12 @@ window.COIN_PUSHER_CONFIG = {
        against this very clip, which was a good number and a bad sound. */
     samples: {
       peg:     'assets/audio/peg-hit.mp3',
-      surface: 'assets/audio/surface-hit.mp3'
+      surface: 'assets/audio/surface-hit.mp3',
+      /* Held while a zone is armed and all the way through the fall, until a
+         coin goes over the edge. Loops - a player can deliberate for as long
+         as they like and the bed must not just stop. */
+      tense:   'assets/audio/tense.mp3',
+      drop:    'assets/audio/drop.mp3'
     },
 
     /* Contact force below which the ENGINE does not even report a peg hit.
@@ -1108,6 +1115,61 @@ window.COIN_PUSHER_CONFIG = {
       maxForce:  10
     },
     startRunning: true
+  },
+
+  /* --------------------------------------------------------------------
+     ARMING A DROP
+
+     Choosing a zone and dropping into it are two separate acts. First click
+     ARMS a zone: it stays lit, the other three go dark red, and the music
+     starts. Second click on the SAME zone releases the coin.
+
+     The point is the pause in between. A drop that happens the instant you
+     touch the screen has no moment to it; arming one and then choosing when
+     to let it go is where the tension lives, which is the whole reason the
+     real show does it this way.
+     -------------------------------------------------------------------- */
+  arming: {
+    enabled: true,
+
+    /* The lit zone keeps the panel's own colour, so this is only the OTHER
+       three. Dark, because these panels are emissive and a bright red at this
+       size reads as an alarm rather than as a zone being closed off. */
+    /* Kept dark so the white key light has little to wash out - this is the
+       DIFFUSE, and the scene lights multiply it. */
+    dimmedColour: 0x1E0305,
+
+    /* The colour the zone actually reads as. Emissive is not lit by anything,
+       so it keeps its saturation where the diffuse cannot. */
+    dimmedGlow:   0x8E1216,
+
+    /* 0.5 is the panel's own default, so a lit zone looks exactly as it always
+       has. The dimmed one glows less AND redder - see setZoneColour for why
+       both are needed. */
+    litEmissive:    0.5,
+    dimmedEmissive: 0.42,
+
+    /* Clicking a DIFFERENT zone while one is armed moves the selection there
+       rather than dropping. Dropping into a zone the player did not just
+       point at would be the one unforgivable outcome here. */
+    reArmOnOtherZone: true,
+
+    /* The music keeps playing after the coin is released, all the way through
+       the fall, and stops when a coin goes over the front edge - the payoff.
+
+       But NOT the first coin over the edge regardless of when. The pusher is
+       running the whole time and coins go over on most strokes, so without a
+       floor the bed would be cut off a fraction of a second after release by
+       something the player had nothing to do with. Hold it for at least this
+       long, which is about the time the dropped coin needs to reach the
+       bottom of the chute - measured at 1.94s - so the music always covers
+       the fall itself. */
+    minResolveSeconds: 2.2,
+
+    /* If NOTHING goes over the edge it would otherwise play for ever, so it
+       gives up after this long. Generous: a coin can rattle down the chute,
+       land, and be pushed for a stroke or two before anything falls. */
+    resolveTimeoutSeconds: 12
   },
 
   /* --------------------------------------------------------------------
