@@ -27,7 +27,7 @@ const CUTOFF_SOFT   = 1400;
 const CUTOFF_HARD   = 17000;
 const PITCH_BY_E    = 0.10;
 
-const LEVELS = { peg: 1.00, coin: 0.70, deck: 0.55, floor: 0.60,
+const LEVELS = { peg: 1.00, surface: 0.85, coin: 0.60,
                  glass: 0.45, wall: 0.40 };
 
 /* One-pole lowpass, standing in for the browser's biquad. */
@@ -87,15 +87,15 @@ kinds.forEach((k, ki) => {
 
 /* Then a burst: what a coin rattling down the peg field actually sounds like,
    which is the case the whole throttling design exists for. */
-cursor += 0.4;
+cursor += 0.5;
 let t = cursor;
-for (let i = 0; i < 9; i++) {
-  const e = 0.85 - i * 0.07 + (Math.random() - 0.5) * 0.15;
-  events.push({ at: t, buf: renderHit('peg', Math.max(0.1, e), i % VARIANTS) });
-  t += 0.085 + Math.random() * 0.07;
+for (let i = 0; i < 8; i++) {
+  const e = 0.9 - i * 0.075 + (Math.random() - 0.5) * 0.15;
+  events.push({ at: t, buf: renderHit('peg', Math.max(0.12, e), i % VARIANTS) });
+  t += 0.10 + Math.random() * 0.09;
 }
-events.push({ at: t + 0.10, buf: renderHit('deck', 0.7, 1) });
-cursor = t + 0.9;
+events.push({ at: t + 0.14, buf: renderHit('surface', 0.75, 1) });
+cursor = t + 1.0;
 
 const total = Math.ceil((cursor + 0.5) * SR);
 const mix = new Float32Array(total);

@@ -35,76 +35,153 @@ let lastAt = new Map();        // body handle -> ms, for per-coin cooldown
 /* ---------------------------------------------------------------------------
    VOICE DEFINITIONS
 
-   A struck disc is INHARMONIC: its overtones are not whole multiples of the
-   fundamental, which is exactly what separates a metallic clink from a
-   musical note. The ratios below are what make it read as metal - space them
-   evenly and it turns into a bell, remove them and it turns into a beep.
+   These are MEASURED, not invented. The first attempt at this file was built
+   from theory - inharmonic ratios off a struck-plate model - and it was so
+   far off the mark it was not worth keeping. The numbers below come out of
+   real Tipping Point footage the host supplied, analysed hit by hit.
 
-   Higher partials must also decay FASTER than low ones. That is what a real
-   strike does, and it is what makes a sound brighten at the attack and mellow
-   as it rings out. Give every partial the same decay and it sounds synthetic
-   however good the ratios are.
+   How: FFT of the 85ms after each strike, minus the FFT of the 85ms BEFORE
+   it. That second part matters - the recording has a continuous bed of
+   audience and music under it, and subtracting a noise print taken from the
+   moment before the hit leaves the coin and drops the studio. Then the
+   spectra of several hits of the same kind are averaged, so a resonance that
+   is genuinely the object reinforces and a stray bit of music that happened
+   to land under one hit averages away. Decay per partial comes from tracking
+   each bin across short frames and fitting its log.
 
-   f0        fundamental, Hz
-   partials  [ratio, relative gain, decay seconds]
+   THE HEADLINE: the peg clang has its fundamental at 434 Hz. The synthesised
+   guess had it at 2350 Hz - five times too high - which is exactly why it
+   sounded thin and cheap instead of like a clang. Real metal impacts in a
+   machine this size are far lower and far chunkier than intuition says.
+
+   partials  [absolute Hz, relative gain, decay seconds]
    noise     the strike transient: [gain, decay seconds, bandpass Hz]
    dur       buffer length, seconds
+   tune      multiplies every partial - the one knob for pitching a voice
+             up or down as a whole without re-measuring anything
+
+   Where a measured decay is marked ADJUSTED it is because the source hits are
+   SERIES of clangs, not isolated strikes: a partial's tail gets cut off by
+   the next hit, or the studio bed keeps a bin alive long after the coin has
+   stopped. Those readings came back as 0.47s on partials that plainly do not
+   ring that long, so they are set by ear against the rest of the set.
    ------------------------------------------------------------------------- */
 export const VOICES = {
-  /* Coin on steel peg. The brightest, longest thing in the machine - the pegs
-     are polished steel with restitution 0.5, so this is a genuine ping with a
-     tail on it, and it is the sound the whole drop is built around. */
+  /* COIN ON PEG - measured from 0:41.94 and 0:42.79.
+     A clang: strong low fundamental, a dense middle, and a bright edge that
+     dies fast. */
   peg: {
-    f0: 2350,
-    partials: [[1.00, 1.00, 0.34], [2.71, 0.62, 0.20], [4.83, 0.40, 0.13],
-               [7.44, 0.26, 0.085], [11.2, 0.15, 0.05], [16.1, 0.08, 0.03]],
-    noise: [0.35, 0.004, 5200],
-    dur: 0.42
+    tune: 1,
+    partials: [
+      [ 434, 1.00, 0.24],    // measured tau 0.054, ADJUSTED - cut off by the
+                             // next clang in the series
+      [ 822, 0.45, 0.18],    // ADJUSTED from 0.49, bed-contaminated bin
+      [ 998, 0.75, 0.16],    // ADJUSTED from 0.037
+      [1243, 0.34, 0.11],
+      [1392, 0.33, 0.13],
+      [1584, 0.47, 0.10],
+
+      /* The top of the voice, WEIGHTED UP against the raw measurement.
+
+         Built straight from the measured gains the voice came out at a
+         centroid of 1168 Hz against the real hits' 2852 and 3021 - two and a
+         half times too dark, and it sounded like a thud instead of a clang.
+         The per-partial decay fitting is the reason: the fundamental's tail
+         gets cut short by the next clang in the series, so shortening it
+         while keeping the highs short too leaves the low end dominating.
+
+         These are the measured FREQUENCIES with their gains scaled 4.5x and
+         decays 1.8x, converged against two metrics taken the same way on the
+         real hits and on the synthesis:
+
+             centroid          synth 2715   real 2852 / 3021
+             energy >2kHz/<2kHz  synth 1.02   real 0.89 / 1.20
+
+         5550 and 7020 came out of the single-hit analysis and are added back
+         to give the top end somewhere to sit. */
+      [3362, 1.22, 0.090],
+      [4205, 1.30, 0.099],
+      [5342, 1.26, 0.072],
+      [5550, 0.99, 0.068],
+      [7020, 0.72, 0.054]
+    ],
+    noise: [0.65, 0.006, 4200],
+    dur: 0.55
   },
 
-  /* Coin on coin. Two thin discs damping each other: same metal, far shorter,
-     and the top partials are gone almost at once. */
+  /* COIN ON SURFACE - measured from 1:08.16, 1:09.76, 1:10.99 and 1:11.36.
+     All four were confirmed as the right sound by the host.
+
+     The surprise here is the top end. There is a hard, bright component at
+     7.5-9.2 kHz that is LOUDER than the fundamental, and it is real, not an
+     artefact - it sits 5.8 to 11.6 times above the noise bed and lands at the
+     same frequency in all four hits. That bright tick is most of what makes
+     the sound read as a counter on a hard surface rather than a thud. */
+  surface: {
+    tune: 1,
+    partials: [
+      [ 514, 1.00, 0.100],
+      [ 726, 0.12, 0.056],
+      [1014, 0.16, 0.049],
+      [1220, 0.36, 0.120],
+      [1391, 0.14, 0.088],
+      [2502, 0.11, 0.037],
+      [7560, 0.42, 0.018],
+      [9023, 1.20, 0.060],   // measured 1.67 relative, trimmed - at full
+                             // strength it is piercing on repeat
+      [9200, 0.90, 0.050]
+    ],
+    noise: [0.45, 0.004, 7000],
+    dur: 0.30
+  },
+
+  /* Everything below is DERIVED from the two measured voices, not measured -
+     there is no reference footage for a counter hitting glass. Each is the
+     surface voice moved and damped by ear. Marked so nobody later mistakes
+     them for measurements. */
+
+  /* Coin on coin: the surface sound with the bright tick pulled down and the
+     tail shortened - two thin discs damp each other. */
   coin: {
-    f0: 1780,
-    partials: [[1.00, 1.00, 0.11], [2.68, 0.55, 0.06], [4.91, 0.30, 0.035],
-               [7.80, 0.16, 0.02]],
-    noise: [0.42, 0.005, 3600],
+    tune: 1.18,
+    partials: [
+      [ 514, 0.70, 0.045],
+      [1014, 0.30, 0.030],
+      [1220, 0.40, 0.050],
+      [2502, 0.16, 0.022],
+      [7560, 0.30, 0.012],
+      [9023, 0.55, 0.022],
+      [9200, 0.40, 0.018]
+    ],
+    noise: [0.55, 0.004, 6000],
     dur: 0.20
   },
 
-  /* Coin on the moving deck. The deck is a big solid body, so the coin's ring
-     is killed on contact - almost all transient, barely any tone. */
-  deck: {
-    f0: 900,
-    partials: [[1.00, 0.85, 0.045], [2.42, 0.35, 0.025], [4.10, 0.15, 0.015]],
-    noise: [0.70, 0.008, 2000],
-    dur: 0.13
-  },
-
-  /* Coin on the fixed floor ahead of the deck. Slightly brighter and a touch
-     longer than the deck - a thinner panel, and it rings a little. */
-  floor: {
-    f0: 1150,
-    partials: [[1.00, 0.80, 0.06], [2.55, 0.38, 0.03], [4.44, 0.18, 0.018]],
-    noise: [0.62, 0.007, 2400],
-    dur: 0.15
-  },
-
-  /* Coin on the chute glass. Thin, high, over immediately - glass has almost
-     no low end and no sustain at this size. */
+  /* Coin on the chute glass: thin, higher, no low end. */
   glass: {
-    f0: 3100,
-    partials: [[1.00, 0.70, 0.05], [2.95, 0.34, 0.025], [5.60, 0.16, 0.012]],
-    noise: [0.50, 0.004, 6000],
-    dur: 0.13
+    tune: 1.35,
+    partials: [
+      [1220, 0.35, 0.040],
+      [2502, 0.30, 0.030],
+      [7560, 0.55, 0.016],
+      [9023, 0.85, 0.030],
+      [9200, 0.60, 0.024]
+    ],
+    noise: [0.50, 0.003, 8000],
+    dur: 0.18
   },
 
-  /* Coin on a side wall. Dead - a dull knock, no ring at all. */
+  /* Coin on a side wall: a dull knock, the bright end gone entirely. */
   wall: {
-    f0: 700,
-    partials: [[1.00, 0.70, 0.035], [2.30, 0.25, 0.018]],
-    noise: [0.75, 0.009, 1500],
-    dur: 0.10
+    tune: 0.85,
+    partials: [
+      [ 514, 0.85, 0.035],
+      [ 726, 0.25, 0.025],
+      [1014, 0.20, 0.018],
+      [2502, 0.06, 0.012]
+    ],
+    noise: [0.70, 0.007, 1600],
+    dur: 0.14
   }
 };
 
@@ -121,16 +198,16 @@ export const VOICES = {
    ------------------------------------------------------------------------- */
 export function renderVoiceInto(out, sr, def, detune, decayScale, seed) {
   const n = out.length;
-  const f0 = def.f0 * detune;
+  const tune = (def.tune || 1) * detune;
 
   for (let p = 0; p < def.partials.length; p++) {
-    const ratio = def.partials[p][0];
+    const hz    = def.partials[p][0] * tune;
     const gain  = def.partials[p][1];
     const decay = def.partials[p][2];
     /* Too close to Nyquist a partial just aliases into a whistle, so drop it
        rather than render rubbish. */
-    if (f0 * ratio > sr * 0.45) continue;
-    const w = 2 * Math.PI * f0 * ratio / sr;
+    if (hz > sr * 0.45) continue;
+    const w = 2 * Math.PI * hz / sr;
     const k = 1 / (decay * decayScale * sr);
     for (let i = 0; i < n; i++) {
       out[i] += gain * Math.exp(-i * k) * Math.sin(w * i);

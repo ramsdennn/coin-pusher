@@ -252,19 +252,20 @@ window.COIN_PUSHER_CONFIG = {
        entirely, which is the quickest way to find out whether one of them is
        the thing making the machine sound cluttered.
 
-         peg     coin on a steel peg in the drop chute - the brightest
-         coin    coin on coin
-         deck    coin on the moving shelf
-         floor   coin on the fixed floor in front of the shelf
-         glass   coin on the chute glass
-         wall    coin on a side wall */
+         peg      coin on a steel peg in the drop chute
+         surface  coin landing on the deck or the floor
+         coin     coin on coin
+         glass    coin on the chute glass
+         wall     coin on a side wall
+
+       peg and surface are measured off real footage. The other three are
+       derived from them by ear - see the note in src/audio.js. */
     levels: {
-      peg:   1.00,
-      coin:  0.70,
-      deck:  0.55,
-      floor: 0.60,
-      glass: 0.45,
-      wall:  0.40
+      peg:     1.00,
+      surface: 0.85,
+      coin:    0.60,
+      glass:   0.45,
+      wall:    0.40
     },
 
     /* THE THROTTLE. A settled pile generates a continuous storm of contacts,
