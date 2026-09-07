@@ -1199,9 +1199,28 @@ window.COIN_PUSHER_CONFIG = {
 
     /* WHEN THE MUSIC STOPS.
 
-       The FIRST coin over the front lip of the platform ends it - the scoring
+       The first coin over the front lip of the platform ends it - the scoring
        drop, not a coin merely tumbling off the shelf onto the platform, which
        is still in play and does not count.
+
+       BUT NOT A DELIVERY THE PUSHER HAD ALREADY SET UP. The pusher runs
+       continuously, so when a coin lands the shelf is usually mid-stroke with
+       the pile already at the lip. Measured on a real drop: the coin landed at
+       1.72s and three coins went over at 4.20s - genuine scoring drops, and
+       not one of them the coin that had just been dropped. It had not been
+       touched yet. The music was ending two and a half seconds after the
+       landing on a result the player had no part in.
+
+       So deliveries are ignored until a full pusher stroke has passed since
+       the landing - long enough that the stroke already in progress has
+       finished and the shelf has come back for the coin that was just added.
+       After that, the first coin over the lip ends it.
+
+       This is measured in STROKES rather than seconds because that is what it
+       actually depends on: change the shelf period and this follows it. */
+    deliveryIgnoreStrokes: 1.0,
+
+    /* --- how it ends ---
 
        Worth knowing what that means in practice, because it is quicker than it
        sounds. Measured across four drops, the coin lands at about 1.8s and the

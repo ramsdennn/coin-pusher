@@ -699,7 +699,13 @@ function tickArming() {
    chute and anything going over is the pusher finishing what it was already
    doing, with nothing to do with this drop at all. */
 function noteDelivery() {
-  if (resolving && landedStep) endResolve();
+  if (!resolving || !landedStep) return;
+  /* Not if the pusher had this one queued up before the coin even arrived -
+     see arming.deliveryIgnoreStrokes. */
+  const settle = CFG.arming.deliveryIgnoreStrokes *
+                 (CFG.shelf.periodMs / 1000) / PHY.timestep;
+  if (stepCount - landedStep < settle) return;
+  endResolve();
 }
 
 export function armedZoneIndex() { return armedZone; }
