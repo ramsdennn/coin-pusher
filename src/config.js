@@ -508,7 +508,9 @@ window.COIN_PUSHER_CONFIG = {
        letterbox than score display. It is 480x400 now, and the width here is
        pulled in to match so the panels keep the height they had rather than
        growing to fill the gap. */
-    aspect:          '480/400',
+    /* 15% off the height, 400 -> 340. The width comes from the row, so this
+       only takes height away - the same text in a tighter box. */
+    aspect:          '480/340',
 
     /* Both are fractions of the COLUMN now, not the window. The panels share
        whatever width the column has, so they cannot drift away from the logo
@@ -520,11 +522,11 @@ window.COIN_PUSHER_CONFIG = {
        tools/build-scoreboard.py rather than matched by eye, so the live text
        and the baked SVG cannot drift apart. Change the panel there and paste
        what it prints. */
-    nameSize:     0.145,
-    scoreSize:    0.375,
+    nameSize:     0.1706,
+    scoreSize:    0.4412,
     lineGap:      0.055,
     screenInsetX: 0.0625,
-    screenInsetY: 0.075,
+    screenInsetY: 0.0882,
 
     /* Glow AND a cast shadow. The glow on its own left the text flat and
        printed on: a lit panel throws light around a letter, but a letter in
@@ -532,8 +534,8 @@ window.COIN_PUSHER_CONFIG = {
        there is no depth. Down and slightly right, matching the light the
        chrome is lit by - a shadow disagreeing with the metal beside it is
        worse than no shadow. */
-    shadowDy:   0.0175,
-    shadowBlur: 0.0125,
+    shadowDy:   0.0206,
+    shadowBlur: 0.0147,
 
     /* Same stack as the SVG, so the two versions cannot drift apart. */
     font: "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"

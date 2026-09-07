@@ -22,7 +22,12 @@ import io, os, sys
 # --------------------------------------------------------------------------
 # 560 wide read as too long next to the logo - the panels looked like letter
 # boxes rather than score displays. 480 is squarer without going square.
-W, H        = 480, 400
+#
+# Height then came off by 15%, 400 -> 340. The panel's WIDTH on screen is set
+# by the row it sits in, so shortening it here only takes height away: the same
+# text in a tighter box, which is what was wanted. The text is deliberately NOT
+# scaled down with it - it fills more of the screen now, which is the point.
+W, H        = 480, 340
 BEZEL       = 30            # frame thickness
 R_OUT       = 22            # outer corner radius
 R_IN        = 9             # screen corner radius
