@@ -508,10 +508,15 @@ window.COIN_PUSHER_CONFIG = {
        letterbox than score display. It is 480x400 now, and the width here is
        pulled in to match so the panels keep the height they had rather than
        growing to fill the gap. */
-    /* Height came off twice: 15% (400 -> 340) then another 5% (340 -> 323).
-       The width comes from the row, so this only takes height away - the same
-       text in a tighter box. */
-    aspect:          '480/323',
+    /* Height came off three times: 15% (400 -> 340), 5% (340 -> 323) and 5%
+       again (323 -> 307). The width comes from the row, so each of those only
+       took height away.
+
+       Note what that has done to the shape: 1.2:1 at the start, 1.56:1 now.
+       Every one of those steps made the panel WIDER relative to its height, so
+       if the complaint is that they look stretched, this is the wrong lever -
+       rowWidthFraction below is the one that narrows them. */
+    aspect:          '480/307',
 
     /* Both are fractions of the COLUMN now, not the window. The panels share
        whatever width the column has, so they cannot drift away from the logo
@@ -535,7 +540,7 @@ window.COIN_PUSHER_CONFIG = {
        gaps being genuinely equal. */
     evenGapFraction: 0.040,
 
-    nameSize:     0.1796,
+    nameSize:     0.1889,
 
     /* A long name WRAPS to a second line, and a second line does not fit at
        the full size - measured, the block becomes 283.8 against 263 of screen
@@ -548,9 +553,9 @@ window.COIN_PUSHER_CONFIG = {
        absurd name shrinking the whole panel into unreadability. */
     nameMinSize:  0.105,
     nameMaxLines: 2,
-    scoreSize:    0.4644,
+    scoreSize:    0.4886,
     screenInsetX: 0.0625,
-    screenInsetY: 0.0929,
+    screenInsetY: 0.0977,
 
     /* Glow AND a cast shadow. The glow on its own left the text flat and
        printed on: a lit panel throws light around a letter, but a letter in
@@ -558,8 +563,8 @@ window.COIN_PUSHER_CONFIG = {
        there is no depth. Down and slightly right, matching the light the
        chrome is lit by - a shadow disagreeing with the metal beside it is
        worse than no shadow. */
-    shadowDy:   0.0217,
-    shadowBlur: 0.0155,
+    shadowDy:   0.0228,
+    shadowBlur: 0.0163,
 
     /* Same stack as the SVG, so the two versions cannot drift apart. */
     font: "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"
