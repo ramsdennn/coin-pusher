@@ -20,7 +20,8 @@ import { buildMachine, driveShelves, liftTrapped, setTubeColour,
          setZoneColour } from '@app/machine';
 import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
 import { initAudio, auditionAll, play, audioReady, setMasterVolume,
-         coinReady, hasSample, playMusic, stopMusic, VOICE_KINDS } from '@app/audio';
+         coinReady, hasSample, playMusic, stopMusic, sampleDuration,
+         VOICE_KINDS } from '@app/audio';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
@@ -494,7 +495,18 @@ function nextDropType() {
    it is in watching what the coin does afterwards, so the music carries
    through the fall and stops on the payoff.
    ------------------------------------------------------------------------- */
+/* LIT and ARMED are different things, and separating them is what lets the
+   lights hold through the fall.
+
+   armedZone is the zone that will release a coin on the next click. litZone is
+   the zone showing white. They are the same while a player is deciding, and
+   they come apart the moment the coin is released: nothing is armed any more,
+   but the lights stay exactly as they were until the music ends. Holding them
+   together in one variable is why the zones used to snap back to white the
+   instant you let go. */
 let armedZone = -1;          // -1 when nothing is armed
+let litZone   = -1;          // -1 when every zone is lit
+let musicResumeAt = 0;       // stepCount at which the ducked music comes back
 let resolving = false;
 /* Both are STEP COUNTS, not wall-clock times.
 
@@ -510,7 +522,7 @@ function paintZones() {
   const A = CFG.arming;
   const lit = CFG.palette.panelGlow;
   for (let i = 0; i < DIMS.zoneCount; i++) {
-    const on = armedZone < 0 || i === armedZone;
+    const on = litZone < 0 || i === litZone;
     if (on) setZoneColour(ctx, i, lit, lit, A.litEmissive);
     else    setZoneColour(ctx, i, A.dimmedColour, A.dimmedGlow, A.dimmedEmissive);
   }
@@ -525,10 +537,19 @@ export function selectZone(zone) {
 
   if (armedZone === zone) {                 // release
     armedZone = -1;
-    paintZones();
+    /* litZone is deliberately NOT cleared - the lights hold through the fall
+       and go out with the music. */
+
+    /* The music steps aside for the drop sting and comes back under the fall.
+       How long it is away is the clip's own length, so replacing the file
+       re-times this on its own. */
+    stopMusic(A.duckFadeOut);
     play('drop', 1, 0);
+    const gap = sampleDuration('drop');
+    musicResumeAt = gap > 0 ? stepCount + gap / PHY.timestep : 0;
+    if (!musicResumeAt) playMusic('tense', { loop: true, fadeIn: A.duckFadeIn });
+
     dropInto(zone);
-    /* The music does NOT stop here. It carries on through the fall. */
     resolving = true;
     resolveEarliest = stepCount + A.minResolveSeconds    / PHY.timestep;
     resolveDeadline = stepCount + A.resolveTimeoutSeconds / PHY.timestep;
@@ -538,9 +559,13 @@ export function selectZone(zone) {
   if (armedZone >= 0 && !A.reArmOnOtherZone) return;
 
   armedZone = zone;                          // arm, or move the selection
+  litZone   = zone;
   resolving = false;
   resolveDeadline = 0;
   resolveEarliest = 0;
+  /* A new selection supersedes a pending un-duck: start the bed now rather
+     than letting the old timer bring it in again a moment later. */
+  musicResumeAt = 0;
   paintZones();
   playMusic('tense', { loop: true });
 }
@@ -556,10 +581,24 @@ function endResolve(fromTimeout) {
   resolving = false;
   resolveDeadline = 0;
   resolveEarliest = 0;
-  if (armedZone < 0) stopMusic(0.35);
+  musicResumeAt = 0;
+  if (armedZone < 0) {
+    litZone = -1;                 // lights out with the music, not before
+    paintZones();
+    stopMusic(0.35);
+  }
 }
 
 function tickArming() {
+  /* Bring the bed back once the drop sting has run its course - but only if
+     the drop has not already resolved in the meantime, which would mean the
+     music was about to stop anyway. */
+  if (musicResumeAt && stepCount >= musicResumeAt) {
+    musicResumeAt = 0;
+    if (resolving || armedZone >= 0) {
+      playMusic('tense', { loop: true, fadeIn: CFG.arming.duckFadeIn });
+    }
+  }
   if (!resolving || !resolveDeadline) return;
   if (stepCount >= resolveDeadline) endResolve(true);
 }
@@ -1744,6 +1783,7 @@ window.startCoinPusher = function (teamA, teamB) {
       dropInto: dropInto,
       selectZone: selectZone,
       armedZone: armedZoneIndex,
+      litZone: function () { return litZone; },
       setRunning: function (v) { running = v; },
       setAutoStep: function (v) { autoStep = v; },
       audio: { play: play, audition: auditionAll, ready: audioReady,

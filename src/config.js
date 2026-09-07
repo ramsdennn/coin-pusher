@@ -261,10 +261,15 @@ window.COIN_PUSHER_CONFIG = {
        peg and surface are measured off real footage. The other three are
        derived from them by ear - see the note in src/audio.js. */
     levels: {
-      peg:     1.00,
+      /* Above 1.0 deliberately: the pegs are the sound the whole drop is built
+         around and they were being lost under the drop sting. The limiter is
+         what stops this simply making everything louder. */
+      peg:     1.25,
       surface: 0.70,
       tense:   0.55,      // a bed, not a feature - it sits under the machine
-      drop:    1.00,
+      /* Quiet. It was at 1.00 and buried the coin rattling down the pegs,
+         which is the sound the drop is actually about. */
+      drop:    0.30,
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -1153,6 +1158,16 @@ window.COIN_PUSHER_CONFIG = {
        rather than dropping. Dropping into a zone the player did not just
        point at would be the one unforgivable outcome here. */
     reArmOnOtherZone: true,
+
+    /* The music gets out of the way for the drop sound and comes back under
+       the fall. How long it is gone for is read off the drop clip itself, so
+       swapping the file re-times this with nothing to adjust; these are only
+       the fades either side of it.
+
+       Not a duck to a lower level but a full stop: the drop sting is short and
+       deliberate, and leaving a bed running under it just muddies both. */
+    duckFadeOut:  0.05,
+    duckFadeIn:   0.12,
 
     /* The music keeps playing after the coin is released, all the way through
        the fall, and stops when a coin goes over the front edge - the payoff.

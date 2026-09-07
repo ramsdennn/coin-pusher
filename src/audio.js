@@ -371,6 +371,13 @@ export async function loadSamples() {
 
 export function hasSample(kind) { return !!samples[kind]; }
 
+/* Length of a loaded sample, in seconds. Used to time the music back in after
+   the drop sound, so the timing comes from the FILE rather than from a number
+   someone picked - swap the clip and the sequencing follows it. */
+export function sampleDuration(kind) {
+  return samples[kind] ? samples[kind].duration : 0;
+}
+
 /* ---------------------------------------------------------------------------
    MUSIC
 
