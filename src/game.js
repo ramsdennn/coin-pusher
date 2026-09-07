@@ -21,7 +21,7 @@ import { buildMachine, driveShelves, liftTrapped, setTubeColour,
 import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
 import { initAudio, auditionAll, play, audioReady, setMasterVolume,
          coinReady, hasSample, playMusic, stopMusic, sampleDuration,
-         VOICE_KINDS } from '@app/audio';
+         playCue, stopCue, VOICE_KINDS } from '@app/audio';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
@@ -507,6 +507,7 @@ function nextDropType() {
 let armedZone = -1;          // -1 when nothing is armed
 let litZone   = -1;          // -1 when every zone is lit
 let musicResumeAt = 0;       // stepCount at which the ducked music comes back
+let droppedItem = null;      // the coin just released, watched out of the chute
 let resolving = false;
 /* Both are STEP COUNTS, not wall-clock times.
 
@@ -526,6 +527,14 @@ function paintZones() {
     if (on) setZoneColour(ctx, i, lit, lit, A.litEmissive);
     else    setZoneColour(ctx, i, A.dimmedColour, A.dimmedGlow, A.dimmedEmissive);
   }
+
+  /* The three tubes framing the machine go red on the same cue as the zones
+     and come back on the same cue, so the whole cabinet reads as one state
+     rather than as a panel that happens to have changed colour. */
+  const tubes = CFG.lightTubes.colours;
+  for (let i = 0; i < tubes.length; i++) {
+    setTubeColour(ctx, i, litZone < 0 ? tubes[i] : A.dimmedGlow);
+  }
 }
 
 /* The host pointed at a zone. Whether that arms it or releases it depends on
@@ -544,12 +553,21 @@ export function selectZone(zone) {
        How long it is away is the clip's own length, so replacing the file
        re-times this on its own. */
     stopMusic(A.duckFadeOut);
-    play('drop', 1, 0);
+    playCue('drop', 0);
+
+    droppedItem = dropInto(zone);
+
+    /* The bed comes back when the COIN clears the chute, not when the clip
+       runs out. Measured, the drop sting is 3.41s against a 1.94s fall, so
+       waiting for the file left the sting playing over every peg strike on the
+       way down - which is exactly why the pegs could not be heard.
+
+       The clip's length is still the backstop: if that coin never clears the
+       chute, because it jammed or was removed, this is what stops the sequence
+       hanging. */
     const gap = sampleDuration('drop');
     musicResumeAt = gap > 0 ? stepCount + gap / PHY.timestep : 0;
     if (!musicResumeAt) playMusic('tense', { loop: true, fadeIn: A.duckFadeIn });
-
-    dropInto(zone);
     resolving = true;
     resolveEarliest = stepCount + A.minResolveSeconds    / PHY.timestep;
     resolveDeadline = stepCount + A.resolveTimeoutSeconds / PHY.timestep;
@@ -566,6 +584,8 @@ export function selectZone(zone) {
   /* A new selection supersedes a pending un-duck: start the bed now rather
      than letting the old timer bring it in again a moment later. */
   musicResumeAt = 0;
+  droppedItem = null;
+  stopCue(CFG.arming.stingFadeOut);
   paintZones();
   playMusic('tense', { loop: true });
 }
@@ -582,6 +602,7 @@ function endResolve(fromTimeout) {
   resolveDeadline = 0;
   resolveEarliest = 0;
   musicResumeAt = 0;
+  droppedItem = null;
   if (armedZone < 0) {
     litZone = -1;                 // lights out with the music, not before
     paintZones();
@@ -589,16 +610,29 @@ function endResolve(fromTimeout) {
   }
 }
 
+/* The released coin has cleared the bottom of the chute: cut the sting and
+   bring the bed back under the rest of the fall. */
+function unduck() {
+  musicResumeAt = 0;
+  droppedItem = null;
+  stopCue(CFG.arming.stingFadeOut);
+  if (resolving || armedZone >= 0) {
+    playMusic('tense', { loop: true, fadeIn: CFG.arming.duckFadeIn });
+  }
+}
+
 function tickArming() {
+  if (droppedItem) {
+    /* Gone from the world - collected, or cleared away - so it will never
+       report clearing the chute. */
+    if (ctx.items.indexOf(droppedItem) < 0) unduck();
+    else if (droppedItem.body.translation().y <= DIMS.chuteBottom) unduck();
+  }
+
   /* Bring the bed back once the drop sting has run its course - but only if
      the drop has not already resolved in the meantime, which would mean the
      music was about to stop anyway. */
-  if (musicResumeAt && stepCount >= musicResumeAt) {
-    musicResumeAt = 0;
-    if (resolving || armedZone >= 0) {
-      playMusic('tense', { loop: true, fadeIn: CFG.arming.duckFadeIn });
-    }
-  }
+  if (musicResumeAt && stepCount >= musicResumeAt) unduck();
   if (!resolving || !resolveDeadline) return;
   if (stepCount >= resolveDeadline) endResolve(true);
 }

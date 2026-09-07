@@ -379,6 +379,53 @@ export function sampleDuration(kind) {
 }
 
 /* ---------------------------------------------------------------------------
+   CUES
+
+   A one-shot that can be CANCELLED. The impact sounds are fire-and-forget -
+   they are 200ms long and there is never a reason to stop one - but the drop
+   sting has to be cut the moment the coin leaves the chute, so it needs a
+   handle and its own gain to fade out on.
+
+   Only one cue runs at a time. There is only ever one drop in the air, and a
+   second one starting means the first is irrelevant.
+   ------------------------------------------------------------------------- */
+let cueSrc = null, cueGain = null;
+
+export function playCue(kind, panX) {
+  const A = cfg();
+  if (!ac || !A || !A.enabled) return false;
+  const buf = samples[kind];
+  if (!buf) return play(kind, 1, panX);        // no sample: fall back to a voice
+
+  stopCue(0.02);
+
+  cueGain = ac.createGain();
+  cueGain.gain.value = (A.levels && A.levels[kind] != null) ? A.levels[kind] : 1;
+  cueGain.connect(master);
+
+  cueSrc = ac.createBufferSource();
+  cueSrc.buffer = buf;
+  cueSrc.connect(cueGain);
+  cueSrc.start();
+  return true;
+}
+
+export function stopCue(fadeSeconds) {
+  if (!ac || !cueSrc) return false;
+  const src = cueSrc, g = cueGain;
+  cueSrc = null; cueGain = null;
+  const f = fadeSeconds != null ? fadeSeconds : 0.08;
+  const t = ac.currentTime;
+  try {
+    g.gain.cancelScheduledValues(t);
+    g.gain.setValueAtTime(g.gain.value, t);
+    g.gain.linearRampToValueAtTime(0, t + f);
+  } catch (e) { /* context torn down */ }
+  try { src.stop(t + f + 0.02); } catch (e) { /* already stopped */ }
+  return true;
+}
+
+/* ---------------------------------------------------------------------------
    MUSIC
 
    A separate path from the impact sounds, because it is a different kind of

@@ -263,13 +263,17 @@ window.COIN_PUSHER_CONFIG = {
     levels: {
       /* Above 1.0 deliberately: the pegs are the sound the whole drop is built
          around and they were being lost under the drop sting. The limiter is
-         what stops this simply making everything louder. */
-      peg:     1.25,
+         what stops this simply making everything louder.
+
+         Note that the real cure was cutting the sting short - see
+         arming.stingFadeOut. If the pegs now sound harsh rather than
+         inaudible, this is the number to pull back, not the sting. */
+      peg:     1.60,
       surface: 0.70,
       tense:   0.55,      // a bed, not a feature - it sits under the machine
       /* Quiet. It was at 1.00 and buried the coin rattling down the pegs,
          which is the sound the drop is actually about. */
-      drop:    0.30,
+      drop:    0.22,
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -1168,6 +1172,13 @@ window.COIN_PUSHER_CONFIG = {
        deliberate, and leaving a bed running under it just muddies both. */
     duckFadeOut:  0.05,
     duckFadeIn:   0.12,
+
+    /* The sting is CUT when the coin clears the chute rather than being left
+       to run out. Measured, the clip is 3.41s against a 1.94s fall, so letting
+       it finish meant it played over every peg strike on the way down - which
+       is why the pegs could not be heard at any volume. Short fade, because
+       chopping a sound off mid-waveform clicks. */
+    stingFadeOut: 0.09,
 
     /* The music keeps playing after the coin is released, all the way through
        the fall, and stops when a coin goes over the front edge - the payoff.
