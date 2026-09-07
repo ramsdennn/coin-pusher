@@ -381,6 +381,10 @@ def swatch_sheet():
 TEAM_A = 0x2F7550          # G2, mid green
 TEAM_B = 0xCE6067          # R4, light red
 
+# The points-per-coin box. Deliberately the ORIGINAL blue - it is a setting,
+# not a team, and giving it either team's colour would say it belonged to them.
+NEUTRAL = 0x2C3E63
+
 
 def document(panels, w, h, background=None, base=0x2C3E63):
     out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
@@ -412,6 +416,8 @@ def main():
         document([panel('', '', text=False)], W, H, base=TEAM_A))
     io.open(os.path.join(outdir, 'panel-blank-b.svg'), 'w', encoding='utf-8').write(
         document([panel('', '', text=False)], W, H, base=TEAM_B))
+    io.open(os.path.join(outdir, 'panel-blank-neutral.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=NEUTRAL))
 
     # Where the live text has to sit to match the baked version, as fractions
     # of the panel. Printed rather than guessed at the CSS end.

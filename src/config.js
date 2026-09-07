@@ -585,6 +585,44 @@ window.COIN_PUSHER_CONFIG = {
     font: "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"
   },
 
+  /* --------------------------------------------------------------------
+     POINTS PER COIN
+
+     A box in the bottom right, in the same style as the scoreboards, where
+     the host types what a coin is worth. Changing it takes effect on the very
+     next coin - there is no apply step and nothing to restart, because on a
+     quiz night the moment you want to change it is the moment you have just
+     realised the scores are wrong.
+
+     Neutral blue on purpose: it is a setting, not a team, and either team's
+     colour would say it belonged to them.
+
+     It writes to the coin TYPES rather than holding a number of its own, so
+     there is still exactly one place a coin's worth lives. The tokens and
+     prizes are untouched by it - they carry their own values, and a box
+     labelled "points per coin" should not silently rewrite what a 100 token
+     is worth.
+     -------------------------------------------------------------------- */
+  pointsBox: {
+    enabled: true,
+    src: 'assets/scoreboard/panel-blank-neutral.svg',
+    label: 'POINTS PER COIN',
+
+    /* Which types the box controls: the ordinary coins, not the tokens. */
+    types: ['coinLight', 'coinDark'],
+
+    min: 0,
+    max: 9999,
+
+    /* Bottom right, under the scoreboards. Bounded on both axes like the
+       right-hand column, so a short window shrinks it rather than pushing it
+       off the screen - the same trap the logo and the panels fell into. */
+    widthFraction:     0.155,
+    maxHeightFraction: 0.26,
+    centreAtScreenX:   0.805,
+    bottomFraction:    0.060
+  },
+
   /* What actually drops when the host clicks a drop zone. */
   /* A single type id, or a list to cycle through. Cycling, not picking at
      random: random drifts, and across a night's play one colour would end up

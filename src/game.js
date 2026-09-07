@@ -2046,6 +2046,110 @@ function makeRightColumn() {
   updateScoreboards();
 }
 
+/* -------------------------------------------------------------------------
+   POINTS PER COIN
+
+   A box in the same style as the scoreboards, in the bottom right, holding a
+   number the host can retype mid-quiz. See pointsBox in config.
+
+   It writes straight to the coin TYPES rather than keeping a value of its own,
+   so a coin's worth still lives in exactly one place and the change lands on
+   the very next coin.
+   ------------------------------------------------------------------------- */
+function coinPoints() {
+  const P = CFG.pointsBox;
+  const t = CFG.itemTypes[P.types[0]];
+  return t && t.value ? t.value.amount : 0;
+}
+
+function setCoinPoints(n) {
+  const P = CFG.pointsBox;
+  if (!isFinite(n)) return;
+  n = Math.max(P.min, Math.min(P.max, Math.round(n)));
+  for (let i = 0; i < P.types.length; i++) {
+    const t = CFG.itemTypes[P.types[i]];
+    if (t && t.value && t.value.type === 'points') t.value.amount = n;
+  }
+  return n;
+}
+
+function makePointsBox() {
+  const P = CFG.pointsBox, S = CFG.scoreboard;
+  if (!P || !P.enabled) return;
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    'position:fixed;z-index:10;' +
+    'width:min(' + (P.widthFraction * 100).toFixed(2) + 'vw,' +
+                   (P.maxHeightFraction * 100).toFixed(2) + 'vh);' +
+    'aspect-ratio:' + S.aspect + ';' +
+    'left:' + (P.centreAtScreenX * 100).toFixed(3) + '%;' +
+    'bottom:' + (P.bottomFraction * 100).toFixed(3) + '%;' +
+    'transform:translateX(-50%);' +
+    'pointer-events:auto;' +
+    'background:url(' + P.src + ') center/100% 100% no-repeat;';
+  box.style.containerType = 'size';
+
+  const inner = document.createElement('div');
+  inner.style.cssText =
+    'position:absolute;display:flex;flex-direction:column;' +
+    'align-items:center;justify-content:space-evenly;' +
+    'left:'   + (S.screenInsetX * 100).toFixed(3) + '%;' +
+    'right:'  + (S.screenInsetX * 100).toFixed(3) + '%;' +
+    'top:'    + (S.screenInsetY * 100).toFixed(3) + '%;' +
+    'bottom:' + (S.screenInsetY * 100).toFixed(3) + '%;' +
+    'font-family:' + S.font + ';font-weight:bold;color:#fff;line-height:1;';
+
+  const shadow =
+    '0 ' + (S.shadowDy * 100).toFixed(2) + 'cqh ' +
+    (S.shadowBlur * 100).toFixed(2) + 'cqh rgba(4,7,14,.72), ' +
+    '0 0 4cqh rgba(190,220,255,.5)';
+
+  /* The label is smaller than a team name - it is three words, not one, and
+     has to sit on one line at this size. */
+  const label = document.createElement('div');
+  label.textContent = P.label;
+  label.style.cssText =
+    'width:100%;text-align:center;letter-spacing:0.05em;' +
+    'text-shadow:' + shadow + ';white-space:nowrap;' +
+    'font-size:' + (S.nameSize * 68).toFixed(2) + 'cqh;';
+
+  /* A real input, styled to look like the score. type=text with a numeric
+     inputmode rather than type=number: the spinner arrows are ugly at this
+     size and there is nothing to step through. */
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.inputMode = 'numeric';
+  input.value = String(coinPoints());
+  input.style.cssText =
+    'width:100%;text-align:center;background:transparent;border:0;outline:0;' +
+    'font-family:inherit;font-weight:bold;color:#fff;padding:0;' +
+    'text-shadow:' + shadow + ';' +
+    'font-size:' + (S.scoreSize * 100).toFixed(2) + 'cqh;';
+
+  function commit() {
+    const n = setCoinPoints(parseInt(input.value, 10));
+    /* Snap the field back to what was actually taken - typing nonsense or
+       something out of range should show the value in force, not the typing
+       that failed to change it. */
+    input.value = String(n != null ? n : coinPoints());
+  }
+  input.addEventListener('change', commit);
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { commit(); input.blur(); }
+  });
+
+  /* Clicking in here is not "somewhere else": adjusting the points mid-turn
+     must not end that team's turn. */
+  box.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+
+  inner.appendChild(label);
+  inner.appendChild(input);
+  box.appendChild(inner);
+  document.body.appendChild(box);
+}
+
 /* Light the machine in a team's colour, or -1 to put it back to neutral. */
 function setTeamHighlight(i) {
   if (teamHighlight === i) return;
@@ -2207,6 +2311,7 @@ window.startCoinPusher = function (teamA, teamB) {
   return ready.then(function () {
     buildScene();
     makeRightColumn();
+    makePointsBox();
     makeHud();
 
     ctx = {
@@ -2288,6 +2393,13 @@ window.startCoinPusher = function (teamA, teamB) {
 
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', function (e) {
+      /* Not while typing. The number keys drop coins, R resets the pile and
+         SPACE pauses the machine - so without this, typing 1 into the points
+         box would drop a coin, and typing 0 would do nothing but the 4 before
+         it would have dropped another. */
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' ||
+                t.isContentEditable)) return;
       if (e.key >= '1' && e.key <= '4') selectZone(parseInt(e.key, 10) - 1);
       else if (e.key === 'r' || e.key === 'R') resetPile();
       else if (e.key === 's' || e.key === 'S') {
