@@ -1854,9 +1854,19 @@ function makeRightColumn() {
       (S.shadowBlur * 100).toFixed(2) + 'cqh rgba(4,7,14,.72), ' +
       '0 0 4cqh rgba(190,220,255,.5)';
 
+    /* The name has to stay inside the screen whatever anyone types.
+
+       width:100% so it is bounded by the screen rather than taking its natural
+       width, which is what let a long name run out through the bezel.
+       overflow-wrap:anywhere so a single long word breaks instead of refusing
+       to wrap. line-clamp is the hard backstop: at most two lines, and
+       anything past that is cut with an ellipsis rather than hidden. */
     const name = document.createElement('div');
     name.style.cssText =
       'letter-spacing:0.06em;text-align:center;text-shadow:' + shadow + ';' +
+      'width:100%;overflow-wrap:anywhere;' +
+      'display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;' +
+      '-webkit-line-clamp:' + (S.nameMaxLines || 2) + ';' +
       'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;';
 
     const score = document.createElement('div');
@@ -1873,6 +1883,44 @@ function makeRightColumn() {
   updateScoreboards();
 }
 
+/* Size the name to fit, shrinking it ONLY if it wraps.
+
+   A second line does not fit at the full size: measured on the current panel,
+   the block goes to 283.8 against 263 of screen and shoves the score out
+   through the bezel. But shrinking every name to the two-line size would make
+   ordinary short ones needlessly small, so the size depends on whether this
+   particular name actually wraps.
+
+   Returns false if the panel has not been laid out yet, so the caller can
+   leave the name unrecorded and try again on the next frame.  */
+function fitName(b, text) {
+  const S = CFG.scoreboard, el = b.name;
+  const panelH = b.box.getBoundingClientRect().height;
+  if (!panelH) return false;
+
+  el.textContent = text;
+  const full = S.nameSize * panelH;
+
+  /* Does it fit on one line? Asked with wrapping off, because with wrapping on
+     a name that is about to wrap still reports a width that fits. */
+  el.style.whiteSpace = 'nowrap';
+  el.style.fontSize = full + 'px';
+  const oneLine = el.scrollWidth <= el.clientWidth;
+  el.style.whiteSpace = 'normal';
+
+  if (oneLine) { el.style.fontSize = full + 'px'; return true; }
+
+  /* It wraps. Give it whatever is left after the score and the gap, split
+     across two lines, and never below the floor - past that the clamp cuts it
+     with an ellipsis instead. */
+  const inner = el.parentElement;
+  const gap = parseFloat(getComputedStyle(inner).rowGap) || 0;
+  const budget = inner.clientHeight - b.score.getBoundingClientRect().height - gap;
+  el.style.fontSize =
+    Math.max(S.nameMinSize * panelH, Math.min(full, budget / 2)) + 'px';
+  return true;
+}
+
 /* Only touches the DOM when a value has actually changed. Called every frame,
    and a layout is far more expensive than the comparison that avoids it. */
 function updateScoreboards() {
@@ -1884,8 +1932,10 @@ function updateScoreboards() {
     const b = boards[i], team = ctx.teams[i];
     if (!team) continue;
     if (b.shownName !== team.name) {
-      b.name.textContent = team.name;
-      b.shownName = team.name;
+      /* Only record it as shown once it has actually been fitted. Before the
+         panel is laid out there is nothing to measure against, and recording
+         it would leave the name at whatever size it happened to get. */
+      if (fitName(b, team.name)) b.shownName = team.name;
     }
     if (b.shownScore !== team.score) {
       b.score.textContent = String(team.score);

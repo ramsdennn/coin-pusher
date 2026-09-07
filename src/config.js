@@ -524,6 +524,18 @@ window.COIN_PUSHER_CONFIG = {
        and the baked SVG cannot drift apart. Change the panel there and paste
        what it prints. */
     nameSize:     0.1796,
+
+    /* A long name WRAPS to a second line, and a second line does not fit at
+       the full size - measured, the block becomes 283.8 against 263 of screen
+       and pushes the score out through the bezel. So the name is shrunk only
+       when it wraps; a short name keeps the full size and looks exactly as it
+       did.
+
+       nameMinSize is the floor. Past it the name is clamped to two lines and
+       whatever is left over is cut with an ellipsis, which is what stops an
+       absurd name shrinking the whole panel into unreadability. */
+    nameMinSize:  0.105,
+    nameMaxLines: 2,
     scoreSize:    0.4644,
     lineGap:      0.055,
     screenInsetX: 0.0625,
