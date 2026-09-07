@@ -281,7 +281,12 @@ window.COIN_PUSHER_CONFIG = {
 
        These are first guesses. Step 2 measures the real event rate and they
        get set from that rather than from taste. */
-    maxVoices:      16,
+    /* Measured hitting the ceiling during real play - peak 16 of 16 - which
+       starves whatever is queued behind it. Sounds are played loudest-first,
+       so the ones dropped are the quietest, which is the right thing to drop;
+       this just gives a busy moment more room. The limiter on the master bus
+       is what stops more voices meaning a louder output. */
+    maxVoices:      24,
 
     /* Measured: a coin falling the chute generates about 3 peg contacts above
        the engine threshold. That is sparse - there is no machine-gun to
@@ -341,6 +346,26 @@ window.COIN_PUSHER_CONFIG = {
 
     /* Change in speed at which a landing plays at full volume. */
     surfaceImpactForFullHit: 2.0,
+
+    /* A contact start opens a WINDOW; the sound is scored on the loudest
+       moment inside it, not on the starting step.
+
+       This is what makes a coin toppling flat under the pusher audible. A
+       contact starts the instant the rim first grazes, and at that instant
+       almost nothing has happened: measured over 83 real impacts, the median
+       velocity change on the starting step was 0.163 - under the threshold -
+       while the actual slap peaked at 1.85 a median of ONE step later. Only
+       30 of the 83 were already loud when their contact began. Scoring on the
+       starting step silenced 29 of 39 topples.
+
+       4 steps is 67ms. The peak lands within it for most hits; the tail
+       reaches 7 steps, but 117ms of delay on an impact is audibly late and
+       not worth chasing. */
+    surfaceWindowSteps: 4,
+
+    /* A hit this hard plays at once rather than waiting for the window - a
+       sharp impact delayed by even 67ms reads as out of sync. */
+    surfaceImmediateImpact: 1.5,
 
     /* Loudest N per step, rest dropped. Lower than the pegs' budget because a
        pile collapsing can start dozens of contacts on one frame and a coin

@@ -39,6 +39,7 @@ const M = {
   pegHits: 0,          // peg sounds actually played, for the HUD
   unjammed: 0,         // coins slid off a peg they were impaled on
   surfaceHits: 0,      // surface / coin-on-coin sounds played
+  soundedThisStep: [], // body handles that made a surface sound this step
   lifted: 0,
   landed: 0,
   jammed: 0,
@@ -1144,6 +1145,7 @@ function physicsStep() {
     }
   }
 
+  M.soundedThisStep.length = 0;
   quietenBeforeStep();
   captureImpactSpeeds();
   ctx.world.step(ctx.eventQueue);
@@ -1192,9 +1194,10 @@ function captureImpactSpeeds() {
   if (!CFG.audio || !CFG.audio.enabled) return;
   for (let i = 0; i < ctx.items.length; i++) {
     const it = ctx.items[i];
-    const v = it.body.linvel();
-    if (!it.preVel) it.preVel = { x: 0, y: 0, z: 0 };
+    const v = it.body.linvel(), w = it.body.angvel();
+    if (!it.preVel) it.preVel = { x: 0, y: 0, z: 0, wx: 0, wy: 0, wz: 0 };
     it.preVel.x = v.x; it.preVel.y = v.y; it.preVel.z = v.z;
+    it.preVel.wx = w.x; it.preVel.wy = w.y; it.preVel.wz = w.z;
   }
 }
 
@@ -1213,7 +1216,22 @@ function captureImpactSpeeds() {
 function impactOf(it) {
   if (!it.preVel) return 0;
   const v = it.body.linvel();
-  return Math.hypot(v.x - it.preVel.x, v.y - it.preVel.y, v.z - it.preVel.z);
+  const lin = Math.hypot(v.x - it.preVel.x, v.y - it.preVel.y, v.z - it.preVel.z);
+
+  /* ROTATION COUNTS TOO, and leaving it out is why a coin toppling flat under
+     the pusher was silent.
+
+     A coin falling flat barely moves its centre - it pivots on its rim and
+     slaps its face down. The centre's velocity hardly changes, so a purely
+     linear measure reads it as nothing at all, while the part that actually
+     hits the surface is travelling fast. Scale the change in spin by the
+     radius and it becomes what the rim is doing, in the same units, and the
+     slap reads as the hit it is. */
+  const w = it.body.angvel();
+  const spin = Math.hypot(w.x - it.preVel.wx, w.y - it.preVel.wy, w.z - it.preVel.wz);
+  const rim = spin * (it.dims && it.dims.radius ? it.dims.radius : DIMS.D * 0.5);
+
+  return Math.max(lin, rim);
 }
 
 function soundContacts() {
@@ -1268,7 +1286,15 @@ function soundCollisions() {
     byCollider.set(ctx.items[i].body.collider(0).handle, ctx.items[i]);
   }
 
-  const hits = [];
+  /* 1. A contact start OPENS a window; it does not decide anything.
+
+     Scoring the hit on the step the contact starts was wrong, and it is why a
+     coin toppling flat under the pusher made no sound. Contact starts the
+     instant the rim first grazes, and at that instant almost nothing has
+     happened yet - measured over 83 real impacts, the median velocity change
+     on the starting step was 0.163, under the threshold, while the actual
+     slap peaked at 1.85 a median of one step later. Only 30 of the 83 were
+     already loud when their contact began; 53 arrived afterwards. */
   ctx.eventQueue.drainCollisionEvents(function (h1, h2, started) {
     if (!started) return;
     /* Pegs have their own, louder voice and their own event stream. Without
@@ -1276,29 +1302,49 @@ function soundCollisions() {
     if (ctx.pegColliders.has(h1) || ctx.pegColliders.has(h2)) return;
 
     const a = byCollider.get(h1), b = byCollider.get(h2);
-    const it = a || b;
-    if (!it) return;
-
-    /* Coin on coin: score it by whichever of the two took the bigger hit. */
-    let impact = impactOf(it);
-    if (a && b) impact = Math.max(impactOf(a), impactOf(b));
-    if (impact < A.surfaceMinImpact) return;
-
-    hits.push({ handle: it.body.handle, speed: impact,
-                x: it.body.translation().x });
+    if (a && !a.hitWindow) a.hitWindow = { at: stepCount, peak: 0 };
+    if (b && !b.hitWindow) b.hitWindow = { at: stepCount, peak: 0 };
   });
-  if (!hits.length) return;
 
-  hits.sort(function (a, b) { return b.speed - a.speed; });
+  /* 2. Follow each open window, and take the loudest moment in it. */
+  const ready = [];
+  for (let i = 0; i < ctx.items.length; i++) {
+    const it = ctx.items[i];
+    const win = it.hitWindow;
+    if (!win) continue;
+
+    const impact = impactOf(it);
+    if (impact > win.peak) win.peak = impact;
+
+    /* A hard hit does not wait - it would be audibly late. Only the ones that
+       start softly and bloom are held for the window to close. */
+    const done = win.peak >= A.surfaceImmediateImpact ||
+                 stepCount - win.at >= A.surfaceWindowSteps;
+    if (!done) continue;
+
+    it.hitWindow = null;
+    if (win.peak < A.surfaceMinImpact) continue;
+    ready.push({ handle: it.body.handle, speed: win.peak,
+                 x: it.body.translation().x });
+  }
+  if (!ready.length) return;
+
+  ready.sort(function (a, b) { return b.speed - a.speed; });
 
   const now = performance.now();
   const half = DIMS.width * 0.5;
   let played = 0;
-  for (let i = 0; i < hits.length && played < A.surfacePerFrameBudget; i++) {
-    const h = hits[i];
+  for (let i = 0; i < ready.length && played < A.surfacePerFrameBudget; i++) {
+    const h = ready[i];
     if (!coinReady(h.handle, now)) continue;
     const energy = Math.min(1, h.speed / A.surfaceImpactForFullHit);
-    if (play('surface', energy, half > 0 ? h.x / half : 0)) played++;
+    if (play('surface', energy, half > 0 ? h.x / half : 0)) {
+      played++;
+      /* Which coin made the noise, for one step. Costs nothing and is the
+         only way to answer "why did THAT not make a sound" without guessing -
+         a question that already cost an hour of measuring the wrong thing. */
+      M.soundedThisStep.push(h.handle);
+    }
   }
   M.surfaceHits += played;
 }
