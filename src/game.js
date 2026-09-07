@@ -39,6 +39,7 @@ const M = {
   pegHits: 0,          // peg sounds actually played, for the HUD
   unjammed: 0,         // coins slid off a peg they were impaled on
   surfaceHits: 0,      // surface / coin-on-coin sounds played
+  dividerHits: 0,      // of those, ones that hit the chute chrome
   soundedThisStep: [], // body handles that made a surface sound this step
   lifted: 0,
   landed: 0,
@@ -1302,8 +1303,22 @@ function soundCollisions() {
     if (ctx.pegColliders.has(h1) || ctx.pegColliders.has(h2)) return;
 
     const a = byCollider.get(h1), b = byCollider.get(h2);
-    if (a && !a.hitWindow) a.hitWindow = { at: stepCount, peak: 0 };
-    if (b && !b.hitWindow) b.hitWindow = { at: stepCount, peak: 0 };
+
+    /* Struck the chute's chrome - a divider between the entry slots, or one
+       of the outer walls, which is the same part. That is polished metal, the
+       same as a peg, so it takes the peg's voice. Scored the same way as any
+       other surface hit; only the sample differs. */
+    const metal = A.dividerUsesPegSound && ctx.metalColliders &&
+                  (ctx.metalColliders.has(h1) || ctx.metalColliders.has(h2));
+
+    if (a) {
+      if (!a.hitWindow) a.hitWindow = { at: stepCount, peak: 0, voice: 'surface' };
+      if (metal) a.hitWindow.voice = 'peg';
+    }
+    if (b) {
+      if (!b.hitWindow) b.hitWindow = { at: stepCount, peak: 0, voice: 'surface' };
+      if (metal) b.hitWindow.voice = 'peg';
+    }
   });
 
   /* 2. Follow each open window, and take the loudest moment in it. */
@@ -1325,6 +1340,7 @@ function soundCollisions() {
     it.hitWindow = null;
     if (win.peak < A.surfaceMinImpact) continue;
     ready.push({ handle: it.body.handle, speed: win.peak,
+                 voice: win.voice || 'surface',
                  x: it.body.translation().x });
   }
   if (!ready.length) return;
@@ -1333,20 +1349,25 @@ function soundCollisions() {
 
   const now = performance.now();
   const half = DIMS.width * 0.5;
-  let played = 0;
+  let played = 0, metalPlayed = 0;
   for (let i = 0; i < ready.length && played < A.surfacePerFrameBudget; i++) {
     const h = ready[i];
     if (!coinReady(h.handle, now)) continue;
     const energy = Math.min(1, h.speed / A.surfaceImpactForFullHit);
-    if (play('surface', energy, half > 0 ? h.x / half : 0)) {
+    if (play(h.voice, energy, half > 0 ? h.x / half : 0)) {
       played++;
+      if (h.voice === 'peg') metalPlayed++;
       /* Which coin made the noise, for one step. Costs nothing and is the
          only way to answer "why did THAT not make a sound" without guessing -
          a question that already cost an hour of measuring the wrong thing. */
       M.soundedThisStep.push(h.handle);
     }
   }
-  M.surfaceHits += played;
+  /* Counted under the voice that actually sounded, so the HUD does not claim
+     a chrome divider was a surface hit. */
+  M.surfaceHits  += played - metalPlayed;
+  M.pegHits      += metalPlayed;
+  M.dividerHits  += metalPlayed;
 }
 
 /* -------------------------------------------------------------------------

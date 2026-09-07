@@ -372,6 +372,16 @@ window.COIN_PUSHER_CONFIG = {
        pusher should sound busy, not like static. */
     surfacePerFrameBudget: 3,
 
+    /* The chute's chrome - the four dividers between the entry slots and the
+       two outer walls, which are the same part - plays the PEG sound rather
+       than the surface one. It is polished metal, the same as a peg, and it
+       was reading as a dull surface hit.
+
+       Measured: every one of 24 dropped coins touches a divider on its way
+       down, so this is not a rare event. Set false to put them back on the
+       surface sound. */
+    dividerUsesPegSound: true,
+
     /* Quietest a hit can be, as a fraction of full. Without a floor, the long
        tail of feather-light contacts is inaudible and the machine sounds like
        it only reacts to hard hits. */

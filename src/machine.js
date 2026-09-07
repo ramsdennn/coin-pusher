@@ -577,6 +577,12 @@ export function buildMachine(ctx) {
   ctx.pegColliders = new Set();
   ctx.pegPositions = [];
 
+  /* The chrome of the drop chute - the dividers between the entry slots and
+     the two outer walls, which are the same part. A coin striking one of
+     these is hitting polished metal, exactly as it is when it strikes a peg,
+     so it gets the peg's sound rather than the surface one. */
+  ctx.metalColliders = new Set();
+
   TIERS.forEach(function (tier) {
     if (DIMS.deckStep > 0) {
       /* One continuous field floor for the whole tier depth. The deck rides
@@ -707,19 +713,22 @@ export function buildMachine(ctx) {
   const chuteCy = (DIMS.chuteTop + DIMS.chuteBottom) / 2;
   const glassT = D * 0.04;
 
-  function chuteWall(cx, cy, cz, sx, sy, sz, material) {
+  function chuteWall(cx, cy, cz, sx, sy, sz, material, metal) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
     m.position.set(cx, cy, cz);
     ctx.scene.add(m);
     const b = ctx.world.createRigidBody(
       ctx.RAPIER.RigidBodyDesc.fixed().setTranslation(cx, cy, cz)
     );
-    ctx.world.createCollider(
+    const col = ctx.world.createCollider(
       ctx.RAPIER.ColliderDesc.cuboid(sx / 2, sy / 2, sz / 2)
         .setFriction(PHY.wallFriction)
         .setRestitution(PHY.itemRestitution),
       b
     );
+    /* Only the chrome counts as metal for audio. This builder also makes the
+       two glass panes, and glass should not ping like a peg. */
+    if (metal) ctx.metalColliders.add(col.handle);
     return m;
   }
 
@@ -779,7 +788,8 @@ export function buildMachine(ctx) {
               D * 0.05,
               edge ? chuteH : slotH,
               DIMS.chuteDepth + glassT * 2,
-              mat(P.chrome, { roughness: 0.18, metalness: 0.95 }));
+              mat(P.chrome, { roughness: 0.18, metalness: 0.95 }),
+              true);                       // chrome: sounds like a peg
   }
 
   /* A chrome bezel round the opening: a head rail across the top, a bright
