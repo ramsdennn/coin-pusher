@@ -282,13 +282,37 @@ window.COIN_PUSHER_CONFIG = {
        These are first guesses. Step 2 measures the real event rate and they
        get set from that rather than from taste. */
     maxVoices:      16,
-    coinCooldownMs: 55,
+
+    /* Measured: a coin falling the chute generates about 3 peg contacts above
+       the engine threshold. That is sparse - there is no machine-gun to
+       defend against at that rate - so the cooldown is set just long enough
+       to collapse the two or three contacts of a single visible bounce into
+       one sound, and no longer. At 55ms it was swallowing most of the hits
+       and the drop went nearly silent. */
+    coinCooldownMs: 28,
     perFrameBudget: 4,
 
-    /* Impact force that counts as a full-strength hit. Anything at or above
-       this plays at full volume and full brightness. Also set from
-       measurement, not taste. */
-    forceForFullHit: 1.0,
+    /* Files loaded at startup, one per voice name. A loaded sample REPLACES
+       the synthesised voice of the same name - everything downstream is
+       identical either way, so it changes the sound and nothing else.
+
+       peg-hit.mp3 is a hand striking a plastic bucket, from Freesound, chosen
+       by the host. Synthesis was tried twice for this and rejected both
+       times; the second attempt reached a spectrogram correlation of 0.74
+       against this very clip, which was a good number and a bad sound. */
+    samples: {
+      peg: 'assets/audio/peg-hit.mp3'
+    },
+
+    /* Contact force below which the ENGINE does not even report a peg hit.
+       The cheapest throttle there is, because it is applied inside the solver
+       and never crosses into JavaScript. Raise it if faint grazes are
+       chattering, lower it if soft touches go silent. */
+    pegForceThreshold: 0.02,
+
+    /* Contact force that counts as a full-strength hit: at or above this a
+       peg sound plays at full volume and full brightness. */
+    pegForceForFullHit: 2.5,
 
     /* Quietest a hit can be, as a fraction of full. Without a floor, the long
        tail of feather-light contacts is inaudible and the machine sounds like

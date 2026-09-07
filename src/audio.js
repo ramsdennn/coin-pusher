@@ -321,9 +321,46 @@ export function initAudio() {
   limiter.connect(ac.destination);
 
   renderAll();
+  loadSamples();            // async; the synth voices cover until it lands
   if (ac.state === 'suspended') ac.resume();
   return true;
 }
+
+/* ---------------------------------------------------------------------------
+   SAMPLES
+
+   Synthesis was tried twice for the peg hit and rejected both times. Modal
+   resynthesis of the host's reference clip reached a spectrogram correlation
+   of 0.74 against the original, which sounded like a good number and was not
+   a good sound. The clip itself always was the answer.
+
+   The dynamics argument against samples is real but narrower than it looks. A
+   sample cannot change its SPECTRAL CONTENT with impact force - a hard strike
+   excites modes a soft one never touches, and filtering a soft recording
+   brighter does not invent them. Over the speed range of a coin falling down
+   a chute that difference is small, and gain, pitch and filter cover it. What
+   actually makes sampled impacts sound fake is REPETITION, and pitch jitter
+   plus the cooldown deals with that.
+   ------------------------------------------------------------------------- */
+let samples = {};                    // kind -> AudioBuffer
+
+export async function loadSamples() {
+  const A = cfg();
+  if (!ac || !A || !A.samples) return;
+  const names = Object.keys(A.samples);
+  await Promise.all(names.map(async function (kind) {
+    try {
+      const res = await fetch(A.samples[kind]);
+      if (!res.ok) throw new Error(res.status + ' ' + A.samples[kind]);
+      samples[kind] = await ac.decodeAudioData(await res.arrayBuffer());
+    } catch (e) {
+      console.warn('[audio] could not load sample "' + kind + '":', e.message);
+    }
+  }));
+  return Object.keys(samples);
+}
+
+export function hasSample(kind) { return !!samples[kind]; }
 
 export function setMasterVolume(v) {
   if (master) master.gain.value = v;
@@ -344,8 +381,14 @@ export function audioReady() { return !!ac && ac.state === 'running'; }
 export function play(kind, energy, panX) {
   const A = cfg();
   if (!ac || !A || !A.enabled) return false;
-  const list = buffers[kind];
-  if (!list) return false;
+  /* A loaded sample always wins over the synthesised voice of the same name.
+     Everything downstream - energy curve, pitch, filter, pan, limiter - is
+     identical either way, so swapping one for the other changes the sound and
+     nothing else. */
+  const buf = samples[kind]
+    ? samples[kind]
+    : (buffers[kind] ? buffers[kind][(Math.random() * buffers[kind].length) | 0] : null);
+  if (!buf) return false;
 
   const lvl = (A.levels && A.levels[kind] != null) ? A.levels[kind] : 1;
   if (lvl <= 0) return false;
@@ -361,7 +404,7 @@ export function play(kind, energy, panX) {
   const amp = A.minGain + (1 - A.minGain) * Math.pow(e, 0.55);
 
   const src = ac.createBufferSource();
-  src.buffer = list[(Math.random() * list.length) | 0];
+  src.buffer = buf;
   /* Pitch: a little lower for a soft hit, plus jitter so repeats differ. */
   src.playbackRate.value =
     (1 + (e - 0.5) * A.pitchByEnergy) *

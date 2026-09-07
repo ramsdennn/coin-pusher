@@ -527,6 +527,10 @@ export function buildMachine(ctx) {
   const width = DIMS.width, D = DIMS.D, deckThick = DIMS.deckThick;
   const parts = { shelves: [], panels: [] };
 
+  /* Collider handles of the drop-chute pegs, so a contact event can be
+     recognised as a coin striking one. */
+  ctx.pegColliders = new Set();
+
   TIERS.forEach(function (tier) {
     if (DIMS.deckStep > 0) {
       /* One continuous field floor for the whole tier depth. The deck rides
@@ -848,7 +852,7 @@ export function buildMachine(ctx) {
         const b = ctx.world.createRigidBody(
           ctx.RAPIER.RigidBodyDesc.fixed().setTranslation(px, py, DIMS.panelZ)
         );
-        ctx.world.createCollider(
+        const pegCol = ctx.world.createCollider(
           /* Frictionless pegs, combined with MIN so the coin's own friction
              cannot reintroduce grip. A coin landing slightly off a peg apex
              sits on a 10 degree slope; any friction above tan(10) = 0.18 holds
@@ -860,9 +864,22 @@ export function buildMachine(ctx) {
             .setFriction(0.0)
             .setFrictionCombineRule(ctx.RAPIER.CoefficientCombineRule.Min)
             .setRestitution(0.5)
-            .setRestitutionCombineRule(ctx.RAPIER.CoefficientCombineRule.Max),
+            .setRestitutionCombineRule(ctx.RAPIER.CoefficientCombineRule.Max)
+            /* Audio. Contact-force events are asked for HERE, on the pegs,
+               rather than on the coins, so the engine only reports the
+               contacts we actually want a sound for. Ask on the coins instead
+               and every coin-on-coin nudge in a settled pile comes back too -
+               hundreds a second, all to be thrown away in JavaScript.
+
+               The threshold is the first line of throttling and the cheapest
+               one, because it is applied inside the solver before anything
+               crosses into JS. */
+            .setActiveEvents(ctx.RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS)
+            .setContactForceEventThreshold(CFG.audio.pegForceThreshold),
           b
         );
+        /* The audio side needs to recognise a peg when an event names one. */
+        ctx.pegColliders.add(pegCol.handle);
         parts.pegs.push(m);
       });
     }

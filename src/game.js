@@ -19,7 +19,7 @@ import { DIMS, TIERS } from '@app/dims';
 import { buildMachine, driveShelves, liftTrapped, setTubeColour } from '@app/machine';
 import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
 import { initAudio, auditionAll, play, audioReady, setMasterVolume,
-         VOICE_KINDS } from '@app/audio';
+         coinReady, hasSample, VOICE_KINDS } from '@app/audio';
 
 const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
@@ -36,6 +36,7 @@ const M = {
   fallen: 0,
   fallenByType: {},
   dropped: 0,
+  pegHits: 0,          // peg sounds actually played, for the HUD
   lifted: 0,
   landed: 0,
   jammed: 0,
@@ -1034,8 +1035,9 @@ function physicsStep() {
   }
 
   quietenBeforeStep();
-  ctx.world.step();
+  ctx.world.step(ctx.eventQueue);
   stepCount++;
+  soundContacts();
   settleContacts();
   M.lifted += liftTrapped(ctx);
   separateCoins();
@@ -1047,6 +1049,56 @@ function physicsStep() {
   holdAtRest();
   trackChute();
   collectFallen();
+}
+
+/* -------------------------------------------------------------------------
+   CONTACT SOUNDS
+
+   Rapier reports a force magnitude per contact, which is what decides how
+   hard a hit sounds. Three limits sit between that and the speaker, because
+   a coin bouncing through the peg field registers several contacts inside a
+   single visible hop and playing them all machine-guns:
+
+     1. the engine's own threshold, set on the peg colliders - the cheapest,
+        because it never crosses into JavaScript
+     2. a per-coin cooldown, so one coin cannot sound twice in quick
+        succession however many contacts it generates
+     3. a per-step budget, loudest first, so one busy moment cannot drown
+        everything else
+
+   Pan follows the coin across the machine, which costs nothing and makes the
+   drop field feel wide.
+   ------------------------------------------------------------------------- */
+function soundContacts() {
+  const A = CFG.audio;
+  if (!A || !A.enabled || !audioReady()) { ctx.eventQueue.clear(); return; }
+
+  const hits = [];
+  ctx.eventQueue.drainContactForceEvents(function (e) {
+    const h1 = e.collider1(), h2 = e.collider2();
+    const pegIsFirst = ctx.pegColliders.has(h1);
+    if (!pegIsFirst && !ctx.pegColliders.has(h2)) return;
+    const other = ctx.world.getCollider(pegIsFirst ? h2 : h1);
+    if (!other) return;
+    const body = other.parent();
+    if (!body) return;
+    hits.push({ handle: body.handle, force: e.totalForceMagnitude(),
+                x: body.translation().x });
+  });
+  if (!hits.length) return;
+
+  hits.sort(function (a, b) { return b.force - a.force; });
+
+  const now = performance.now();
+  const half = DIMS.width * 0.5;
+  let played = 0;
+  for (let i = 0; i < hits.length && played < A.perFrameBudget; i++) {
+    const h = hits[i];
+    if (!coinReady(h.handle, now)) continue;
+    const energy = Math.min(1, h.force / A.pegForceForFullHit);
+    if (play('peg', energy, half > 0 ? h.x / half : 0)) played++;
+  }
+  M.pegHits += played;
 }
 
 /* -------------------------------------------------------------------------
@@ -1151,6 +1203,9 @@ function updateHud() {
     '<br><b>fallen off</b> ' + M.fallen +
     ' &nbsp; <b>per 20 strokes</b> ' + per20.toFixed(1) +
     '<br><b>dropped</b> ' + M.dropped +
+    /* So a silent machine can be told apart from a machine that is not
+       detecting hits at all. */
+    ' &nbsp; <b>peg snd</b> ' + M.pegHits +
     ' &nbsp; <b>through</b> ' + M.landed + '/' + M.dropped +
     ' &nbsp; <b>chute fall</b> ' + (mean(M.fallSteps) === null ? '-' :
         (mean(M.fallSteps) / 60).toFixed(2) + 's (' +
@@ -1232,6 +1287,12 @@ window.startCoinPusher = function (teamA, teamB) {
       ],
       activeTeam: 0
     };
+
+    /* Contact-force events for the audio. Only colliders that ask for them
+       report - currently just the chute pegs - so this queue stays short.
+       Deliberately NOT inside buildWorld's try/catch: if this ever throws it
+       should be loud, not swallowed as an old-Rapier fallback. */
+    ctx.eventQueue = new RAPIER.EventQueue(true);
 
     ctx.machine = buildMachine(ctx);
 
