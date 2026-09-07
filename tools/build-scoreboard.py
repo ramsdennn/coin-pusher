@@ -149,8 +149,14 @@ def defs():
               SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, R_IN)
 
 
-def panel(name, score, x=0, y=0):
-    """One score panel, translated to (x, y)."""
+def panel(name, score, x=0, y=0, text=True):
+    """One score panel, translated to (x, y).
+
+    text=False leaves the screen empty. That is the version the GAME uses: the
+    chrome is a static image and the name and score are live HTML laid over it,
+    because a score that changes cannot be baked into a file, and injecting the
+    same SVG twice would collide on every gradient id it contains.
+    """
     g = ['<g transform="translate(%g,%g)">' % (x, y)]
 
     # Frame. The plate carries the broad chrome ramp; the top and bottom rails
@@ -183,6 +189,10 @@ def panel(name, score, x=0, y=0):
              '<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="none" '
              'stroke="url(#recess)" stroke-width="13"/></g>'
              % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, R_IN))
+
+    if not text:
+        g.append('</g>')
+        return chr(10).join(g)
 
     cx = W / 2.0
 
@@ -235,6 +245,18 @@ def main():
 
     io.open(os.path.join(outdir, 'panel-team-b.svg'), 'w', encoding='utf-8').write(
         document([panel('TEAM B', 90)], W, H))
+
+    # The one the game actually uses: chrome only, no text.
+    io.open(os.path.join(outdir, 'panel-blank.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H))
+
+    # Where the live text has to sit to match the baked version, as fractions
+    # of the panel. Printed rather than guessed at the CSS end.
+    print('  name  : size %.4f of height, baseline %.4f'
+          % (NAME_SIZE / float(H), NAME_BASE / float(H)))
+    print('  score : size %.4f of height, baseline %.4f'
+          % (SCORE_SIZE / float(H), SCORE_BASE / float(H)))
+    print('  screen inset: %.4f x, %.4f y' % (BEZEL / float(W), BEZEL / float(H)))
 
     # A review sheet: both teams, on the game's own background, plus the
     # extremes the panel has to survive - a long name and a four-digit score.

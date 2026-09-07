@@ -444,6 +444,46 @@ window.COIN_PUSHER_CONFIG = {
     opacity:         1.0
   },
 
+  /* --------------------------------------------------------------------
+     SCOREBOARDS
+
+     Two panels under the logo, in the right-hand third the camera framing
+     leaves clear. Placed to the boxes the host drew over a screenshot.
+
+     Drawn as a DOM overlay, like the logo, and for the same reason: the
+     numbers have to stay crisp and readable from across a room, and the 3D
+     renderer's job is the machine.
+
+     The CHROME is a static SVG and the TEXT is live HTML laid over it. That
+     split matters - the score changes constantly so it cannot be baked into
+     the file, and injecting the same SVG twice would collide on every gradient
+     id inside it, leaving both panels quietly sharing one set of defs.
+
+     Sizes are fractions of the WINDOW, so the layout holds at any size without
+     a resize handler - the browser does the arithmetic in CSS.
+     -------------------------------------------------------------------- */
+  scoreboard: {
+    enabled: true,
+    src: 'assets/scoreboard/panel-blank.svg',
+
+    widthFraction:   0.155,  // each panel, of the window's width
+    gapFraction:     0.020,  // between the two
+    centreAtScreenX: 0.805,  // centre of the PAIR
+    topFraction:     0.370,  // of the window's height
+
+    /* Where the text sits inside the panel, as fractions of its height.
+       These come out of tools/build-scoreboard.py rather than being matched by
+       eye - it prints them - so the live text lands exactly where the baked
+       version has it. Change the panel geometry there and these follow. */
+    nameSize:     0.155,
+    nameBaseline: 0.370,
+    scoreSize:    0.395,
+    scoreBaseline: 0.795,
+
+    /* Same stack as the SVG, so the two versions cannot drift apart. */
+    font: "'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif"
+  },
+
   /* What actually drops when the host clicks a drop zone. */
   /* A single type id, or a list to cycle through. Cycling, not picking at
      random: random drifts, and across a night's play one colour would end up

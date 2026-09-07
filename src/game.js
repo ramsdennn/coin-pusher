@@ -1651,6 +1651,7 @@ function frame(now) {
   }
 
   syncMeshes();
+  updateScoreboards();
   updateHud();
   renderer.render(scene, camera);
 }
@@ -1767,6 +1768,94 @@ function makeLogo() {
   document.body.appendChild(img);
 }
 
+/* -------------------------------------------------------------------------
+   SCOREBOARDS
+
+   Two panels under the logo. See the scoreboard block in config for the
+   placement and for why the chrome is an image and the text is not.
+
+   Positioned entirely in CSS percentages, so they hold their place when the
+   window changes shape without anything having to run on resize.
+   ------------------------------------------------------------------------- */
+let boards = [];
+
+function makeScoreboards() {
+  const S = CFG.scoreboard;
+  if (!S || !S.enabled) return;
+
+  const pairW = S.widthFraction * 2 + S.gapFraction;
+  const left  = S.centreAtScreenX - pairW / 2;
+
+  for (let i = 0; i < 2; i++) {
+    const x = left + i * (S.widthFraction + S.gapFraction);
+
+    const box = document.createElement('div');
+    box.style.cssText =
+      'position:fixed;z-index:10;pointer-events:none;' +
+      'left:' + (x * 100).toFixed(3) + '%;' +
+      'top:'  + (S.topFraction * 100).toFixed(3) + '%;' +
+      'width:' + (S.widthFraction * 100).toFixed(3) + '%;' +
+      /* The panel is 560x400, so its height follows its width. aspect-ratio
+         keeps that true at any window size without measuring anything. */
+      'aspect-ratio:560/400;' +
+      'background:url(' + S.src + ') center/100% 100% no-repeat;';
+
+    /* Text is sized in units of the PANEL, not the window - cqh is a
+       percentage of this box's own height - so it scales with the chrome
+       around it rather than drifting off it as the window changes. */
+    box.style.containerType = 'size';
+
+    const name = document.createElement('div');
+    name.style.cssText =
+      'position:absolute;left:0;width:100%;text-align:center;' +
+      'font-family:' + S.font + ';font-weight:bold;color:#fff;' +
+      'letter-spacing:0.06em;white-space:nowrap;overflow:hidden;' +
+      'text-shadow:0 0 ' + (0.03 * 100).toFixed(0) + 'cqh rgba(190,220,255,.55);' +
+      'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;' +
+      /* Baselines, not tops. The SVG positions its text by baseline and this
+         has to land in the same place, so the line box is pulled up by roughly
+         the cap height. */
+      'top:' + ((S.nameBaseline - S.nameSize * 0.78) * 100).toFixed(2) + 'cqh;';
+
+    const score = document.createElement('div');
+    score.style.cssText =
+      'position:absolute;left:0;width:100%;text-align:center;' +
+      'font-family:' + S.font + ';font-weight:bold;color:#fff;' +
+      'white-space:nowrap;' +
+      'text-shadow:0 0 ' + (0.04 * 100).toFixed(0) + 'cqh rgba(190,220,255,.55);' +
+      'font-size:' + (S.scoreSize * 100).toFixed(2) + 'cqh;' +
+      'top:' + ((S.scoreBaseline - S.scoreSize * 0.78) * 100).toFixed(2) + 'cqh;';
+
+    box.appendChild(name);
+    box.appendChild(score);
+    document.body.appendChild(box);
+    boards.push({ box: box, name: name, score: score, shownName: null, shownScore: null });
+  }
+  updateScoreboards();
+}
+
+/* Only touches the DOM when a value has actually changed. Called every frame,
+   and a layout is far more expensive than the comparison that avoids it. */
+function updateScoreboards() {
+  /* The panels are built alongside the logo, before the world exists, so the
+     first call has no teams to read. The render loop fills them in a frame
+     later; guarding here keeps the build order free rather than tying panel
+     creation to when ctx happens to be assigned. */
+  if (!ctx || !ctx.teams) return;
+  for (let i = 0; i < boards.length; i++) {
+    const b = boards[i], team = ctx.teams[i];
+    if (!team) continue;
+    if (b.shownName !== team.name) {
+      b.name.textContent = team.name;
+      b.shownName = team.name;
+    }
+    if (b.shownScore !== team.score) {
+      b.score.textContent = String(team.score);
+      b.shownScore = team.score;
+    }
+  }
+}
+
 function makeHud() {
   hud = document.createElement('div');
   hud.style.cssText =
@@ -1798,6 +1887,7 @@ window.startCoinPusher = function (teamA, teamB) {
   return ready.then(function () {
     buildScene();
     makeLogo();
+    makeScoreboards();
     makeHud();
 
     ctx = {
@@ -1902,6 +1992,14 @@ window.startCoinPusher = function (teamA, teamB) {
       },
       step: physicsStep,
       setTubeColour: function (i, hex) { return setTubeColour(ctx, i, hex); },
+      /* Set a team's score and redraw its panel at once. The panels are
+         normally refreshed by the render loop, which is no use for testing
+         them with the loop stopped. */
+      setScore: function (i, v) {
+        if (ctx.teams[i]) ctx.teams[i].score = v;
+        updateScoreboards();
+      },
+      refreshScores: updateScoreboards,
       dropInto: dropInto,
       selectZone: selectZone,
       armedZone: armedZoneIndex,
