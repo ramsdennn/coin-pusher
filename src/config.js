@@ -502,6 +502,13 @@ window.COIN_PUSHER_CONFIG = {
      -------------------------------------------------------------------- */
   scoreboard: {
     enabled: true,
+    /* The two teams' screen colours, so the game can light the machine to
+       match a panel. These are the SAME values the panels are generated from -
+       TEAM_A and TEAM_B in tools/build-scoreboard.py - and have to be changed
+       in both places together, because a panel is a picture and the game
+       cannot read a colour out of it. */
+    teamColours: [0x2F7550, 0xCE6067],
+
     /* One per team: they are different colours now, so there is a file each
        rather than one shared background. Team A green, Team B red, matching
        how the teams are coloured in the quiz running alongside this.

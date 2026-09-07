@@ -540,6 +540,11 @@ let landedStep      = 0;     // stepCount at which the dropped coin hit the shel
 let fadeFrom = -1;           // stepCount at which the fade begins
 let fadeMix  = 0;
 
+/* Which team's box has been clicked, or -1 for none. Lights the machine's
+   three tubes in that team's colour - whose turn it is, without a word of
+   text on screen. */
+let teamHighlight = -1;
+
 /* Blend two 0xRRGGBB colours. Done per channel on the raw integers rather
    than through THREE.Color so this can be called for every zone and tube on
    every frame of the fade without allocating anything. */
@@ -570,10 +575,17 @@ function paintZones() {
 
   /* The three tubes framing the machine go red on the same cue as the zones
      and come back on the same cue, so the whole cabinet reads as one state
-     rather than as a panel that happens to have changed colour. */
+     rather than as a panel that happens to have changed colour.
+
+     ARMING WINS over a team highlight while it is running: the drop is the
+     thing happening, and the machine going red for it is the whole point. When
+     it clears, the tubes fall back to the selected team's colour rather than
+     to neutral, so whose turn it is survives the drop. */
   const tubes = CFG.lightTubes.colours;
+  const team = teamHighlight >= 0 ? CFG.scoreboard.teamColours[teamHighlight] : null;
   for (let i = 0; i < tubes.length; i++) {
-    setTubeColour(ctx, i, litZone < 0 ? tubes[i] : mixHex(A.dimmedGlow, tubes[i], mix));
+    const rest = team != null ? team : tubes[i];
+    setTubeColour(ctx, i, litZone < 0 ? rest : mixHex(A.dimmedGlow, rest, mix));
   }
 }
 
@@ -1799,6 +1811,11 @@ function makeRightColumn() {
     'transform:translateX(-50%);';
   document.body.appendChild(col);
 
+  /* Anything else clicked puts the machine back to neutral. On the document so
+     it catches the canvas, the background and the panels' own surround alike -
+     the panels stop the event before it gets here. */
+  document.addEventListener('pointerdown', function () { setTeamHighlight(-1); });
+
   if (L && L.enabled) {
     const img = document.createElement('img');
     img.src = L.src;
@@ -1824,6 +1841,10 @@ function makeRightColumn() {
        the gap is, so the panel width never has to be worked out by hand. */
     box.style.cssText =
       'flex:1 1 0;aspect-ratio:' + S.aspect + ';position:relative;' +
+      /* The column is pointer-events:none so clicks fall through to the
+         machine; the panels opt back IN, because they are the one part of the
+         overlay that is meant to be clicked. */
+      'pointer-events:auto;cursor:pointer;' +
       'background:url(' + S.srcs[i] + ') center/100% 100% no-repeat;';
     /* Text is sized in cqh - a percentage of this box's own height - so it
        scales with the chrome around it rather than with the window. */
@@ -1904,6 +1925,16 @@ function makeRightColumn() {
                     shownName: null, shownScore: null };
     boards.push(board);
 
+    /* Clicking a panel lights the machine in that team's colour. The event is
+       stopped here so the document-level handler below does not immediately
+       clear what this just set. */
+    (function (index) {
+      box.addEventListener('pointerdown', function (e) {
+        e.stopPropagation();
+        setTeamHighlight(index);
+      });
+    })(i);
+
     /* Re-fit when the panel changes size. The size itself is in cqh so it
        already follows the panel; this is for the one-line DECISION, which is
        a measurement and can land differently at a very different scale.
@@ -1917,6 +1948,15 @@ function makeRightColumn() {
   }
   updateScoreboards();
 }
+
+/* Light the machine in a team's colour, or -1 to put it back to neutral. */
+function setTeamHighlight(i) {
+  if (teamHighlight === i) return;
+  teamHighlight = i;
+  paintZones();
+}
+
+export function teamHighlightIndex() { return teamHighlight; }
 
 /* Size the name to fit, shrinking it ONLY if it wraps.
 
@@ -2135,7 +2175,15 @@ window.startCoinPusher = function (teamA, teamB) {
       );
       ray.setFromCamera(ndc, camera);
       const hits = ray.intersectObjects(ctx.machine.panels, false);
-      if (hits.length) selectZone(hits[0].object.userData.zone);
+      if (hits.length) {
+        /* A drop zone is not "somewhere else". Letting this bubble would hit
+           the document handler and clear the team highlight the moment the
+           host started playing, which is exactly when they want to still see
+           whose turn it is. Clicking the cabinet or the background still
+           clears it, because those genuinely are somewhere else. */
+        e.stopPropagation();
+        selectZone(hits[0].object.userData.zone);
+      }
     });
 
     window.addEventListener('resize', onResize);
@@ -2186,6 +2234,8 @@ window.startCoinPusher = function (teamA, teamB) {
       dropInto: dropInto,
       selectZone: selectZone,
       armedZone: armedZoneIndex,
+      teamHighlight: teamHighlightIndex,
+      setTeamHighlight: setTeamHighlight,
       litZone: function () { return litZone; },
       setRunning: function (v) { running = v; },
       setAutoStep: function (v) { autoStep = v; },
