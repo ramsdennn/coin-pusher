@@ -269,10 +269,10 @@ window.COIN_PUSHER_CONFIG = {
          symptom: the pegs were not quiet, they were being covered by a 3.41s
          sting playing over the whole fall. That sting is gone, so this is now
          doing what it says. */
-      peg:     2.20,
+      peg:     2.50,
       surface: 0.70,
       tense:   0.55,      // a bed, not a feature - it sits under the machine
-      drop:    0.22,      // unused unless a drop sting is put back in samples
+      drop:    0.22,      // under the pegs on purpose - it used to bury them
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -321,15 +321,15 @@ window.COIN_PUSHER_CONFIG = {
       /* Held while a zone is armed and all the way through the fall, until the
          outcome is settled. Loops - a player can deliberate for as long as
          they like and the bed must not just stop. */
-      tense:   'assets/audio/tense.mp3'
+      tense:   'assets/audio/tense.mp3',
 
-      /* NO DROP STING. There was one and it is gone: at 3.41s against a 1.94s
-         fall it played straight over the coin rattling down the pegs, which is
-         the sound the drop is actually about.
-
-         The machinery for it is still here and still works - put a file back
-         as `drop:` and it returns, along with the music ducking out of its way
-         and back in when the coin lands. Nothing else needs changing. */
+      /* The sting on release. It is CUT the moment the coin clears the chute
+         rather than being left to run: the clip is 3.41s against a 1.94s
+         fall, so letting it finish means it plays straight over the coin
+         rattling down the pegs. The bed ducks out for it and comes back at
+         that same moment. Remove this line and the release is silent, with
+         the music simply running through it. */
+      drop:    'assets/audio/drop.mp3'
     },
 
     /* Contact force below which the ENGINE does not even report a peg hit.
@@ -1186,46 +1186,49 @@ window.COIN_PUSHER_CONFIG = {
        chopping a sound off mid-waveform clicks. */
     stingFadeOut: 0.09,
 
-    /* WHEN THE OUTCOME IS SETTLED.
+    /* THE LIGHTS NO LONGER WAIT FOR THE MUSIC.
 
-       The old rule was "stop at the first coin over the edge", and it was
-       badly wrong. Measured across four drops, the first coin goes over at
-       3.2 to 3.8 seconds - but coins keep going over until 10 to 18 seconds.
-       The music was ending about a fifth of the way through the result.
+       They used to go out together. Now the red starts clearing a beat after
+       the coin lands and eases back rather than snapping, so the machine
+       returns to normal while the result is still playing out.
 
-       Falls are not spread evenly. They arrive in CLUSTERS, one per pusher
-       stroke, and the stroke is 7 seconds:
+       Both are measured from the LANDING, not from the arming, so the timing
+       is the same however long a player deliberates before letting go. */
+    fadeBackDelaySeconds: 1.0,
+    fadeBackSeconds:      2.0,
 
-           seed 1   3.2, 3.8,  9.5, 18.0
-           seed 2   3.8, 3.9,  9.5, 17.8
-           seed 3   3.6, 3.8, 16.5
-           seed 4   3.8, 10.0, 10.4
+    /* WHEN THE MUSIC STOPS.
 
-       So the machine delivers its answer a stroke at a time, and the honest
-       statement of "it has finished" is A WHOLE STROKE PRODUCED NOTHING. That
-       is what this is: the quiet window is one stroke, in the machine's own
-       rhythm rather than a number picked by feel.
+       The FIRST coin over the front lip of the platform ends it - the scoring
+       drop, not a coin merely tumbling off the shelf onto the platform, which
+       is still in play and does not count.
 
-       Anything shorter ends BETWEEN clusters and brings the original bug
-       straight back, because the gaps between clusters are a stroke wide. */
-    quietStrokes: 1.0,
+       Worth knowing what that means in practice, because it is quicker than it
+       sounds. Measured across four drops, the coin lands at about 1.8s and the
+       first coin goes over at 3.2 to 3.8s - so the music runs for roughly two
+       seconds after the landing. Those early ones are usually NOT caused by
+       the dropped coin at all: the pusher runs continuously and is already
+       mid-stroke when the coin arrives, so it is the machine's own delivery
+       that ends the music.
 
-    /* Coming to rest is NOT usable as the signal, which is worth recording so
+       Coins carry on going over until 10 to 18 seconds, in clusters one
+       pusher stroke apart. Ending on the first one is a deliberate choice for
+       pace, not an oversight - a previous version waited for a whole stroke to
+       pass with nothing falling, which is a truer reading of "the outcome is
+       known" but left the bed running for 11 to 18 seconds. If it ever wants
+       to go back, that is the change. */
+
+    /* Coming to rest is NOT usable as a signal, which is worth recording so
        nobody reaches for it later. With the pusher running the pile never
        settles: 13 to 14 coins are moving at any moment - the ones riding the
        deck - pulsing to 40 or 50 on every stroke whether or not anything
        falls. There were motion spikes at 18s and 25s in a run where nothing
-       went over at all. Falls are the only reliable signal here. */
+       went over at all. Falls are the only reliable signal here.
 
-    /* Hard stop. A true backstop now rather than a participant: it only fires
-       if the machine delivers nothing at all. It also has to exist because
-       coins go over on their own about once every 13 seconds even with no
-       drop, so without a cap a run of background falls could chain the quiet
-       window along indefinitely.
-
-       Was 12s, which was cutting off three runs out of four - they still had
-       coins falling at 16 to 18 seconds. */
-    resolveTimeoutSeconds: 35
+       The case where nothing scores at all. Counted from the LANDING rather
+       than from the arming, so a player who takes a long time deciding does
+       not eat into it. */
+    resolveTimeoutSeconds: 12
   },
 
   /* --------------------------------------------------------------------

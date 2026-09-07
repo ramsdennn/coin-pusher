@@ -516,15 +516,39 @@ let resolving = false;
    frozen playfield and, on resume, a drop that never happened is already over.
    Counting steps means the timer only advances when the coin does. */
 let resolveDeadline = 0;     // stepCount at which to give up; 0 when not resolving
-let quietSince      = 0;     // stepCount of the last delivery; 0 = not counting yet
+let landedStep      = 0;     // stepCount at which the dropped coin hit the shelf
 
+/* The red does not snap back, it eases back, starting a beat after the coin
+   lands. 0 = fully red, 1 = fully normal; -1 = not fading. */
+let fadeFrom = -1;           // stepCount at which the fade begins
+let fadeMix  = 0;
+
+/* Blend two 0xRRGGBB colours. Done per channel on the raw integers rather
+   than through THREE.Color so this can be called for every zone and tube on
+   every frame of the fade without allocating anything. */
+function mixHex(a, b, t) {
+  const ar = (a >> 16) & 255, ag = (a >> 8) & 255, ab = a & 255;
+  const br = (b >> 16) & 255, bg = (b >> 8) & 255, bb = b & 255;
+  return (((ar + (br - ar) * t) | 0) << 16) |
+         (((ag + (bg - ag) * t) | 0) << 8) |
+         (((ab + (bb - ab) * t) | 0));
+}
+
+/* mix runs 0 (full red) to 1 (back to normal). */
 function paintZones() {
   const A = CFG.arming;
   const lit = CFG.palette.panelGlow;
+  const mix = litZone < 0 ? 1 : fadeMix;
+
   for (let i = 0; i < DIMS.zoneCount; i++) {
-    const on = litZone < 0 || i === litZone;
-    if (on) setZoneColour(ctx, i, lit, lit, A.litEmissive);
-    else    setZoneColour(ctx, i, A.dimmedColour, A.dimmedGlow, A.dimmedEmissive);
+    if (litZone < 0 || i === litZone) {
+      setZoneColour(ctx, i, lit, lit, A.litEmissive);
+    } else {
+      setZoneColour(ctx, i,
+        mixHex(A.dimmedColour, lit, mix),
+        mixHex(A.dimmedGlow,   lit, mix),
+        A.dimmedEmissive + (A.litEmissive - A.dimmedEmissive) * mix);
+    }
   }
 
   /* The three tubes framing the machine go red on the same cue as the zones
@@ -532,7 +556,7 @@ function paintZones() {
      rather than as a panel that happens to have changed colour. */
   const tubes = CFG.lightTubes.colours;
   for (let i = 0; i < tubes.length; i++) {
-    setTubeColour(ctx, i, litZone < 0 ? tubes[i] : A.dimmedGlow);
+    setTubeColour(ctx, i, litZone < 0 ? tubes[i] : mixHex(A.dimmedGlow, tubes[i], mix));
   }
 }
 
@@ -562,11 +586,12 @@ export function selectZone(zone) {
     droppedItem = dropInto(zone);
 
     resolving = true;
-    resolveDeadline = stepCount + A.resolveTimeoutSeconds / PHY.timestep;
-    /* NOT counting quiet yet. The window starts when the coin lands, so a
-       stroke that happens to end while it is still in the air cannot finish
-       the sequence before the coin has had a chance to do anything. */
-    quietSince = 0;
+    /* Both the timeout and the fade are anchored to the LANDING, which has not
+       happened yet - see tickArming. Anchoring them here instead would let a
+       player who deliberates for twenty seconds eat the whole window before
+       the coin is even in the air. */
+    landedStep = 0;
+    resolveDeadline = 0;
     return;
   }
 
@@ -580,7 +605,10 @@ export function selectZone(zone) {
      than letting the old timer bring it in again a moment later. */
   musicResumeAt = 0;
   droppedItem = null;
-  quietSince = 0;
+  landedStep = 0;
+  resolveDeadline = 0;
+  fadeFrom = -1;
+  fadeMix = 0;                 // a new selection is fully red again
   stopCue(CFG.arming.stingFadeOut);
   paintZones();
   playMusic('tense', { loop: true });
@@ -593,13 +621,20 @@ function endResolve() {
   if (!resolving) return;
   resolving = false;
   resolveDeadline = 0;
-  quietSince = 0;
+  landedStep = 0;
   musicResumeAt = 0;
   droppedItem = null;
   if (armedZone < 0) {
-    litZone = -1;                 // lights out with the music, not before
-    paintZones();
     stopMusic(0.35);
+    /* The lights are NOT cleared here. They run their own fade, which usually
+       outlasts the music: a coin often scores about two seconds after the
+       landing, while the red does not finish easing back until three. Clearing
+       them here would snap them to normal mid-fade. The fade puts them out
+       when it finishes; this only ends the music.
+
+       The exception is a drop that somehow resolved before the fade could even
+       start, which would otherwise leave the machine red for good. */
+    if (fadeFrom < 0 && fadeMix <= 0) { litZone = -1; paintZones(); }
   }
 }
 
@@ -618,13 +653,31 @@ function tickArming() {
   const A = CFG.arming;
 
   if (droppedItem) {
-    /* The coin is down. Everything from here is the outcome, so this is where
-       the quiet window starts counting. Gone from the world counts as landed
-       too - collected, or cleared away - since it will never report arriving. */
+    /* The coin is down. Everything is timed from here: the sting stops, the
+       bed comes back, the clock on the music starts, and the red begins to
+       clear a beat later. Gone from the world counts as landed too -
+       collected, or cleared away - since it will never report arriving. */
     const gone = ctx.items.indexOf(droppedItem) < 0;
     if (gone || droppedItem.body.translation().y <= DIMS.chuteBottom) {
-      quietSince = stepCount;
+      landedStep = stepCount;
+      resolveDeadline = stepCount + A.resolveTimeoutSeconds / PHY.timestep;
+      fadeFrom = stepCount + A.fadeBackDelaySeconds / PHY.timestep;
       unduck();
+    }
+  }
+
+  /* Ease the red back. Runs to completion on its own clock, so it is unaffected
+     by when the music happens to stop. */
+  if (fadeFrom >= 0 && litZone >= 0 && stepCount >= fadeFrom) {
+    const span = A.fadeBackSeconds / PHY.timestep;
+    const t = span > 0 ? Math.min(1, (stepCount - fadeFrom) / span) : 1;
+    if (t !== fadeMix) { fadeMix = t; paintZones(); }
+    if (t >= 1) {
+      /* Fully back. Drop out of the fade entirely rather than sitting at a
+         fully-mixed red, so a later arm starts from a clean state. */
+      fadeFrom = -1;
+      fadeMix  = 0;
+      if (armedZone < 0) { litZone = -1; paintZones(); }
     }
   }
 
@@ -634,20 +687,19 @@ function tickArming() {
   if (musicResumeAt && stepCount >= musicResumeAt) unduck();
   if (!resolving) return;
 
-  /* A WHOLE STROKE HAS PASSED WITH NOTHING GOING OVER THE EDGE, so the machine
-     has stopped delivering and the outcome is known. See arming.quietStrokes
-     for why it is a stroke and why anything shorter brings back the bug this
-     replaced - stopping at the first coin, a fifth of the way through. */
-  const quietSteps = A.quietStrokes * (CFG.shelf.periodMs / 1000) / PHY.timestep;
-  if (quietSince && stepCount - quietSince >= quietSteps) { endResolve(); return; }
-
+  /* Nothing scored within the window. Only armed once the coin has landed, so
+     a long deliberation cannot eat into it. */
   if (resolveDeadline && stepCount >= resolveDeadline) endResolve();
 }
 
-/* A coin went over the edge: the machine is still delivering, so the quiet
-   window restarts from here. */
+/* A coin went over the front lip of the platform - the scoring drop - which
+   is what the music has been waiting for.
+
+   Only counts AFTER the coin has landed. Before that the coin is still in the
+   chute and anything going over is the pusher finishing what it was already
+   doing, with nothing to do with this drop at all. */
 function noteDelivery() {
-  if (resolving) quietSince = stepCount;
+  if (resolving && landedStep) endResolve();
 }
 
 export function armedZoneIndex() { return armedZone; }
