@@ -537,8 +537,7 @@ let landedStep      = 0;     // stepCount at which the dropped coin hit the shel
 
 /* The red does not snap back, it eases back, starting a beat after the coin
    lands. 0 = fully red, 1 = fully normal; -1 = not fading. */
-let fadeFrom = -1;           // stepCount at which the fade begins
-let fadeMix  = 0;
+let fadeFrom = -1;           // stepCount at which the red is let go
 
 /* Which team's box has been clicked, or -1 for none. Lights the machine's
    three tubes in that team's colour - whose turn it is, without a word of
@@ -557,27 +556,78 @@ function mixHex(a, b, t) {
 }
 
 /* mix runs 0 (full red) to 1 (back to normal). */
-function paintZones() {
-  const A = CFG.arming;
-  const lit = CFG.palette.panelGlow;
-  const mix = litZone < 0 ? 1 : fadeMix;
+/* -------------------------------------------------------------------------
+   LIGHT TRANSITIONS
+
+   Nothing switches instantly. Every light - the four zone panels and the three
+   tubes - eases from where it is to where it should be, so arming a zone,
+   picking a team, and the machine returning to normal all read as a light
+   changing rather than a value being replaced.
+
+   Each light is a CHANNEL holding where it came from, where it is going, when
+   it started and how long it has. Setting a target mid-transition starts the
+   new one from wherever the light actually IS, so a change part way through
+   another does not jump.
+
+   This replaced a one-off fade that existed only for the post-landing return
+   to normal. Keeping both would have meant the machine easing twice, once
+   through that ramp and again through this one, and the two fighting over how
+   long it took.
+   ------------------------------------------------------------------------- */
+function chan(hex) { return { from: hex, to: hex, at: 0, dur: 0, cur: hex }; }
+
+function aim(ch, value, durSteps) {
+  if (ch.to === value) return;
+  ch.from = ch.cur;
+  ch.to   = value;
+  ch.at   = stepCount;
+  ch.dur  = durSteps;
+}
+
+/* Smoothstep rather than linear: a light that starts and stops abruptly reads
+   as a cut with a delay in the middle, not as a fade. */
+function ease(t) { return t * t * (3 - 2 * t); }
+
+function tick(ch, lerp) {
+  if (ch.dur <= 0) { ch.cur = ch.to; return; }
+  const t = Math.min(1, (stepCount - ch.at) / ch.dur);
+  ch.cur = lerp(ch.from, ch.to, ease(t));
+  if (t >= 1) { ch.cur = ch.to; ch.dur = 0; }
+}
+
+const lerpNum = function (a, b, t) { return a + (b - a) * t; };
+
+let lights = null;
+
+function initLights() {
+  const A = CFG.arming, lit = CFG.palette.panelGlow;
+  lights = { zoneC: [], zoneG: [], zoneE: [], tubes: [] };
+  for (let i = 0; i < DIMS.zoneCount; i++) {
+    lights.zoneC.push(chan(lit));
+    lights.zoneG.push(chan(lit));
+    lights.zoneE.push(chan(A.litEmissive));
+  }
+  for (let i = 0; i < CFG.lightTubes.colours.length; i++) {
+    lights.tubes.push(chan(CFG.lightTubes.colours[i]));
+  }
+}
+
+/* Point every light at where the current state says it should be. seconds is
+   how long to take getting there - short for arming or picking a team, long
+   for the machine easing back to normal after a drop. */
+function paintZones(seconds) {
+  if (!lights) initLights();
+  const A = CFG.arming, lit = CFG.palette.panelGlow;
+  const dur = (seconds != null ? seconds : CFG.arming.lightFadeSeconds) / PHY.timestep;
 
   for (let i = 0; i < DIMS.zoneCount; i++) {
-    if (litZone < 0 || i === litZone) {
-      setZoneColour(ctx, i, lit, lit, A.litEmissive);
-    } else {
-      setZoneColour(ctx, i,
-        mixHex(A.dimmedColour, lit, mix),
-        mixHex(A.dimmedGlow,   lit, mix),
-        A.dimmedEmissive + (A.litEmissive - A.dimmedEmissive) * mix);
-    }
+    const on = litZone < 0 || i === litZone;
+    aim(lights.zoneC[i], on ? lit : A.dimmedColour, dur);
+    aim(lights.zoneG[i], on ? lit : A.dimmedGlow,   dur);
+    aim(lights.zoneE[i], on ? A.litEmissive : A.dimmedEmissive, dur);
   }
 
-  /* The three tubes framing the machine go red on the same cue as the zones
-     and come back on the same cue, so the whole cabinet reads as one state
-     rather than as a panel that happens to have changed colour.
-
-     ARMING WINS over a team highlight while it is running: the drop is the
+  /* ARMING WINS over a team highlight while it is running: the drop is the
      thing happening, and the machine going red for it is the whole point. When
      it clears, the tubes fall back to the selected team's colour rather than
      to neutral, so whose turn it is survives the drop. */
@@ -585,7 +635,22 @@ function paintZones() {
   const team = teamHighlight >= 0 ? CFG.scoreboard.teamColours[teamHighlight] : null;
   for (let i = 0; i < tubes.length; i++) {
     const rest = team != null ? team : tubes[i];
-    setTubeColour(ctx, i, litZone < 0 ? rest : mixHex(A.dimmedGlow, rest, mix));
+    aim(lights.tubes[i], litZone < 0 ? rest : A.dimmedGlow, dur);
+  }
+}
+
+/* Advance every light and push it to the materials. Called each frame. */
+function tickLights() {
+  if (!lights || !ctx || !ctx.machine) return;
+  for (let i = 0; i < lights.zoneC.length; i++) {
+    tick(lights.zoneC[i], mixHex);
+    tick(lights.zoneG[i], mixHex);
+    tick(lights.zoneE[i], lerpNum);
+    setZoneColour(ctx, i, lights.zoneC[i].cur, lights.zoneG[i].cur, lights.zoneE[i].cur);
+  }
+  for (let i = 0; i < lights.tubes.length; i++) {
+    tick(lights.tubes[i], mixHex);
+    setTubeColour(ctx, i, lights.tubes[i].cur);
   }
 }
 
@@ -637,7 +702,6 @@ export function selectZone(zone) {
   landedStep = 0;
   resolveDeadline = 0;
   fadeFrom = -1;
-  fadeMix = 0;                 // a new selection is fully red again
   stopCue(CFG.arming.stingFadeOut);
   paintZones();
   playMusic('tense', { loop: true });
@@ -655,15 +719,18 @@ function endResolve() {
   droppedItem = null;
   if (armedZone < 0) {
     stopMusic(0.35);
-    /* The lights are NOT cleared here. They run their own fade, which usually
-       outlasts the music: a coin often scores about two seconds after the
-       landing, while the red does not finish easing back until three. Clearing
-       them here would snap them to normal mid-fade. The fade puts them out
-       when it finishes; this only ends the music.
+    /* The lights are NOT cleared here when a fade is already coming. They run
+       their own clock, which usually outlasts the music: a coin often scores
+       about two seconds after the landing while the red does not finish easing
+       back until three, and clearing them here would cut that short.
 
-       The exception is a drop that somehow resolved before the fade could even
-       start, which would otherwise leave the machine red for good. */
-    if (fadeFrom < 0 && fadeMix <= 0) { litZone = -1; paintZones(); }
+       Only when no fade was ever scheduled - a drop that resolved before the
+       coin even landed - does this have to let the red go itself, or the
+       machine would stay lit for good. */
+    if (fadeFrom < 0 && litZone >= 0) {
+      litZone = -1;
+      paintZones(CFG.arming.fadeBackSeconds);
+    }
   }
 }
 
@@ -695,19 +762,12 @@ function tickArming() {
     }
   }
 
-  /* Ease the red back. Runs to completion on its own clock, so it is unaffected
-     by when the music happens to stop. */
-  if (fadeFrom >= 0 && litZone >= 0 && stepCount >= fadeFrom) {
-    const span = A.fadeBackSeconds / PHY.timestep;
-    const t = span > 0 ? Math.min(1, (stepCount - fadeFrom) / span) : 1;
-    if (t !== fadeMix) { fadeMix = t; paintZones(); }
-    if (t >= 1) {
-      /* Fully back. Drop out of the fade entirely rather than sitting at a
-         fully-mixed red, so a later arm starts from a clean state. */
-      fadeFrom = -1;
-      fadeMix  = 0;
-      if (armedZone < 0) { litZone = -1; paintZones(); }
-    }
+  /* A beat after the coin lands, let the red go. One target change over a long
+     duration - the transition machinery does the easing, and it runs on its own
+     clock regardless of when the music happens to stop. */
+  if (fadeFrom >= 0 && stepCount >= fadeFrom) {
+    fadeFrom = -1;
+    if (armedZone < 0) { litZone = -1; paintZones(A.fadeBackSeconds); }
   }
 
   /* Bring the bed back once the drop sting has run its course - but only if
@@ -1431,6 +1491,12 @@ function physicsStep() {
   unjamChute();
   collectFallen();
   tickArming();
+  /* Driven from the step, not the render loop, because the transitions are
+     timed in stepCount like everything else here. Keeping them on the render
+     loop would have them advancing on a different clock to the state that
+     triggers them, and would leave them frozen in any situation where physics
+     runs without painting. */
+  tickLights();
 }
 
 /* -------------------------------------------------------------------------

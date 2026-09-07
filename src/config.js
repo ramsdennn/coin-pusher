@@ -1352,6 +1352,15 @@ window.COIN_PUSHER_CONFIG = {
     fadeBackDelaySeconds: 1.0,
     fadeBackSeconds:      2.0,
 
+    /* How long an ordinary light change takes - arming a zone, picking a team,
+       going back to neutral. Nothing switches instantly; a light that snaps
+       reads as a value being replaced rather than a light changing.
+
+       Short, because these follow a click and a click should feel answered.
+       The long one above is only for the machine easing back after a drop,
+       which is a different kind of moment and wants the room. */
+    lightFadeSeconds:     0.35,
+
     /* WHEN THE MUSIC STOPS.
 
        The first coin over the front lip of the platform ends it - the scoring
