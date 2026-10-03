@@ -28,7 +28,7 @@ const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
 
 let ctx = null;
-let renderer, scene, camera, hud, backdrop = null;
+let renderer, scene, camera, backdrop = null;
 let titleBackdrop = null;
 
 /* Loaded once, used twice: the title screen's standalone canvas and, later,
@@ -2120,7 +2120,6 @@ function frame(now) {
 
   syncMeshes();
   updateScoreboards();
-  updateHud();
   /* Wall-clock, not the physics clock: the backdrop is decoration and should
      keep breathing while the machine is paused. */
   if (backdrop) backdrop.update(now / 1000, renderer.domElement.clientWidth,
@@ -2173,46 +2172,6 @@ function syncMeshes() {
     const t = sh.body.translation();
     sh.mesh.position.set(t.x, t.y, t.z);
   }
-}
-
-function fmt(v, dp) { return v === null ? '-' : v.toFixed(dp === undefined ? 4 : dp); }
-
-function updateHud() {
-  let awake = 0;
-  for (let i = 0; i < ctx.items.length; i++) {
-    if (!ctx.items[i].body.isSleeping()) awake++;
-  }
-
-  const creep = mean(M.creep), ret = mean(M.retract), ext = mean(M.extend);
-  const per20 = M.strokes ? (M.fallen / M.strokes) * 20 : 0;
-
-  hud.innerHTML =
-    '<b>fps</b> ' + fps.toFixed(0) +
-    ' &nbsp; <b>on shelf</b> ' + ctx.items.length +
-    ' &nbsp; <b>awake</b> ' + awake +
-    ' &nbsp; <b>stroke</b> ' + M.strokes +
-    ' &nbsp; <b>' + (running ? 'RUNNING' : 'PAUSED') + '</b>' +
-    '<br><b>creep/stroke</b> ' + fmt(creep) +
-    ' &nbsp; <b>on return</b> ' + fmt(ret) +
-    ' &nbsp; <b>on out-stroke</b> ' + fmt(ext) +
-    ' &nbsp; (coin = ' + DIMS.D + ')' +
-    '<br><b>fallen off</b> ' + M.fallen +
-    ' &nbsp; <b>per 20 strokes</b> ' + per20.toFixed(1) +
-    '<br><b>dropped</b> ' + M.dropped +
-    /* So a silent machine can be told apart from a machine that is not
-       detecting hits at all. */
-    ' &nbsp; <b>peg snd</b> ' + M.pegHits +
-    ' &nbsp; <b>surf snd</b> ' + M.surfaceHits +
-    (M.unjammed ? ' &nbsp; <b>unjammed</b> ' + M.unjammed : '') +
-    ' &nbsp; <b>through</b> ' + M.landed + '/' + M.dropped +
-    ' &nbsp; <b>chute fall</b> ' + (mean(M.fallSteps) === null ? '-' :
-        (mean(M.fallSteps) / 60).toFixed(2) + 's (' +
-        ((mean(M.fallSteps) / 60) / (CFG.shelf.periodMs / 1000) * 100).toFixed(0) + '% of a stroke)') +
-    ' &nbsp; <b>spread</b> ' + (M.landX.length < 2 ? '-' :
-        (spread(M.landX) / DIMS.D).toFixed(2) + ' coins') +
-    (M.jammed ? ' &nbsp; <b style="color:#ff6b6b">JAMMED ' + M.jammed + '</b>' : '') +
-    '<br><span style="opacity:.55">SPACE run/pause &middot; S single step &middot; R reset &middot; ' +
-    'presettle ' + presettleSteps + ' &middot; stroke ' + DIMS.stroke.toFixed(3) + '</span>';
 }
 
 /* The logo, as a plain image over the canvas.
@@ -4019,15 +3978,6 @@ function applyCursor() {
   });
 }
 
-function makeHud() {
-  hud = document.createElement('div');
-  hud.style.cssText =
-    'position:fixed;left:12px;top:10px;z-index:20;font:13px/1.6 ui-monospace,Consolas,monospace;' +
-    'color:#EDE7FA;background:rgba(11,6,22,.66);padding:8px 12px;border-radius:8px;' +
-    'pointer-events:none;white-space:nowrap';
-  document.body.appendChild(hud);
-}
-
 function onResize() {
   const host = document.getElementById('game');
   camera.aspect = host.clientWidth / host.clientHeight;
@@ -4059,7 +4009,6 @@ window.startCoinPusher = function (teamA, teamB) {
     makeRightColumn();
     makePointsBox();
     makeButtonRow();
-    makeHud();
 
     ctx = {
       RAPIER: RAPIER,
