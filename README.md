@@ -170,15 +170,5 @@ cannot be a peg field; as pegs it would simply be a wall.
 
 ---
 
-## Not built yet
-
-- **Scoring.** Team names are collected at the start and items are counted off
-  the lip, but scores, the prize log and the on-screen team panels are not
-  wired up. Falling items are counted, not yet awarded.
-- **Art.** Everything is plain shapes. The shelf is red and the platform white
-  so the shelf's travel is easy to read while tuning; the real machine has both
-  surfaces red with thin white lips.
-- **Drop-panel colour and state.**
-
 `REBUILD-BRIEF.md` in this folder is the current design brief, including
 corrections made as the build went along. It is the thing to read first.
