@@ -1,3 +1,5 @@
+game based on tipping point. obligatory AI slop:
+
 # Coin Pusher Quiz
 
 A browser-based coin pusher for a family quiz night, run on a TV. The host asks
