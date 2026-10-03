@@ -37,10 +37,47 @@ BEZEL       = 30            # frame thickness
 R_OUT       = 22            # outer corner radius
 R_IN        = 9             # screen corner radius
 
+# The two strokes that model the frame's edges. Absolute user units, like the
+# radii above, which is fine while every panel is roughly one size and wrong
+# the moment one is not - see geometry().
+BEVEL_W     = 9             # the highlight/shadow run round the outer edge
+RECESS_W    = 13            # the shading on the screen's opening
+
 SCREEN_X    = BEZEL
 SCREEN_Y    = BEZEL
 SCREEN_W    = W - BEZEL * 2
 SCREEN_H    = H - BEZEL * 2
+
+
+def geometry(w, h, bezel, r_out=None, r_in=None, bevel_w=None, recess_w=None):
+    """Switch the module to another panel shape.
+
+    The points box is a different shape from a scoreboard - much shorter, and a
+    bezel scaled for a 307-tall panel looks clumsy wrapped round a 230-tall one.
+    Rather than a second copy of the drawing code, everything derived from the
+    size is recomputed here and the same code draws both.
+
+    The corner radii and the two edge strokes are absolute user units, so they
+    do NOT follow the shape on their own. That is survivable between 307 and
+    230 and is not survivable at 107: a 9-unit bevel round a 14-unit bezel
+    swallows the frame whole, and a 22-unit corner radius on a 107-tall panel
+    turns a rounded rectangle into a lozenge. Pass them when the shape changes
+    enough to need it. Omitted, they keep whatever they had, so the panels
+    built before this argument existed come out byte-for-byte identical.
+    """
+    global W, H, BEZEL, SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H
+    global TEXT_GAP, NAME_BASE, SCORE_BASE
+    global R_OUT, R_IN, BEVEL_W, RECESS_W
+    W, H, BEZEL = w, h, bezel
+    if r_out    is not None: R_OUT    = r_out
+    if r_in     is not None: R_IN     = r_in
+    if bevel_w  is not None: BEVEL_W  = bevel_w
+    if recess_w is not None: RECESS_W = recess_w
+    SCREEN_X, SCREEN_Y = BEZEL, BEZEL
+    SCREEN_W, SCREEN_H = W - BEZEL * 2, H - BEZEL * 2
+    TEXT_GAP   = (SCREEN_H - NAME_SIZE - SCORE_SIZE) / 3.0
+    NAME_BASE  = SCREEN_Y + TEXT_GAP + NAME_SIZE * ASCENT
+    SCORE_BASE = SCREEN_Y + TEXT_GAP + NAME_SIZE + TEXT_GAP + SCORE_SIZE * ASCENT
 
 NAME_SIZE   = 58
 SCORE_SIZE  = 150
@@ -245,8 +282,8 @@ def panel(name, score, x=0, y=0, text=True, scheme=None):
              % (H - BEZEL, W, BEZEL))
     # Bevel last, over all of it, so the corners turn properly.
     g.append('<rect x="1" y="1" width="%d" height="%d" rx="%d" fill="none" '
-             'stroke="url(#bevel)" stroke-width="9"/>'
-             % (W - 2, H - 2, R_OUT))
+             'stroke="url(#bevel)" stroke-width="%g"/>'
+             % (W - 2, H - 2, R_OUT, BEVEL_W))
     g.append('</g>')
     # A hairline to stop the plate dissolving into a light background.
     g.append('<rect x="0.75" y="0.75" width="%.1f" height="%.1f" rx="%d" fill="none" '
@@ -261,8 +298,8 @@ def panel(name, score, x=0, y=0, text=True, scheme=None):
              % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, sid))
     g.append('<g clip-path="url(#screenClip)">'
              '<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="none" '
-             'stroke="url(#recess)" stroke-width="13"/></g>'
-             % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, R_IN))
+             'stroke="url(#recess)" stroke-width="%g"/></g>'
+             % (SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, R_IN, RECESS_W))
 
     if not text:
         g.append('</g>')
@@ -390,6 +427,12 @@ TEAM_B = 0xCE6067          # R4, light red
 # like a lit panel behind glass and becomes a hole cut in the bezel.
 NEUTRAL = 0x232327
 
+# The START button on the title screen. Asked for as black, and black is what
+# it reads as - the four screen stops are within a shade of each other. It is
+# not 0x000000 only because the sheen wash needs something to sit on; at pure
+# black the glass stops catching light and the button goes matte.
+BLACK = 0x050508
+
 
 def document(panels, w, h, background=None, base=0x2C3E63):
     out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" '
@@ -421,8 +464,7 @@ def main():
         document([panel('', '', text=False)], W, H, base=TEAM_A))
     io.open(os.path.join(outdir, 'panel-blank-b.svg'), 'w', encoding='utf-8').write(
         document([panel('', '', text=False)], W, H, base=TEAM_B))
-    io.open(os.path.join(outdir, 'panel-blank-neutral.svg'), 'w', encoding='utf-8').write(
-        document([panel('', '', text=False)], W, H, base=NEUTRAL))
+
 
     # Where the live text has to sit to match the baked version, as fractions
     # of the panel. Printed rather than guessed at the CSS end.
@@ -430,6 +472,63 @@ def main():
     io.open(os.path.join(outdir, 'colours.svg'), 'w', encoding='utf-8').write(
         swatch_sheet())
 
+    print('  scoreboard   : %d/%d' % (W, H))
+    print('  nameSize     : %.4f   (of panel height)' % (NAME_SIZE / float(H)))
+    print('  scoreSize    : %.4f' % (SCORE_SIZE / float(H)))
+    print('  evenGap      : %.4f   (what space-evenly will produce)'
+          % (TEXT_GAP / float(H)))
+    print('  screenInsetX : %.4f' % (BEZEL / float(W)))
+    print('  screenInsetY : %.4f' % (BEZEL / float(H)))
+    print('  shadowDy     : %.4f   blur %.4f' % (7 / float(H), 5 / float(H)))
+
+    # --- the points box: its own shape, drawn by the same code -------------
+    # Much shorter than a scoreboard, and a bezel scaled for a 307-tall panel
+    # looks clumsy round a 230-tall one, so it gets a thinner one.
+    sw, sh, sb = W, H, BEZEL
+    geometry(480, 230, 20)
+    io.open(os.path.join(outdir, 'panel-blank-neutral.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=NEUTRAL))
+    print('  pointsBox    : %d/%d' % (W, H))
+    print('    screenInsetX : %.4f' % (BEZEL / float(W)))
+    print('    screenInsetY : %.4f' % (BEZEL / float(H)))
+    # --- the title screen -------------------------------------------------
+    # The name fields and the START button are the same chrome as the score
+    # panels, at the proportions of a text box rather than a scoreboard.
+    #
+    # Why a new shape rather than the 480x307 panel scaled down: a score panel
+    # is 1.56:1 and a name field is about 4.5:1. Stretching one into the other
+    # smears the bevel and pulls the corners into ovals, and the result reads
+    # as a squashed scoreboard rather than a matching part. Same drawing code,
+    # same chrome ramp, same team colours - a shape that suits a text field.
+    #
+    # Both keep H=107 and BEZEL=14, so when they are rendered at the same
+    # height on the page the frames come out exactly as thick as each other.
+    # Only the width differs.
+    geometry(480, 107, 14, r_out=10, r_in=4, bevel_w=4, recess_w=6)
+    io.open(os.path.join(outdir, 'title-name-a.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=TEAM_A))
+    io.open(os.path.join(outdir, 'title-name-b.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=TEAM_B))
+    print('  titleField   : %d/%d' % (W, H))
+    print('    insetX %.4f  insetY %.4f' % (BEZEL / float(W), BEZEL / float(H)))
+
+    geometry(360, 107, 14)
+    io.open(os.path.join(outdir, 'title-start.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=BLACK))
+    print('  titleStart   : %d/%d' % (W, H))
+    print('    insetX %.4f  insetY %.4f' % (BEZEL / float(W), BEZEL / float(H)))
+
+    # --- the settings panel ------------------------------------------------
+    # Portrait, and much bigger than anything else here, so the bezel and the
+    # corners are scaled with it - a frame tuned for a 307-tall scoreboard
+    # looks like piping round a 660-tall panel.
+    geometry(480, 660, 26, r_out=20, r_in=8, bevel_w=8, recess_w=11)
+    io.open(os.path.join(outdir, 'panel-settings.svg'), 'w', encoding='utf-8').write(
+        document([panel('', '', text=False)], W, H, base=NEUTRAL))
+    print('  settings     : %d/%d' % (W, H))
+    print('    insetX %.4f  insetY %.4f' % (BEZEL / float(W), BEZEL / float(H)))
+
+    geometry(sw, sh, sb, r_out=22, r_in=9, bevel_w=9, recess_w=13)
     print('  aspect       : %d/%d' % (W, H))
     print('  nameSize     : %.4f   (of panel height)' % (NAME_SIZE / float(H)))
     print('  scoreSize    : %.4f' % (SCORE_SIZE / float(H)))

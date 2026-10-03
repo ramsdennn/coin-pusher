@@ -182,6 +182,177 @@ window.COIN_PUSHER_CONFIG = {
       density: 1.0,
       value: { type: 'points', amount: 10 }
     },
+    /* The DOUBLER.
+
+       Physically a coin and nothing else: same diameter, same thickness, same
+       density, same true-cylinder collider. That is not laziness. The pile's
+       stillness came from those cylinder colliders specifically, and a token
+       that shoved differently from a coin would put the whole pile back into
+       the shimmering state it took a long time to get out of. It has to be a
+       coin. It just has to be an OBVIOUS one.
+
+       So the only differences are the ones you can see: gold, a little more
+       metal in the finish than the plastic coins have, and a face.
+
+       'face' is new. Nothing before this ever put a mark on an item, and the
+       mechanics of doing it are in items.js - the short version is that a
+       cylinder gives THREE three material slots, so the rim can stay plain
+       metal while both flat faces carry the glyph. Both, because a disc in a
+       pile is as likely to be face down as face up.
+
+       Its 'value' is a coin's value, which is what makes 'one token and two
+       coins' come to thirty before doubling. It is listed in pointsBox.types
+       as well, so changing points-per-coin during the quiz moves it too - a
+       doubler worth 10 in a round where coins are worth 50 would be a trap. */
+    multiplier: {
+      label: 'x2 Token',
+      image: null,
+      /* P4 indigo, chosen off a sheet of five purples rendered into the real
+         pile rather than judged on a black card - which mattered, because the
+         two darkest candidates looked fine in isolation and disappeared among
+         sixty coins. Gold is deliberately NOT used here; it is being kept for
+         a coin type still to come. */
+      color: 0x4B2E8C,
+      finish: { roughness: 0.28, metalness: 0.45 },
+      shape: 'disc',
+      size: { diameter: 1.0, thickness: 0.16 },
+      density: 1.0,
+      value: { type: 'points', amount: 10 },
+      /* Drawn to a canvas at startup, not loaded from a file. At the size a
+         coin occupies on screen this is a couple of hundred pixels across,
+         and a generated glyph stays crisp at any camera distance while
+         costing no asset and no load. */
+      face: {
+        text:       'x2',
+        background: 0x6140A5,   // a shade brighter than the rim, so the face
+        ink:        0xF2EAFF,   //   reads as a stamped disc, not a flat one
+        sizeFraction: 0.52,     // of the face's diameter
+        ringWidth:    0.045,    // an inset ring, the way a real token is milled
+        ringColour:   0x33205F
+      }
+    },
+
+    /* A PRESENT.
+
+       Two coins wide, two high and two deep - a cube of 0.48 against the
+       coin's 0.24. Measured against the machine before it was chosen: there
+       are 2.32 coins of clearance between the top deck and the bottom of the
+       chute, so it fits standing up with about a third of a coin to spare.
+
+       That measurement settles something else too. A present can never come
+       DOWN the chute: it is several times too big for the peg field. Placing
+       them by hand is the only way one gets onto the shelf, which is why
+       there is a button for it.
+
+       Its value is a prize and nothing else - no points. It is a thing
+       somebody takes home, and the score is for coins. The x2 therefore does
+       not double it, because there is nothing there to double.
+
+       density is the number to reach for if it misbehaves. It is a big object
+       - sixty four times a coin's volume - so at a coin's density it would
+       weigh sixty four coins and plough through the pile like a brick. At
+       0.30 it weighs about nineteen, which is heavy enough to shove a pile
+       and light enough for the pile to shove back.
+       ------------------------------------------------------------------- */
+    present: {
+      label: 'Present',
+      image: null,
+      color: 0xE8467C,          // the fallback if wrap.palette is emptied
+      finish: { roughness: 0.45, metalness: 0.02 },
+      shape: 'box',
+      size: { width: 1, height: 1, depth: 1 },   // in coin diameters
+      /* About a coin's own weight, so coins shove it as readily as they
+         shove each other. Swept on seeded piles: at 0.22 it kept up with a
+         free coin 74% of the time, at 0.10 it was 78%, and at 0.05 it went
+         unstable - lighter than a coin, it gets flicked rather than pushed,
+         which is not what a box does. 0.10 is the useful end of that. */
+      density: 0.10,
+      value: { type: 'prize', label: 'Present' },
+
+      /* Presents are exempt from sleeping, and it is worth writing down why
+         a general-purpose flag exists for one item type.
+
+         A sleeping body is skipped by the solver completely. Rapier wakes one
+         when a NEW contact is made - and a coin already touching a present
+         and simply leaning harder makes no new contact. So a sleeping present
+         sat there inert while the pile pressed on it, which is exactly what
+         "the coins just stack up against the back of it" looks like.
+         Measured before the fix: a present on the floor was asleep for 69 to
+         89 per cent of a three-stroke run.
+
+         The risk this carries is real and was measured too - see the note in
+         physics.sleep. Rapier sleeps by ISLAND, so a body that cannot sleep
+         can hold every coin touching it awake, and the pile's stillness was
+         hard won. */
+      neverSleeps: true,
+
+      /* WRAPPING. The presence of this block is what tells items.js to build
+         a small GROUP - box, two ribbon bands crossing over the top and down
+         the faces, a knot and two loops - instead of a single mesh. The
+         physics is unaffected: the collider is still one cuboid.
+
+         The pair is drawn per present, so two on the shelf are two colours.
+         NOT random rgb, which is how you end up with a beige present under a
+         slightly different beige ribbon. A curated list of bright pairs can
+         only produce combinations that were looked at. */
+      wrap: {
+        palette: [
+          { box: 0xE8467C, ribbon: 0x8E1130 },   // the reference: pink / deep red
+          { box: 0xE23B3B, ribbon: 0xF5C542 },   // red / gold
+          { box: 0x2E7BE8, ribbon: 0xF2F5FA },   // blue / white
+          { box: 0x2FA84F, ribbon: 0xF5C542 },   // green / gold
+          { box: 0x8B4DD8, ribbon: 0xA8E063 },   // purple / lime
+          { box: 0xF07B24, ribbon: 0x17A9A0 },   // orange / teal
+          { box: 0x17A9A0, ribbon: 0xE8467C },   // teal / pink
+          { box: 0xF5C542, ribbon: 0x2E7BE8 }    // gold / blue
+        ],
+        ribbonFraction: 0.17,   // band width, of the box's own width
+        proud:          0.012,  // how far the bands stand off the faces
+        knotFraction:   0.34,   // the knot, of the box's width
+        loopFraction:   0.62    // the two bow loops, of the box's width
+      },
+
+      /* Spawned upright and turned a little, so it reads from the game's
+         camera the way the reference picture does - bow up, ribbon down the
+         near corner. It tumbles freely from the moment anything touches it;
+         this only decides how it arrives. */
+      spawnYawDeg: 22
+    },
+
+    /* THE JACKPOT TOKEN.
+
+       A coin in every way that matters to the simulation - same diameter,
+       thickness and density - so it sits and shoves and falls exactly as a
+       coin does. Gold, with a red five-pointed star across most of the face,
+       which is the only thing that makes it different.
+
+       Never spawned by the game. There is no entry in startingLayout and
+       nothing in the chute produces one: the host places every single one.
+
+       No points. The lights and the fanfare are the payoff - it announces
+       that somebody has won, it does not add to a score, and the x2 has
+       nothing to double. */
+    jackpot: {
+      label: 'Jackpot Token',
+      image: null,
+      color: 0xD9A521,
+      finish: { roughness: 0.26, metalness: 0.55 },
+      shape: 'disc',
+      size: { diameter: 1.0, thickness: 0.16 },
+      density: 1.0,
+      value: { type: 'prize', label: 'JACKPOT' },
+      face: {
+        background: 0xF0BE38,
+        ink:        0xC81E28,
+        ringWidth:  0.045,
+        ringColour: 0x8A6410,
+        /* A star instead of a glyph. Same drawing routine either way - see
+           drawFace in items.js. outer and inner are radii as a fraction of
+           the face, so the star scales with the coin. */
+        star: { points: 5, outer: 0.40, inner: 0.165, rotation: 0 }
+      }
+    },
+
     token50: {
       label: '50 Token',
       image: null,
@@ -274,6 +445,9 @@ window.COIN_PUSHER_CONFIG = {
       tense:   0.55,      // a bed, not a feature - it sits under the machine
       drop:    0.22,      // under the pegs on purpose - it used to bury them
       scoring: 0.90,      // the payoff, and the loudest thing after the pegs
+      bonus:   0.95,      // the x2's own payoff, a shade above an ordinary one
+      jackpot:    1.00,   // the biggest thing that happens all night
+      jackpotWin: 1.00,
       coin:    0.60,
       glass:   0.45,
       wall:    0.40
@@ -334,7 +508,20 @@ window.COIN_PUSHER_CONFIG = {
 
       /* One per coin over the front lip. Every coin gets its own, so three
          going over is three sounds, not one louder one. */
-      scoring: 'assets/audio/scoring.mp3'
+      scoring: 'assets/audio/scoring.mp3',
+
+      /* What the x2 token plays INSTEAD of 'scoring' when it goes over. Not
+         as well as - it is that coin's scoring sound, so one coin still makes
+         one sound, and it takes its turn in the same stagger so a token and
+         two coins coming off together read as three separate events. */
+      bonus:   'assets/audio/bonus.mp3',
+
+      /* The jackpot pair, played back to back rather than together: the win
+         sting starts the moment the jackpot clip ends. Scheduled on the audio
+         clock off the first clip's measured duration, so the join is exact
+         however busy the frame is - a timer would drift. */
+      jackpot:    'assets/audio/jackpot.mp3',
+      jackpotWin: 'assets/audio/jackpot-win.mp3'
     },
 
     /* Contact force below which the ENGINE does not even report a peg hit.
@@ -378,6 +565,40 @@ window.COIN_PUSHER_CONFIG = {
        running with nothing dropped gave 38 of them, five a second of noise.
        Scoring on the CHANGE in velocity separates the two cleanly - being
        carried along changes nothing, being hit changes everything. */
+    /* THE RUN-UP GATE. A hit must also have been APPROACHING at this speed
+       to make a sound - see captureImpactSpeeds. It is what separates a coin
+       that landed from a coin that was sitting still and got nudged.
+
+       runUpDecay is how fast the remembered speed fades, per step. 0.93
+       halves it in about ten steps, a sixth of a second, which is long enough
+       to still hold the approach when the contact resolves.
+
+       Set surfaceMinRunUp to 0 to turn the gate off entirely.
+
+       0.45 comes from a survival table, not from taste. Seven minutes of the
+       machine idling against a run with eight drops, counting the hits that
+       actually SOUND rather than the contacts that are thrown away:
+
+           gate    idle clangs left    drop sounds kept
+           off           74                  100%
+           0.35          37                   88%
+           0.45           4                   60%
+           0.55           0                   44%
+           1.00           0                   39%
+
+       0.45 removes 95 per cent of the idling noise - from about ten a minute
+       to one every two minutes - and keeps two thirds of the drop. Chasing
+       the last four costs another sixth of the drop, and past 0.55 the curve
+       flattens: everything above it is a genuine landing. */
+    /* Coin against coin only sounds while a team's turn is running. Between
+       turns the pile can settle as noisily as it likes and nobody hears it,
+       which is most of an evening. Coin against a SURFACE is not affected.
+       false lets them sound all the time. */
+    coinOnCoinNeedsTurn: true,
+
+    runUpDecay:       0.93,
+    surfaceMinRunUp:  0.45,
+
     surfaceMinImpact: 0.30,
 
     /* Change in speed at which a landing plays at full volume. */
@@ -557,6 +778,39 @@ window.COIN_PUSHER_CONFIG = {
 
     nameSize:     0.1889,
 
+    /* The name's LINE HEIGHT, as a multiple of its font size.
+
+       Not 1. The block around it uses line-height:1 deliberately - the default
+       leaves descender space under every line that nothing is drawn in, which
+       pushes the whole block high in the panel. But a line box of exactly one
+       em does not CONTAIN the font: Arial's ascent and descent come to about
+       1.12em together, so the tail of every g, j, p, q and y falls outside the
+       box and the overflow:hidden guard slices it flat. Measured at 1920x1080
+       before the fix: the name reported a scroll height of 36 against a client
+       height of 35, which is the flat-bottomed g in the bug report.
+
+       So the name gets its own, big enough to hold the descenders, while
+       everything else keeps the tight one. fitName reads this back from the
+       computed style, so the two-line fitting follows it without being told. */
+    nameLineHeight: 1.18,
+
+    /* Room for the name's SHADOW inside the clip, as a fraction of panel
+       height. The line height above fixed the glyphs; the shadow is a second
+       thing entirely - it is drawn below and around the letters, outside the
+       line box, so overflow:hidden went on cutting it off in a straight line
+       under the descenders.
+
+       This is added as PADDING on the name's wrapper and taken straight back
+       off as a negative margin, so the clip box grows while the space the
+       element occupies does not - the panel's spacing is untouched.
+
+       On the wrapper rather than on the name itself for a specific reason:
+       fitName measures the name's scrollHeight, and scrollHeight includes
+       padding. Put here, every measurement the fitting makes is unchanged.
+
+       Big enough for the drop (shadowDy + blur) and the glow around it. */
+    nameShadowPad: 0.060,
+
     /* A long name WRAPS to a second line, and a second line does not fit at
        the full size - measured, the block becomes 283.8 against 263 of screen
        and pushes the score out through the bezel. So the name is shrunk only
@@ -609,25 +863,40 @@ window.COIN_PUSHER_CONFIG = {
     label: 'POINTS PER COIN',
 
     /* Which types the box controls: the ordinary coins, not the tokens. */
-    types: ['coinLight', 'coinDark'],
+    types: ['coinLight', 'coinDark', 'multiplier'],
 
     min: 0,
     max: 9999,
 
-    /* Deliberately smaller than a scoreboard, and quieter. It is a setting the
-       host reaches for occasionally, not something the room should be reading,
-       so the text is a smaller fraction of the box as well as the box being
-       smaller. */
-    labelSize: 0.100,   // of the box's height
-    valueSize: 0.300,
+    /* Its own shape, not a scoreboard's. 40% off the height and 20% off the
+       width makes it far flatter - 2.09:1 against the scoreboards' 1.56:1 - so
+       it gets its own panel drawn at 480x230 with a thinner bezel. A bezel
+       scaled for a 307-tall panel looks clumsy wrapped round a 230-tall one. */
+    aspect:       '480/230',
+    screenInsetX: 0.0417,
+    screenInsetY: 0.0870,
+
+    /* The text stays the SAME SIZE ON SCREEN through that shrink, so as
+       fractions of a much shorter box these had to go up: 0.100 -> 0.167 and
+       0.300 -> 0.500. It leaves the text nearly filling the screen with only a
+       few pixels of gap, which is the cost of holding the text still while the
+       box comes in around it. */
+    labelSize: 0.167,   // of the box's height
+    valueSize: 0.500,
 
     /* Tucked into the bottom-right CORNER rather than centred under the
        scoreboards, anchored to the right edge with a margin so it never sits
        hard against it. Bounded on both axes like the right-hand column, so a
        short window shrinks it rather than pushing it off screen - the trap the
        logo and the panels both fell into. */
-    widthFraction:     0.105,
-    maxHeightFraction: 0.20,
+    /* NOTE these bound the WIDTH: it is min(widthFraction of the viewport's
+       width, maxHeightFraction of its height), and the height then follows
+       from the aspect. Worth spelling out, because the box was being sized by
+       the SECOND of them without that being obvious - at 1869x868 the height
+       bound gave 174px and the width bound 196, so changing the width fraction
+       alone would have done nothing at all. */
+    widthFraction:     0.0744,
+    maxHeightFraction: 0.16,
     rightFraction:     0.030,
     bottomFraction:    0.055
   },
@@ -643,13 +912,67 @@ window.COIN_PUSHER_CONFIG = {
      Scattered across the shelf at setup. tier: 1 = top, 2 = bottom.
      Loaded from the front lip backwards, so the machine starts primed.
      -------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------
+     HOW THE STARTING PILE IS LAID OUT
+
+     Every coin is placed AT REST somewhere the machine cannot disturb it. The
+     bands it uses are derived from the geometry in items.js - see the note on
+     buildStartingPile - and these are the knobs that shape them.
+
+     The measurement that drove all of it: before this, the opening three
+     strokes swept 6 to 9 coins over the edge with nobody playing, because the
+     pile was built to within three quarters of a coin of the lip and dropped
+     from a height so it was still tumbling when play began.
+     ----------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------------
+     HOW THE STARTING PILE IS LAID OUT
+
+     Coins are dropped at random into the two areas that are always on show -
+     the strip of shelf that never withdraws, and the platform the shelf never
+     crosses. The regions come from the machine's own geometry; see the note
+     on buildStartingPile in items.js. There is almost nothing to tune here on
+     purpose, because every knob the previous versions had was a way of
+     pulling the pile back from the edges, and that is what made them look
+     arranged rather than played.
+     ----------------------------------------------------------------------- */
+  startingPile: {
+    /* Extra clearance beyond the coin's own radius, in coin diameters, at the
+       walls and at both ends of each region. 0 uses every bit of the space.
+       Raise it a little if coins are starting out half over an edge. */
+    edgeMarginInCoins: 0,
+
+    /* How much of the pile goes on the shelf strip rather than the platform.
+       Sharing by area gave the strip six coins and left the shelf looking
+       bare - it is only a quarter of a coin deep, so area is a poor guide to
+       how many belong there. It holds eleven or twelve side by side across
+       the width; past that they stack rather than spread. */
+    deckShare: 0.22,
+
+    /* How many spots each coin tries before taking the one furthest from the
+       coins already down. 1 is plain uniform random, which CLUMPS - that is
+       what sampling does, and it is not a sign of too few coins. A dozen is
+       plenty; more evens it out further and starts to look deliberate. */
+    candidates: 12
+  },
+
   startingLayout: [
     /* Plain coins only for now. The token and prize types are still defined
        above and still work - they are just not loaded onto the shelf. Add a
        line back here to bring one in. The count is 62 rather than 57 so the
        field holds the same number of items it did with the extras. */
-    { type: 'coinLight', count: 31, tier: 1 },
-    { type: 'coinDark',  count: 31, tier: 1 }
+    { type: 'coinLight', count: 30, tier: 1 },
+    { type: 'coinDark',  count: 30, tier: 1 },
+    /* The two doublers the game starts with. Where they land is not decided
+       here: buildStartingPile shuffles this queue before it lays anything
+       out, so two lines in a list is all "place them randomly" costs. Sixty
+       two items either way - the coins gave up the two places.
+
+       SKIPPED ENTIRELY when x2 is switched off in the settings menu, with
+       two ordinary coins taking their places so the pile still holds 62.
+       See buildStartingPile: a token that cannot double is indistinguishable
+       from a working one until it fails to pay, so the answer is not to put
+       it there. */
+    { type: 'multiplier', count: 2, tier: 1 }
   ],
 
   /* --------------------------------------------------------------------
@@ -1762,6 +2085,617 @@ window.COIN_PUSHER_CONFIG = {
        Each step drops brightness as well as shifting hue, so the three read
        as one graded frame rather than three separate rings. */
     colours: [0xFFFFFF, 0x8FD3FF, 0x2E7BE8]
+  },
+
+  /* -------------------------------------------------------------------------
+     THE DOUBLER
+
+     A x2 token that goes over the edge doubles EVERYTHING the team captured
+     in that turn - including the coins that already went over before it did.
+     Order does not matter, which is the whole point: you cannot lose the
+     doubling by getting the token out first, and you cannot game it by
+     holding the token back.
+
+     The arithmetic that makes order not matter is in award() in game.js. In
+     short: the token scores as an item first, then the turn's running
+     subtotal is added a SECOND time, and everything after it scores at the
+     new multiplier. One token gives x2, two give x4, and the sums come out
+     the same whichever order they land in.
+
+     A turn is one team's box being lit. The multiplier resets when the light
+     moves, so no doubling ever reaches back past the start of a turn, and a
+     token that goes over while it is nobody's turn is simply spent.
+     ----------------------------------------------------------------------- */
+  multiplier: {
+    enabled: true,
+    typeId: 'multiplier',
+
+    /* What one token multiplies the turn by. Two tokens compound, so two of
+       these at 2 is x4, three is x8. */
+    factor: 2,
+
+    /* How often one comes down the chute instead of a coin. 0.1 is one in
+       ten, which is what was asked for.
+
+       This is the ONLY way another one enters play: the two that start on the
+       shelf are gone once they fall. There is no ceiling on how many can be
+       on the shelf at once - a run of luck can leave three or four sitting
+       there, which is a good problem for the room to have. */
+    dropChance: 0.1,
+
+    /* THE INDICATOR.
+
+       A picture of the token itself, tilted, in the corner of the scoring
+       team's panel while their turn is doubled. Drawn from the SAME canvas
+       that paints the token's 3D face - not a second drawing of it - so it
+       cannot drift out of step with the coin in the machine, and changing the
+       colour above moves both.
+
+       It is a light, not a counter. It says "this turn is doubled" and shows
+       x2 whether the turn is running at x2 or x4; the score itself still does
+       the full arithmetic. false removes it, and the scoring is unaffected
+       either way. */
+    showIndicator: true,
+    indicatorAngle: 55,      // degrees clockwise; negative tilts the other way
+    indicatorSize:  0.235,   // of the panel's height
+
+    /* -----------------------------------------------------------------------
+       THE FLASH
+
+       A x2 going over the edge takes the three tubes purple and back, three
+       times, then leaves them wherever they should be at that moment - the
+       team's colour, neutral, or the armed red if a drop is still resolving.
+       The resting colour is RE-DERIVED when the flash ends rather than
+       remembered from before it, so a flash that lands in the middle of a
+       drop cannot strand the lights on a stale colour.
+
+       colour is NOT the token's own indigo, and that is deliberate. The tubes
+       are emissive - they are lit, not painted - so setting them to a dark
+       colour reads as the tube going OUT rather than flashing. This is the
+       same purple family, lifted to something a light can actually be.
+
+       Snappier than the machine's other light moves on purpose: the smooth
+       fade that suits a team change reads as a throb rather than a flash at
+       this length. onSeconds is the rise, offSeconds the fall back.
+       ----------------------------------------------------------------------- */
+    flash: {
+      enabled:    true,
+      colour:     0x9B5CFF,
+      count:      3,
+      onSeconds:  0.12,
+      offSeconds: 0.18
+    }
+  },
+
+  /* -------------------------------------------------------------------------
+     THE INTRO
+
+     Played full screen the moment START is pressed, with the game BUILDING
+     BEHIND IT. That ordering is the whole point: starting the world takes a
+     moment - Rapier initialising, the pile laid out and pre-settled - and
+     doing it after the video would mean the intro finishing onto a black
+     screen while that happened. Run together, the load disappears.
+
+     Any key or click stops it and goes straight to the game.
+     ----------------------------------------------------------------------- */
+  intro: {
+    enabled: true,
+    src: 'assets/video/intro.mp4',
+
+    /* Scaled by the volume slider like everything else - a muted machine
+       should not blast an intro. */
+    volume: 1.0,
+
+    /* How long before a key or click will skip it.
+
+       Not zero, and not for taste: the START click is still being delivered
+       when the video begins, so listeners armed immediately catch that very
+       click and the intro is cancelled by the thing that started it. */
+    skipArmMs: 350
+  },
+
+  /* -------------------------------------------------------------------------
+     THE TITLE MUSIC
+
+     Loops behind the team-name screen and stops when the game begins.
+
+     Played through a plain <audio> element rather than the game's own audio
+     graph, and the reason is timing: that graph is built on an AudioContext
+     which cannot exist until the browser has seen a user gesture, and the
+     gesture in question is the START click - by which point the title screen
+     is over. An <audio> element has the same restriction but degrades
+     usefully rather than throwing, so it can be tried immediately and started
+     on the first click or keypress if the browser refuses.
+
+     In practice the host types two team names before pressing START, so the
+     music will be running well before then. On a page nobody touches at all
+     it stays silent, which is the correct behaviour and not a bug.
+     ----------------------------------------------------------------------- */
+  titleMusic: {
+    enabled: true,
+    src: 'assets/audio/title.mp3',
+
+    /* Scaled by whatever the volume slider was last set to, so this cannot
+       come blaring out at a level the host already turned down. */
+    volume: 0.55,
+
+    /* Cut rather than stopped dead when START is pressed - a loop that
+       vanishes mid-bar sounds like a fault. */
+    fadeOutSeconds: 0.6
+  },
+
+  /* -------------------------------------------------------------------------
+     TEAM COLOURS THE CONTESTANTS PICK
+
+     A swatch either side of the two name fields on the title screen. Clicking
+     one opens the browser's own colour picker; what comes back becomes that
+     team's colour, and the defaults below are what you get if nobody touches
+     them.
+
+     The colour has to reach three places, and only the first is trivial:
+
+       the light tubes    a config value, read by paintZones
+       the score panel    a pre-rendered SVG
+       the name field     another pre-rendered SVG
+
+     The artwork is generated by tools/build-scoreboard.py with the colour
+     baked in. Rather than port that whole generator into the browser, the
+     colour is changed where it actually lives: SEVEN gradient stops - four in
+     the screen gradient, three in the sheen - all derived from one base by
+     the two formulas below. Everything else in the file, the chrome and the
+     bevel and the corner radii, is left exactly as the build script made it,
+     so the panels cannot drift away from the ones it generates.
+     ----------------------------------------------------------------------- */
+  teamColour: {
+    enabled: true,
+
+    /* Copied from scoreboard.teamColours - G2 and R4, the pair chosen off a
+       swatch sheet rendered in the real scene. */
+    defaults: [0x2F7550, 0xCE6067],
+
+    /* The artwork to recolour, per team. */
+    panelSrcs: ['assets/scoreboard/panel-blank-a.svg',
+                'assets/scoreboard/panel-blank-b.svg'],
+    fieldSrcs: ['assets/scoreboard/title-name-a.svg',
+                'assets/scoreboard/title-name-b.svg'],
+
+    /* The gradient ramp the generator uses, copied stop for stop rather than
+       re-invented - see RAMP in tools/build-scoreboard.py. */
+    ramp:  [1.00, 0.80, 0.64, 0.88],
+    sheen: [0.72, 0.42, 0.22],
+
+    /* THE LIGHTNESS CLAMP. The name and the score are white; a pale colour
+       makes them vanish and a near-black one swallows the panel. The picked
+       colour keeps its hue and saturation and has only its lightness pulled
+       into this band, so what comes out can be a little deeper than what was
+       clicked.
+
+       The band is set by the DEFAULTS, not by taste: G2 sits at 0.32 and R4
+       at 0.59, and neither may be altered by a clamp meant for other people's
+       choices. */
+    minLightness: 0.15,
+    maxLightness: 0.62,
+
+    /* The swatch buttons, as fractions of the name field's own height. */
+    swatchWidth: 0.21,
+
+    /* How close the swatch sits to its field. The row's own gap is 22px,
+       which is right between the two name fields and too far for a button
+       that belongs to one of them, so the swatch is pulled back in by a
+       negative margin on its inner edge. This is the gap that survives. */
+    swatchGapPx: 6,
+
+    /* A rainbow down the button, so it reads as "pick a colour" rather than
+       as a coloured strip. It no longer shows the team's current colour -
+       the name field beside it is already tinted that, so nothing is lost. */
+    swatchGradient: ['#FF3B30', '#FFD60A', '#34C759',
+                     '#32ADE6', '#3B4CFF', '#FF2D95'],
+
+    storageKey: 'coinPusher.teamColours'
+  },
+
+  /* -------------------------------------------------------------------------
+     THE SETTINGS MENU
+
+     A cog under the volume mixer, in the same corner and on both screens.
+     Clicking it opens a panel built from the SAME generator as the
+     scoreboards and the points box - real chrome, dark screen, the same
+     condensed bold - so it reads as another part of the machine rather than
+     as a dialog that wandered in.
+
+     The machine keeps running while it is open. A host adjusting the speed
+     wants to see what the speed does, and SPACE still pauses if they want it
+     stopped.
+     ----------------------------------------------------------------------- */
+  settings: {
+    enabled: true,
+    src: 'assets/scoreboard/panel-settings.svg',
+    aspect: '480/660',
+
+    /* From the generator, so the controls sit inside the lit screen rather
+       than over the bezel. */
+    screenInsetX: 0.0542,
+    screenInsetY: 0.0394,
+
+    /* Bounded on both axes, for the reason given in rightColumn: one bound
+       alone is only correct at one shape of window. */
+    widthFraction:     0.30,   // of the viewport's width
+    maxHeightFraction: 0.42,   // of its height, via the aspect
+
+    /* Type sizes, as fractions of the panel's height. */
+    titleSize: 0.046,
+    labelSize: 0.030,
+    valueSize: 0.030,
+
+    /* THE SPEED STEPS, as multiples of normal. Stepped rather than smooth on
+       purpose: normal has to be a detent you can always get back to, not a
+       spot you have to hunt for with a mouse. */
+    speedSteps: [0.25, 0.333, 0.5, 0.667, 1, 1.5, 2, 3, 4],
+
+    /* Remembered between reloads, like the volume. The reset buttons
+       obviously are not. */
+    storageKey: 'coinPusher.settings'
+  },
+
+  /* -------------------------------------------------------------------------
+     PLACING A COIN BY HAND
+
+     PLACE COIN in the settings menu shuts the menu and puts the next click on
+     the machine down as a coin. One click, one coin, then it is over.
+
+     The same machinery the present and jackpot buttons use, pointed at an
+     ordinary coin - so it lands ON a heap rather than inside one, a click
+     that misses the machine costs nothing, and the coin that results is in
+     every way a normal coin. It scores if it goes over the edge, to whoever's
+     turn it is. It does not use up a drop or touch the turn.
+
+     There is no cap. Presents have one because four of them is a cluttered
+     board; coins are what the board is made of.
+
+     WHICH COIN: the next one in the light/dark rotation that dropped coins
+     use, sharing their counter, so placing by hand does not fill the pile
+     with one colour. Never a x2 token - that roll belongs to the chute.
+     ----------------------------------------------------------------------- */
+  placeCoin: {
+    enabled: true,
+
+    /* Dropped from a hair above whatever was clicked rather than set exactly
+       on it, so it settles instead of being wedged into the surface. The same
+       0.35 of a coin the presents and the jackpot token use. */
+    dropHeightInCoins: 0.35
+  },
+
+  /* -------------------------------------------------------------------------
+     THE MOUSE POINTER
+
+     The arrow is replaced by a white hand, because the whole screen is a thing
+     you point at and press, and an arrow says "operating system" where a hand
+     says "go on then".
+
+     The artwork is assets/cursor/hand.svg, built by tools/build-cursor.py from
+     the icon in hand-source.svg beside it. Read that script before changing
+     anything here - the hand is white and outlined and tilted because of what
+     it does, not by accident.
+
+     Two things about cursors that are not obvious and that shape all of this:
+
+       THE SHADOW HAS TO BE INSIDE THE IMAGE. A cursor is a picture the
+       operating system draws, not an element on the page, so CSS filters and
+       box-shadows do not touch it. The shadow is drawn into the SVG, and the
+       image carries transparent padding for it to fall into or it would be
+       clipped square at the edge.
+
+       THE SIZE HAS TO BE INSIDE THE IMAGE TOO. CSS cannot scale a cursor; the
+       browser draws it at the image's own width and height. So the file is
+       fetched, its size rewritten to whatever size says below, and the result
+       handed over as a data URL. That is why this is done in code rather than
+       as one line of CSS in index.html.
+     ----------------------------------------------------------------------- */
+  cursor: {
+    enabled: true,
+    src: 'assets/cursor/hand.svg',
+
+    /* In pixels, and the image is square. Chrome refuses anything over 128
+       and quietly falls back to the ordinary arrow, so that is the ceiling.
+
+       64 rather than something nearer the 20-odd pixels of a normal arrow
+       because this is played across a room on a television. The hand does not
+       fill the square - it is tilted, and the corners are the shadow's room -
+       so a 64px cursor is a hand about 48px tall. */
+    size: 64,
+
+    /* WHERE THE CLICK ACTUALLY LANDS, as a fraction of the image, measured on
+       the tip of the pointing finger. Printed by tools/build-cursor.py; copy
+       them across if that script is ever re-run.
+
+       Worth getting right rather than eyeballing: presents and jackpots are
+       placed by clicking, so an error here would put them somewhere other
+       than where the hand is pointing, and it would look like the placement
+       was broken rather than the pointer. */
+    hotspotX: 0.0851,
+    hotspotY: 0.1986,
+
+    /* The shadow, in the SVG's own units - the hand is about 40 of them
+       across, so these are meant to be small. Raising blur and opacity
+       together is what makes it read as a shadow rather than as a smudge.
+
+       Set enabled to false for no shadow at all. */
+    shadow: {
+      enabled: true,
+      dx: 1.0,        // right
+      dy: 1.3,        // and down, so the light reads as coming from above
+      blur: 0.9,
+      opacity: 0.45
+    }
+  },
+
+  /* -------------------------------------------------------------------------
+     THE VOLUME CONTROL
+
+     Bottom left, vertical: the slider above, the speaker below. Deliberately
+     the opposite corner from the placement buttons and the points box, and
+     deliberately quiet - it is the one control that gets used when something
+     has gone wrong in the room rather than as part of the game.
+
+     It drives the MASTER volume, so coins, pegs, the fanfares and the music
+     all move together. Clicking the speaker crosses it out and silences
+     everything; clicking again brings it back at whatever the slider says -
+     the slider does not drop to zero while muted, so unmuting returns you to
+     exactly the level you had.
+
+     The level is remembered between reloads and the MUTE is not. A quiz that
+     resets the volume every time the page reloads would be maddening, and a
+     machine that boots silently reads as broken rather than as muted.
+     ----------------------------------------------------------------------- */
+  volume: {
+    enabled: true,
+
+    /* Sized to fit in the strip of empty screen to the LEFT of the machine,
+       rather than matched to the buttons on the other side. That strip is
+       narrow, and these numbers come from measuring it rather than guessing:
+       raycasting across the control's own band of the screen put the
+       machine's leftmost pixel at
+
+           1200x800   38px   3.17% of the width
+           1600x900   54px   3.38%
+           1920x1080  64px   3.33%
+
+       - the same fraction of the WIDTH at every shape, because that is what
+       the camera framing is tied to. So everything here is a fraction of the
+       width too, and the whole control lands clear of the cabinet at any
+       window: left margin plus icon comes to about 2.4% against the 3.2% of
+       clear strip, leaving a small gap to the machine.
+
+       Bounded on height as well for the reason given in rightColumn - a bound
+       on one axis alone is only correct at one aspect ratio. */
+    iconFraction:      0.017,   // of the viewport's width
+    iconMaxHeight:     0.034,   // of its height
+
+    trackHeightFraction: 0.155, // the slider's length, of viewport height
+    trackWidthFraction:  0.0042,// and its thickness, of viewport width
+    gapFraction:         0.010, // between the slider and the speaker
+
+    leftFraction:   0.007,      // hard against the edge, clear of the machine
+    bottomFraction: 0.055,      // matches pointsBox, so the corners line up
+
+    /* Muted enough to sit in the corner unnoticed, bright enough to find.
+
+       THE SLIDER IS A LIGHT ON THE MACHINE. Rather than a colour of its own,
+       the filled bar and the handle show whatever the innermost light tube is
+       showing at that instant, driven from the same place on the same clock -
+       so it cannot fall out of step with the machine, and it needed no rules
+       of its own for "flash with the lights" or "go red while armed". Those
+       fall out of it.
+
+       It works because that tube's own resting colour is already white: with
+       nothing happening the slider is white, during a team's turn it carries
+       their colour, while a zone is armed it goes red with the cabinet, and
+       through a flash it flashes.
+
+       The empty part of the track stays neutral whatever the machine is
+       doing, so the level is still readable at a glance. The speaker takes
+       the colour as well, but only its body and its sound waves - the mute
+       cross stays red, because a red cross on a red speaker would disappear
+       exactly when you needed to see it. */
+    trackColour:  'rgba(255,255,255,0.16)',
+    tintAlpha:    0.62,         // the filled bar
+    handleAlpha:  0.88,         // the handle, a little more solid
+    iconAlpha:    0.82,         // the speaker, which takes the colour too
+    mutedColour:  '#E2484F',    // the cross
+
+    storageKey: 'coinPusher.volume',
+
+    /* The cog sits under the speaker in the same column, which is what pushes
+       the mixer up to make room for it. */
+    cogFraction:   0.019,       // of the viewport's width
+    cogMaxHeight:  0.038        // of its height
+  },
+
+  /* -------------------------------------------------------------------------
+     THE JACKPOT
+
+     The biggest thing that happens all evening, and the machine is supposed to
+     look like it. Ten flashes with everything moving on ONE beat:
+
+       the backlight   all four panes together, white / yellow / white ...
+       the tubes       a checkerboard - the outer two yellow with the middle
+                       white, then the outer two white with the middle yellow
+
+     so on every beat the whole machine flips, and the tubes are always the
+     opposite of each other. Then it all goes back to whatever it should be -
+     team colour, neutral, or the armed red if a drop is still resolving.
+
+     Placed by hand and never spawned, like a present, but with no limit on
+     how many can be on the board.
+     ----------------------------------------------------------------------- */
+  jackpot: {
+    enabled: true,
+    typeId: 'jackpot',
+
+    maxOnBoard: 0,        // 0 = no limit
+    dropHeightInCoins: 0.35,
+
+    /* This flash is GAPLESS - each state replaces the last with no beat of
+       resting colour between - so a "flash" here is one state, not an on-off
+       pair. onSeconds is how long each state is held, and it is the number
+       that decides the CHARACTER of the effect: 0.22 reads as flashing, much
+       slower reads as a pulse.
+
+       matchSound decides how MANY. With it on, the count is worked out at the
+       moment the token drops from the two clips' measured durations, so the
+       lights run for exactly as long as the fanfare and follow it
+       automatically if either clip is ever swapped - which has already
+       happened once. 'flashes' is then only the fallback for when the audio
+       has not loaded.
+
+       Set matchSound false to go back to a fixed count. */
+    matchSound: true,
+    flashes:    10,
+    onSeconds:  0.22,
+    offSeconds: 0.22,
+
+    /* The two colours the machine alternates between. white is the panels'
+       own lit colour so the "off" beat is the machine's normal look rather
+       than a second effect. */
+    yellow: 0xFFD21E,
+    white:  0xFFFFFF,
+
+    /* Back to back, not together: 'win' starts the moment 'sound' ends. */
+    sound:    'jackpot',
+    thenPlay: 'jackpotWin',
+
+    button: { gapFraction: 0.010 }   // between it and the present button
+  },
+
+  /* -------------------------------------------------------------------------
+     PRESENTS
+
+     A present is a prize rather than a score: when one goes over the edge
+     somebody in the room has won something they collect in person, and the
+     machine's job is to make that unmistakable.
+
+     It cannot arrive down the chute - see itemTypes.present for the
+     measurement - so they are PLACED. The button arms placement, the next
+     click on the machine puts one just above that spot, and it drops the last
+     fraction of an inch into place. Clicking the button again cancels.
+     ----------------------------------------------------------------------- */
+  presents: {
+    enabled: true,
+    typeId: 'present',
+
+    /* None at the start - every present is placed by hand. The seeding code
+       is left in place and driven by this number, so it is one edit away if
+       that changes back. */
+    startingCount: 0,
+    maxOnBoard:    10,    // the button goes dead at this many, until one falls
+
+    /* How far above whatever was clicked the present appears. Small on
+       purpose: a present dropped from a height bounces and takes the pile
+       with it, and the host clicked a spot because that is where they wanted
+       it. In coin diameters. */
+    dropHeightInCoins: 0.35,
+
+    /* Six flashes, alternating the present's OWN two colours - box, ribbon,
+       box, ribbon, box, ribbon - so what the tubes do matches the thing that
+       just dropped rather than being a generic prize colour.
+
+       Emissive again, so the two are lifted the way the x2's purple is: a
+       dark ribbon set on a light tube reads as the tube going out. lift is
+       how far towards white each colour is pulled before it reaches them. */
+    flashPairs: 3,
+    flashLift:  0.42,
+    onSeconds:  0.13,
+    offSeconds: 0.13,
+
+    /* One play, not two. */
+    sound: 'bonus',
+
+    /* The button. Sits beside the points-per-coin box in the bottom right
+       corner and is deliberately much smaller than it - it is used a handful
+       of times an evening, and the points box is read all night. */
+    button: {
+      /* Measured rather than guessed: at 0.043 it came out 69px against the
+         points box's 57 tall, so the button that gets used a handful of times
+         an evening was BIGGER than the number that is read all night. These
+         put it at about 40px - clearly the smaller of the two. */
+      sizeFraction:   0.025,   // of the viewport's width, bounded by height
+      maxHeightFraction: 0.050,
+      gapFraction:    0.012,   // between it and the points box
+      armedGlow:      '#F5C542'
+    }
+  },
+
+  /* -------------------------------------------------------------------------
+     THE BACKDROP - a dot wall
+
+     A grid of soft round lights on a near-black ground, with broad glows
+     drifting behind it and paler columns sweeping across. It replaced a
+     photograph, and the reasons are in backdrop.js: generated per pixel it is
+     as sharp at 4K as at 720p, it loads nothing where the photograph was
+     1.4MB, and the grid is measured in SCREEN PIXELS so the dots stay the
+     same size and land on the pixel grid instead of crawling when the window
+     changes shape.
+
+     The same background runs behind the title screen and behind the game, off
+     one clock, so pressing START does not restart it.
+
+     If it ever pulls the eye, the knobs in order are exposure (how bright),
+     dots.contrast (how much of the wall is lit at once) and dots.driftSpeed.
+     enabled:false puts the flat palette.background colour back.
+     ----------------------------------------------------------------------- */
+  backdrop: {
+    enabled: true,
+
+    /* Display grade, applied last. The machine has to stay the brightest
+       thing on screen - it is the only thing anyone is meant to watch. */
+    exposure: 0.88,
+    vignette: 0.55,   // corners fall away, so the scoreboards sit on quiet
+
+    dots: {
+      /* Spacing and size. pitchPx is in real screen pixels: at 26 a 1080-tall
+         television gets about 41 rows, which is close to the reference and
+         still reads as individual lights from across a room rather than as a
+         texture. radius and softness are fractions of one cell. */
+      pitchPx:  26,
+      radius:   0.30,
+      softness: 0.55,
+
+      /* The lighting behind the grid. driftSpeed scales the whole motion, so
+         one number slows everything together; glowScale is how large the
+         drifting blobs are, and the column pair is the slow sweep across. */
+      driftSpeed:  1.0,
+      glowScale:   0.42,
+      columnScale: 0.60,
+      columnSpeed: 0.008,
+
+      /* Shaping. Most of the wall should sit low with the bright regions the
+         exception - lift floor to darken the quiet areas, raise contrast to
+         make the lit ones stand out further.
+
+         These came from comparing three renders side by side. The first pass
+         lit the whole wall fairly evenly and read as polka dots rather than
+         as a lit set; a much darker version after it lost the background
+         almost entirely. This sits between them: large quiet regions with the
+         brightness concentrated, which is what the reference does. */
+      floor:    0.36,
+      contrast: 2.45,
+      gamma:    1.30,
+
+      /* Blue, and staying blue. The light tubes go green, red and purple to
+         MEAN something; a background doing the same at ten times the size
+         would drown them out. mid is deliberately the machine's own blue. */
+      ground: 0x03060F,
+      dim:    0x123A78,
+      mid:    0x2E7BE8,
+      hot:    0x7FD8FF,
+
+      /* How much of the glow bleeds between the dots. Without a little of
+         this the wall reads as dots painted on a board rather than as lights
+         behind glass. */
+      groundGlow: 0.11
+    },
+
+    noiseSize: 256       // the tileable noise built at startup; 256 is plenty
   },
 
   palette: {

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 720" width="1240" height="720">
+<defs>
+<radialGradient id="lit" cx="0.35" cy="0.28" r="0.85"><stop offset="0" stop-color="#ffffff" stop-opacity="0.30"/><stop offset="0.55" stop-color="#ffffff" stop-opacity="0.05"/><stop offset="1" stop-color="#000000" stop-opacity="0.28"/></radialGradient>
+<filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.55"/></filter>
+</defs>
+<rect width="1240" height="720" fill="#0B0B10"/>
+<text x="105" y="58" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="bold">x2 token - five purples</text>
+<text x="105" y="86" fill="#8C86A0" font-family="Segoe UI,Arial,sans-serif" font-size="17">the two coin greys are shown at each end for comparison</text>
+<g filter="url(#sh)">
+<circle cx="197" cy="212" r="92" fill="#9AA0A7"/>
+<circle cx="197" cy="212" r="92" fill="url(#lit)"/>
+</g>
+<rect x="105" y="324" width="184" height="26" rx="6" fill="#9AA0A7"/>
+<text x="197" y="374" text-anchor="middle" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold">light coin</text>
+<text x="197" y="396" text-anchor="middle" fill="#8C86A0" font-family="Consolas,monospace" font-size="15">#9AA0A7</text>
+<text x="197" y="416" text-anchor="middle" fill="#6E6885" font-family="Segoe UI,Arial,sans-serif" font-size="13">reference</text>
+<g filter="url(#sh)">
+<circle cx="497" cy="212" r="92" fill="#BFA6EC"/>
+<circle cx="497" cy="212" r="78.752" fill="none" stroke="#7A5FB5" stroke-width="8.28"/>
+<circle cx="497" cy="212" r="92" fill="url(#lit)"/>
+</g>
+<text x="497" y="243.28" text-anchor="middle" fill="#2B1A46" font-family="Arial Narrow,Arial,sans-serif" font-size="93.84" font-weight="bold">x2</text>
+<rect x="405" y="324" width="184" height="26" rx="6" fill="#A88BDD"/>
+<text x="497" y="374" text-anchor="middle" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold">P1  lilac</text>
+<text x="497" y="396" text-anchor="middle" fill="#8C86A0" font-family="Consolas,monospace" font-size="15">#A88BDD</text>
+<text x="497" y="416" text-anchor="middle" fill="#6E6885" font-family="Segoe UI,Arial,sans-serif" font-size="13">brightest - unmistakable at distance</text>
+<g filter="url(#sh)">
+<circle cx="797" cy="212" r="92" fill="#9B76DE"/>
+<circle cx="797" cy="212" r="78.752" fill="none" stroke="#5B3A94" stroke-width="8.28"/>
+<circle cx="797" cy="212" r="92" fill="url(#lit)"/>
+</g>
+<text x="797" y="243.28" text-anchor="middle" fill="#1F1038" font-family="Arial Narrow,Arial,sans-serif" font-size="93.84" font-weight="bold">x2</text>
+<rect x="705" y="324" width="184" height="26" rx="6" fill="#8257C9"/>
+<text x="797" y="374" text-anchor="middle" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold">P2  violet</text>
+<text x="797" y="396" text-anchor="middle" fill="#8C86A0" font-family="Consolas,monospace" font-size="15">#8257C9</text>
+<text x="797" y="416" text-anchor="middle" fill="#6E6885" font-family="Segoe UI,Arial,sans-serif" font-size="13">clearly lighter than both greys</text>
+<g filter="url(#sh)">
+<circle cx="1097" cy="212" r="92" fill="#7C58C8"/>
+<circle cx="1097" cy="212" r="78.752" fill="none" stroke="#422A79" stroke-width="8.28"/>
+<circle cx="1097" cy="212" r="92" fill="url(#lit)"/>
+</g>
+<text x="1097" y="243.28" text-anchor="middle" fill="#F2EAFF" font-family="Arial Narrow,Arial,sans-serif" font-size="93.84" font-weight="bold">x2</text>
+<rect x="1005" y="324" width="184" height="26" rx="6" fill="#6340B0"/>
+<text x="1097" y="374" text-anchor="middle" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold">P3  royal</text>
+<text x="1097" y="396" text-anchor="middle" fill="#8C86A0" font-family="Consolas,monospace" font-size="15">#6340B0</text>
+<text x="1097" y="416" text-anchor="middle" fill="#6E6885" font-family="Segoe UI,Arial,sans-serif" font-size="13">last one that separates on brightness</text>
+<g filter="url(#sh)">
+<circle cx="197" cy="542" r="92" fill="#6140A5"/>
+<circle cx="197" cy="542" r="78.752" fill="none" stroke="#33205F" stroke-width="8.28"/>
+<circle cx="197" cy="542" r="92" fill="url(#lit)"/>
+</g>
+<text x="197" y="573.28" text-anchor="middle" fill="#F2EAFF" font-family="Arial Narrow,Arial,sans-serif" font-size="93.84" font-weight="bold">x2</text>
+<rect x="105" y="654" width="184" height="26" rx="6" fill="#4B2E8C"/>
+<text x="197" y="704" text-anchor="middle" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold">P4  indigo</text>
+<text x="197" y="726" text-anchor="middle" fill="#8C86A0" font-family="Consolas,monospace" font-size="15">#4B2E8C</text>
+<text x="197" y="746" text-anchor="middle" fill="#6E6885" font-family="Segoe UI,Arial,sans-serif" font-size="13">hue only - close to the dark coin</text>
+<g filter="url(#sh)">
+<circle cx="497" cy="542" r="92" fill="#472F76"/>
+<circle cx="497" cy="542" r="78.752" fill="none" stroke="#241541" stroke-width="8.28"/>
+<circle cx="497" cy="542" r="92" fill="url(#lit)"/>
+</g>
+<text x="497" y="573.28" text-anchor="middle" fill="#EDE3FF" font-family="Arial Narrow,Arial,sans-serif" font-size="93.84" font-weight="bold">x2</text>
+<rect x="405" y="654" width="184" height="26" rx="6" fill="#35215E"/>
+<text x="497" y="704" text-anchor="middle" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold">P5  aubergine</text>
+<text x="497" y="726" text-anchor="middle" fill="#8C86A0" font-family="Consolas,monospace" font-size="15">#35215E</text>
+<text x="497" y="746" text-anchor="middle" fill="#6E6885" font-family="Segoe UI,Arial,sans-serif" font-size="13">darkest - hardest to pick out</text>
+<g filter="url(#sh)">
+<circle cx="797" cy="542" r="92" fill="#4A4F55"/>
+<circle cx="797" cy="542" r="92" fill="url(#lit)"/>
+</g>
+<rect x="705" y="654" width="184" height="26" rx="6" fill="#4A4F55"/>
+<text x="797" y="704" text-anchor="middle" fill="#EDE7FA" font-family="Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold">dark coin</text>
+<text x="797" y="726" text-anchor="middle" fill="#8C86A0" font-family="Consolas,monospace" font-size="15">#4A4F55</text>
+<text x="797" y="746" text-anchor="middle" fill="#6E6885" font-family="Segoe UI,Arial,sans-serif" font-size="13">reference</text>
+</svg>

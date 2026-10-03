@@ -7,50 +7,100 @@
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%; overflow: hidden;
-    background: #0B0616; color: #EDE7FA;
+    background: #000; color: #EDE7FA;
     font-family: Arial, Helvetica, sans-serif;
   }
   #game { width: 100vw; height: 100dvh; }
   /* Stop a tap on the machine scrolling or zooming the page on a phone. */
   #game canvas { display: block; touch-action: none; }
 
+  /* ----------------------------------------------------------------------
+     THE TITLE SCREEN
+
+     Everything on it is the game's own furniture rather than a second set of
+     styles: the logo is the file the game hangs top-right, and the two name
+     fields and the START button are the score panels' chrome, built by
+     tools/build-scoreboard.py at the proportions of a text box.
+
+     PANEL         SVG        rendered      screen inset
+     name field    480x107    300x67px      2.92% x, 13.08% y
+     START         360x107    225x67px      3.89% x, 13.08% y
+
+     Both panels are 107 tall with a 14 bezel, so rendered at the same 67px
+     height their frames come out exactly as thick as each other. The padding
+     below is those insets in pixels - it keeps the text off the metal and
+     inside the lit screen, which is where the game puts its own.
+     ---------------------------------------------------------------------- */
   #setup {
     position: fixed; inset: 0; z-index: 50;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 26px; background: radial-gradient(circle at 50% 35%, #241141 0%, #0B0616 70%);
+    gap: 26px; background: #000;
   }
-  #setup h1 {
-    margin: 0; font-size: min(58px, 13vw); letter-spacing: 2px; font-weight: 900;
-    color: #C77DFF; text-shadow: 0 0 28px rgba(199,125,255,.45);
+
+  /* The logo is 2:1, so bounding it on BOTH axes is what stops a short window
+     pushing the START button off the bottom. Same trick as the right-hand
+     column in the game - see rightColumn in config.js. */
+  #title { display: block; width: min(560px, 78vw, 64vh); height: auto; }
+
+  #setup p, #fs {
+    margin: 0; color: #fff; font-weight: bold; font-style: italic;
   }
-  #setup p { margin: 0; color: #7E6BA8; font-size: 19px; }
+  #setup p { font-size: 19px; }
+  #fs       { font-size: 15px; }
+
   .row { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; }
+
+  /* The panel art carries the frame, so the input has no border of its own -
+     one drawn over the top would sit outside the bevel and read as a box
+     round a box. */
+  .row input, #start {
+    box-sizing: border-box; height: 67px; border: none; border-radius: 0;
+    background-repeat: no-repeat; background-position: center;
+    background-size: 100% 100%;
+    font-family: 'Arial Narrow','Haettenschweiler','Arial Bold',Arial,Helvetica,sans-serif;
+    font-weight: bold; color: #fff; text-align: center; line-height: 1;
+    /* Shadow first, then glow: text-shadow paints back to front, so the glow
+       has to come second or the shadow sits on top of it. Same order and the
+       same two colours as the scoreboards. */
+    text-shadow: 0 2px 1.5px rgba(4,7,14,.72), 0 0 4px rgba(190,220,255,.5);
+  }
+
   .row input {
-    width: min(300px, 80vw); padding: 16px 18px; font-size: 24px; font-weight: bold;
-    border-radius: 10px; border: 3px solid #3B2A5E;
-    background: #150C28; color: #fff; text-align: center;
+    width: min(300px, 80vw); padding: 9px 10px;
+    font-size: 24px; font-style: italic;
   }
-  .row input:focus { outline: none; border-color: #C77DFF; }
+  #teamA { background-image: url('assets/scoreboard/title-name-a.svg'); }
+  #teamB { background-image: url('assets/scoreboard/title-name-b.svg'); }
+
+  /* Placeholders at full white would read as names already typed in. Holding
+     them back to 55% keeps them obviously a prompt while still reading as
+     white rather than as a second colour. */
+  .row input::placeholder { color: #fff; opacity: .55; font-style: italic; }
+  .row input:focus {
+    outline: none;
+    filter: drop-shadow(0 0 7px rgba(255,255,255,.65));
+  }
+
   #start {
-    padding: 18px 60px; font-size: 26px; font-weight: 900; letter-spacing: 1px;
-    border: none; border-radius: 10px; cursor: pointer;
-    background: #C77DFF; color: #12081F;
+    width: 225px; padding: 9px 14px;
+    font-size: 26px; letter-spacing: 0.06em; cursor: pointer;
+    background-image: url('assets/scoreboard/title-start.svg');
   }
-  #start:hover { background: #DDA5FF; }
-  #fs { color: #5C4A85; font-size: 15px; }
+  #start:hover:not(:disabled) { filter: brightness(1.14); }
+  #start:disabled { filter: brightness(.55); cursor: default; }
 </style>
 </head>
 <body>
 
 <div id="setup">
-  <h1>COIN PUSHER</h1>
-  <p>Type the two team names, then start the session.</p>
+  <img id="title" src="assets/logo/tipping-point.svg" alt="Tipping Point">
+  <p>Type the two team names, then find out where your Tipping Point is!</p>
   <div class="row">
     <input id="teamA" placeholder="Team 1" autocomplete="off">
     <input id="teamB" placeholder="Team 2" autocomplete="off">
   </div>
   <button id="start">START</button>
-  <div id="fs">Press F11 for full screen. Scores and shelf reset every time this page is reloaded.</div>
+  <div id="fs">Press F11 for full screen.</div>
 </div>
 
 <div id="game"></div>

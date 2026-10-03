@@ -18,7 +18,8 @@ import * as RAPIER from 'rapier';
 import { DIMS, TIERS } from '@app/dims';
 import { buildMachine, driveShelves, liftTrapped, setTubeColour,
          setZoneColour } from '@app/machine';
-import { buildStartingPile, createItem, quatOnEdge } from '@app/items';
+import { buildStartingPile, createItem, quatOnEdge,
+         itemFaceImage } from '@app/items';
 import { initAudio, auditionAll, play, audioReady, setMasterVolume,
          coinReady, hasSample, playMusic, stopMusic, sampleDuration,
          playCue, stopCue, VOICE_KINDS } from '@app/audio';
@@ -27,7 +28,19 @@ const CFG = window.COIN_PUSHER_CONFIG;
 const PHY = CFG.physics;
 
 let ctx = null;
-let renderer, scene, camera, hud;
+let renderer, scene, camera, hud, backdrop = null;
+let titleBackdrop = null;
+
+/* Loaded once, used twice: the title screen's standalone canvas and, later,
+   the quad inside the game's own scene.
+
+   Resolved by RELATIVE url rather than through index.html's import map, and
+   stamped from this module's own url. The stamp protects every file the map
+   names but cannot protect index.html, because index.html is what CARRIES the
+   map - so adding a name to it is a change that does not land until the
+   browser lets go of its cached copy of the page, which looks exactly like
+   the module being missing. Resolving it here needs no map entry at all. */
+const backdropModule = import('./backdrop.js' + new URL(import.meta.url).search);
 let acc = 0, last = 0, fps = 0;
 let stepCount = 0, presettleSteps = 0;
 let phase = 0, running = CFG.shelf.startRunning;
@@ -41,8 +54,13 @@ const M = {
   pegHits: 0,          // peg sounds actually played, for the HUD
   unjammed: 0,         // coins slid off a peg they were impaled on
   surfaceHits: 0,      // surface / coin-on-coin sounds played
+  coinOnCoin: 0,       // contacts where BOTH sides were items
+  coinOnSurface: 0,    // and where only one was
+  runUps: [],          // approach speed of every hit that passed the impact test
+  hushed: 0,           // hits the run-up gate silenced
   awarded: 0,          // points credited to a team
   prizes: 0,           // prize items won
+  doublers: 0,         // x2 tokens that went over the edge
   dividerHits: 0,      // of those, ones that hit the chute chrome
   soundedThisStep: [], // body handles that made a surface sound this step
   lifted: 0,
@@ -117,6 +135,29 @@ function buildScene() {
   renderer.toneMappingExposure = CFG.render.exposure;
 
   host.appendChild(renderer.domElement);
+
+  /* ---------------------------------------------------------------------
+     The stage photograph behind the machine. It adds itself to the scene
+     once the image has decoded, and draws first every frame - backdrop.js.
+
+     Loaded by RELATIVE url rather than through index.html's import map, and
+     stamped from this module's own url. The reason is worth writing down:
+     the stamp protects every file the map names, but it cannot protect
+     index.html, because index.html is what CARRIES the map. So adding a name
+     to the map is a change that does not land until the browser lets go of
+     its cached copy of the page - which looks exactly like the module being
+     missing. Resolving it here instead needs no map entry, so a new module
+     never depends on a fresh index.html again.
+     --------------------------------------------------------------------- */
+  backdropModule
+    .then(function (mod) {
+      backdrop = mod.createBackdrop(scene, CFG.backdrop);
+      /* The title screen's own canvas has done its job. Both run the same
+         shader off the same clock, so the frame this draws first is the frame
+         that one would have drawn next - the handover is invisible. */
+      if (titleBackdrop) { titleBackdrop.dispose(); titleBackdrop = null; }
+    })
+    .catch(function (err) { console.warn('[backdrop] not loaded:', err); });
 
   /* Ambient is deliberately low. A strong hemisphere light fills every
      crevice evenly, which is precisely what makes a scene look flat - it
@@ -346,6 +387,7 @@ function clearItems() {
 function resetPile() {
   clearItems();
   buildStartingPile(ctx);
+  seedPresents();
   stepCount = 0;
   phase = 0;
   M.strokes = 0; M.fallen = 0; M.fallenByType = {};
@@ -462,13 +504,42 @@ function collectFallen() {
       /* One sound per coin, fanned out so a burst reads as several coins
          rather than one loud thump. Counted per step, not per coin, so the
          first of a batch is always immediate. */
+      const doubler = isDoubler(it.typeId);
+      const present = !!(CFG.presents && CFG.presents.enabled && it.wrap);
+      const jackpot = !!(CFG.jackpot && CFG.jackpot.enabled &&
+                         it.typeId === CFG.jackpot.typeId);
       if (CFG.audio && CFG.audio.enabled && audioReady()) {
         const stagger = CFG.audio.scoringStaggerSeconds / PHY.timestep;
         const at = Math.max(stepCount, nextScoringStep);
-        play('scoring', 1, DIMS.width > 0 ? t.x / (DIMS.width * 0.5) : 0,
-             (at - stepCount) * PHY.timestep, true);
+        /* The x2 and a present each get their own sound INSTEAD of the
+           ordinary one, and take their turn in the same queue, so several
+           things coming off together read as separate events rather than a
+           pile-up. A present plays it once. */
+        const pan = DIMS.width > 0 ? t.x / (DIMS.width * 0.5) : 0;
+        const wait = (at - stepCount) * PHY.timestep;
+        let kind = 'scoring';
+        if (jackpot && hasSample(CFG.jackpot.sound)) kind = CFG.jackpot.sound;
+        else if (doubler && hasSample('bonus')) kind = 'bonus';
+        else if (present && hasSample(CFG.presents.sound)) kind = CFG.presents.sound;
+        play(kind, 1, pan, wait, true);
+
+        /* And the win sting straight after the jackpot clip, not over it.
+           Delayed by the first clip's MEASURED duration and scheduled on the
+           audio clock, so the join is exact - a timer would drift by however
+           long the frame took. */
+        if (jackpot && CFG.jackpot.thenPlay && hasSample(CFG.jackpot.thenPlay)) {
+          play(CFG.jackpot.thenPlay, 1, pan,
+               wait + sampleDuration(kind), true);
+        }
         nextScoringStep = at + stagger;
       }
+      /* And the tubes, whether or not it scored for anyone. A token that goes
+         over while it is nobody's turn is wasted, but it still went over, and
+         a machine that stays silent for it looks broken rather than strict.
+         A present is a prize and is nobody's turn by definition. */
+      if (jackpot) startJackpotFlash();
+      else if (doubler) startDoublerFlash();
+      else if (present) startPresentFlash(it);
       noteDelivery();
       M.fallenByType[it.typeId] = (M.fallenByType[it.typeId] || 0) + 1;
       scene.remove(it.mesh);
@@ -491,10 +562,32 @@ let dropTurn = 0;
 
 /* config.dropItem may be one type id or a list. A list cycles - see the note
    there on why this is not a random pick. */
-function nextDropType() {
+/* The plain coin rotation - light, dark, light, dark - with no doubler roll.
+
+   Split out because PLACE COIN needs it too, and needs it to share the SAME
+   counter: two counters would let the pile drift towards one colour, since
+   the hand-placed coins and the dropped ones would each start again from
+   light. */
+function nextCoinType() {
   const d = CFG.dropItem;
   if (typeof d === 'string') return d;
   return d[dropTurn++ % d.length];
+}
+
+function nextDropType() {
+  /* One in ten, by default, is a doubler rather than a coin - see
+     multiplier.dropChance. Rolled per drop, so ten drops is the average
+     rather than a promise; a run of three in a row is possible and is the
+     kind of thing a room enjoys. This is the only way another token enters
+     play once the two on the shelf have gone.
+
+     Deliberately not shared with PLACE COIN: a token the host put there by
+     hand would be one they chose, which is not the same thing at all. */
+  const D = CFG.multiplier;
+  if (D && D.enabled && D.dropChance > 0 && Math.random() < D.dropChance) {
+    return D.typeId;
+  }
+  return nextCoinType();
 }
 
 /* -------------------------------------------------------------------------
@@ -546,6 +639,19 @@ let fadeFrom = -1;           // stepCount at which the red is let go
    three tubes in that team's colour - whose turn it is, without a word of
    text on screen. */
 let teamHighlight = -1;
+
+/* THE TURN'S DOUBLING.
+
+   turnMultiplier  what the NEXT item over the edge is worth, as a multiple
+   turnSubtotal    what this turn has scored so far, after multipliers
+
+   The subtotal is the whole trick. When a doubler lands it is added a second
+   time, which retroactively doubles every coin that already went over in this
+   turn - so the order the token comes out in cannot change the final number.
+   Both reset when the light moves to another team, which is what stops a
+   doubling reaching back past the start of a turn. */
+let turnMultiplier = 1;
+let turnSubtotal = 0;
 
 /* Blend two 0xRRGGBB colours. Done per channel on the raw integers rather
    than through THREE.Color so this can be called for every zone and tube on
@@ -618,13 +724,165 @@ function initLights() {
 /* Point every light at where the current state says it should be. seconds is
    how long to take getting there - short for arming or picking a team, long
    for the machine easing back to normal after a drop. */
+/* ---------------------------------------------------------------------------
+   THE x2 FLASH
+
+   Three pulses of purple across the tubes, then back to whatever the lights
+   should be. Held as a phase and a countdown rather than a queue of timers,
+   because it is stepped on the physics clock like everything else here - a
+   setTimeout would drift against the machine and would keep firing while the
+   tab is in the background.
+
+   flashLeft counts HALF-cycles: on, off, on, off, on, off. That is why it is
+   count * 2 rather than count.
+   ------------------------------------------------------------------------- */
+let flashSeq = [];        // the colour of each lit pulse, in order
+let flashIndex = 0;       // which pulse we are on
+let flashOn = false;      // is the current half-cycle a lit one
+let flashUntil = 0;       // step at which the current half-cycle ends
+let flashOnSteps = 1, flashOffSteps = 1;
+/* GAPLESS flashes have no dark half-cycle: each frame is held and then
+   replaced by the next, so the machine alternates between two lit states
+   rather than blinking on and off against its resting colour. That is the
+   difference between "flash, back to normal, flash" and "yellow, white,
+   yellow" - the jackpot wants the second. */
+let flashGapless = false;
+
+/* Start a flash. colours is one entry per PULSE, so a x2 passes one colour
+   repeated three times and a present passes its box and ribbon alternating
+   six times. Restarts rather than stacks: two things landing together is
+   worth two sounds and is not worth two sequences fighting each other. */
+function startFlash(colours, onSeconds, offSeconds, gapless) {
+  if (!colours || !colours.length) return;
+  flashSeq = colours.slice();
+  flashIndex = 0;
+  flashOn = false;          // tickFlash flips it, so the first half-cycle is lit
+  flashUntil = stepCount;   // ... and starts immediately
+  flashOnSteps  = Math.max(1, Math.round(onSeconds  / PHY.timestep));
+  flashOffSteps = Math.max(1, Math.round(offSeconds / PHY.timestep));
+  flashGapless  = !!gapless;
+  tickFlash();
+}
+
+/* A colour lifted towards white. The tubes are emissive - they are lit, not
+   painted - so a dark colour set on one reads as the tube going OUT rather
+   than flashing. A present's ribbon is often dark, so its own colours have to
+   be raised before they reach the light. */
+function lift(hex, t) {
+  const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
+  const up = (c) => Math.round(c + (255 - c) * t);
+  return (up(r) << 16) | (up(g) << 8) | up(b);
+}
+
+/* The current pulse, or null between pulses and when nothing is flashing.
+
+   A frame is { tubes, panels }:
+     tubes    one colour for all three, or an array of three
+     panels   a colour for the backlight, or null to leave it alone
+
+   Most flashes only touch the tubes. The jackpot is the one that takes the
+   backlight too, which is why this is a frame rather than a colour. */
+function flashFrame() {
+  return flashOn && flashIndex < flashSeq.length ? flashSeq[flashIndex] : null;
+}
+
+function tubesOf(frame, i) {
+  if (!frame || frame.tubes == null) return null;
+  return Array.isArray(frame.tubes)
+    ? frame.tubes[i % frame.tubes.length]
+    : frame.tubes;
+}
+
+function tickFlash() {
+  if (flashIndex >= flashSeq.length || stepCount < flashUntil) return;
+  let steps;
+  if (flashGapless) {
+    if (flashOn) flashIndex++;        // that state is done; the next replaces it
+    flashOn = flashIndex < flashSeq.length;
+    steps = flashOnSteps;
+  } else {
+    flashOn = !flashOn;
+    if (!flashOn) flashIndex++;       // a dark half-cycle ends that pulse
+    steps = flashOn ? flashOnSteps : flashOffSteps;
+    if (flashIndex >= flashSeq.length) flashOn = false;   // finish at rest
+  }
+  flashUntil = stepCount + steps;
+  /* Repaint at the pulse's own speed, not the machine's usual fade. */
+  paintZones(steps * PHY.timestep);
+}
+
+/* The x2's flash: one colour, three pulses. */
+function startDoublerFlash() {
+  const F = CFG.multiplier && CFG.multiplier.flash;
+  if (!F || !F.enabled || !(F.count > 0)) return;
+  const seq = [];
+  for (let i = 0; i < F.count; i++) seq.push({ tubes: F.colour, panels: null });
+  startFlash(seq, F.onSeconds, F.offSeconds);
+}
+
+/* The jackpot's: ten flashes, everything on one beat.
+
+   The panels take all four together, alternating white and yellow. The tubes
+   take a checkerboard - outer two yellow with the middle white, then the
+   reverse - so on every beat the whole machine flips and the tubes are always
+   the opposite of each other. */
+function startJackpotFlash() {
+  const J = CFG.jackpot;
+  if (!J || !J.enabled) return;
+
+  /* How many states to hold. With matchSound on this is derived from the two
+     clips actually loaded, so the lights run exactly as long as the fanfare -
+     and keep doing so if a clip is swapped, rather than needing a number here
+     edited to match. Rounded UP, so the lights outlast the audio by at most
+     one state rather than stopping just short of the end. */
+  let count = J.flashes;
+  if (J.matchSound) {
+    const secs = (hasSample(J.sound) ? sampleDuration(J.sound) : 0) +
+                 (J.thenPlay && hasSample(J.thenPlay) ? sampleDuration(J.thenPlay) : 0);
+    if (secs > 0) count = Math.ceil(secs / J.onSeconds);
+  }
+  if (!(count > 0)) return;
+
+  const seq = [];
+  for (let i = 0; i < count; i++) {
+    const even = (i % 2) === 0;
+    const outer = even ? J.yellow : J.white;
+    const mid   = even ? J.white  : J.yellow;
+    seq.push({ tubes: [outer, mid, outer], panels: even ? J.yellow : J.white });
+  }
+  /* gapless: the alternation IS the flash. There is no beat where the
+     machine goes back to its resting colours. */
+  startFlash(seq, J.onSeconds, J.offSeconds, true);
+}
+
+/* A present's: its own two colours, alternating, three times through. */
+function startPresentFlash(item) {
+  const P = CFG.presents;
+  if (!P || !P.enabled || !item.wrap) return;
+  const seq = [];
+  for (let i = 0; i < P.flashPairs; i++) {
+    seq.push({ tubes: lift(item.wrap.box,    P.flashLift), panels: null });
+    seq.push({ tubes: lift(item.wrap.ribbon, P.flashLift), panels: null });
+  }
+  startFlash(seq, P.onSeconds, P.offSeconds);
+}
+
 function paintZones(seconds) {
   if (!lights) initLights();
   const A = CFG.arming, lit = CFG.palette.panelGlow;
   const dur = (seconds != null ? seconds : CFG.arming.lightFadeSeconds) / PHY.timestep;
 
+  const frame = flashFrame();
   for (let i = 0; i < DIMS.zoneCount; i++) {
     const on = litZone < 0 || i === litZone;
+    /* A flash that names a panel colour takes ALL four together and outranks
+       the armed red, because a jackpot outranks a drop in progress. */
+    if (frame && frame.panels != null) {
+      aim(lights.zoneC[i], frame.panels, dur);
+      aim(lights.zoneG[i], frame.panels, dur);
+      aim(lights.zoneE[i], A.litEmissive, dur);
+      continue;
+    }
     aim(lights.zoneC[i], on ? lit : A.dimmedColour, dur);
     aim(lights.zoneG[i], on ? lit : A.dimmedGlow,   dur);
     aim(lights.zoneE[i], on ? A.litEmissive : A.dimmedEmissive, dur);
@@ -636,9 +894,16 @@ function paintZones(seconds) {
      to neutral, so whose turn it is survives the drop. */
   const tubes = CFG.lightTubes.colours;
   const team = teamHighlight >= 0 ? CFG.scoreboard.teamColours[teamHighlight] : null;
+  /* The x2 flash sits ON TOP of all of it, arming included: a token going
+     over is the biggest thing that can happen and it should not be outvoted
+     by a drop still resolving. When it ends this function runs again with
+     flashColour() back to null and the lights land wherever the state says
+     they belong - nothing is remembered across the flash. */
   for (let i = 0; i < tubes.length; i++) {
     const rest = team != null ? team : tubes[i];
-    aim(lights.tubes[i], litZone < 0 ? rest : A.dimmedGlow, dur);
+    const fl = tubesOf(frame, i);
+    aim(lights.tubes[i],
+        fl != null ? fl : (litZone < 0 ? rest : A.dimmedGlow), dur);
   }
 }
 
@@ -655,6 +920,9 @@ function tickLights() {
     tick(lights.tubes[i], mixHex);
     setTubeColour(ctx, i, lights.tubes[i].cur);
   }
+  /* The volume slider is the fourth light. Same value, same step, so it
+     cannot lag or disagree with the cabinet. */
+  if (lights.tubes.length) setVolumeTint(lights.tubes[0].cur);
 }
 
 /* The host pointed at a zone. Whether that arms it or releases it depends on
@@ -806,10 +1074,42 @@ function award(it) {
   if (type.value.type === 'prize') {
     team.log.push(type.value.label);
     M.prizes++;
-  } else {
-    team.score += type.value.amount;
-    M.awarded += type.value.amount;
+    return;
   }
+
+  /* Scored at whatever the turn is currently worth. */
+  const gain = type.value.amount * turnMultiplier;
+  team.score  += gain;
+  M.awarded   += gain;
+  turnSubtotal += gain;
+
+  /* And if that was a doubler, settle up. It has already scored as an item,
+     so adding the turn's subtotal a second time doubles the whole turn -
+     the coins that went over before this one included. Then everything after
+     it scores at the new multiplier.
+
+     Worth checking the two orders by hand, because "order does not matter" is
+     easy to claim and easy to get wrong. Points at 10, a token and two coins:
+
+       token last   10 + 10 = 20, token +10 = 30, retro +30 = 60
+       token first  token +10 = 10, retro +10 = 20, x2; two coins at 20 = 60
+
+     and two tokens plus one coin comes to 120 either way, which is three
+     items at 10 multiplied by 4. */
+  if (isDoubler(it.typeId)) {
+    team.score += turnSubtotal;
+    M.awarded  += turnSubtotal;
+    turnSubtotal *= CFG.multiplier.factor;
+    turnMultiplier *= CFG.multiplier.factor;
+    M.doublers++;
+  }
+}
+
+/* One place that answers "is this the token", so the rule cannot drift apart
+   from the type it is about. */
+function isDoubler(typeId) {
+  const D = CFG.multiplier;
+  return !!(D && D.enabled && typeId === D.typeId);
 }
 
 /* A coin went over the front lip of the platform - the scoring drop - which
@@ -1186,6 +1486,11 @@ function sleepSettled() {
 
     if (b.isSleeping()) { M.asleep++; it.quiet = 0; continue; }
     if (it.dropStep !== undefined) { it.quiet = 0; continue; }   // in the chute
+    /* Some types are never put to sleep - see itemTypes.present.neverSleeps.
+       Rapier's own island sleeping is turned off for them at creation; this
+       is the other half, so nothing here forces one down either. */
+    const ty = CFG.itemTypes[it.typeId];
+    if (ty && ty.neverSleeps) { it.quiet = 0; continue; }
 
     const v = b.linvel();
     const w = b.angvel();
@@ -1522,6 +1827,7 @@ function physicsStep() {
   unjamChute();
   collectFallen();
   tickArming();
+  tickFlash();
   /* Driven from the step, not the render loop, because the transitions are
      timed in stepCount like everything else here. Keeping them on the render
      loop would have them advancing on a different clock to the state that
@@ -1562,6 +1868,25 @@ function captureImpactSpeeds() {
     if (!it.preVel) it.preVel = { x: 0, y: 0, z: 0, wx: 0, wy: 0, wz: 0 };
     it.preVel.x = v.x; it.preVel.y = v.y; it.preVel.z = v.z;
     it.preVel.wx = w.x; it.preVel.wy = w.y; it.preVel.wz = w.z;
+
+    /* THE RUN-UP: a decaying peak of how fast this coin has actually been
+       going. Not the same thing as impactOf, which measures the CHANGE at the
+       moment of contact, and that difference is the whole point.
+
+       A coin at rest in the pile still gets nudged by the solver, the shapes
+       separate and re-touch by microns, and the velocity change spikes enough
+       to look like a hit. What it never has is speed sustained over the steps
+       leading up to it. A coin that fell down the chute does.
+
+       Absolute speed is deliberately NOT used on its own - see impactOf for
+       why that was wrong. This is an extra condition alongside the impact
+       test, not a replacement for it, so a coin being carried along by the
+       deck still stays silent: it is moving, but nothing is happening to it. */
+    const speed = Math.hypot(v.x, v.y, v.z);
+    const rim = Math.hypot(w.x, w.y, w.z) *
+                (it.dims && it.dims.radius ? it.dims.radius : DIMS.D * 0.5);
+    it.runUp = Math.max(Math.max(speed, rim),
+                        (it.runUp || 0) * CFG.audio.runUpDecay);
   }
 }
 
@@ -1674,12 +1999,22 @@ function soundCollisions() {
     const metal = A.dividerUsesPegSound && ctx.metalColliders &&
                   (ctx.metalColliders.has(h1) || ctx.metalColliders.has(h2));
 
+    /* BOTH sides being items means coin on coin; one side means coin on a
+       surface - the deck, the floor, a wall. Recorded on the window so the
+       two can be counted, and told apart, when the sound is finally played. */
+    const coinOnCoin = !!(a && b);
+    if (coinOnCoin) M.coinOnCoin++; else M.coinOnSurface++;
+
     if (a) {
-      if (!a.hitWindow) a.hitWindow = { at: stepCount, peak: 0, voice: 'surface' };
+      if (!a.hitWindow) {
+        a.hitWindow = { at: stepCount, peak: 0, voice: 'surface', pair: coinOnCoin };
+      }
       if (metal) a.hitWindow.voice = 'peg';
     }
     if (b) {
-      if (!b.hitWindow) b.hitWindow = { at: stepCount, peak: 0, voice: 'surface' };
+      if (!b.hitWindow) {
+        b.hitWindow = { at: stepCount, peak: 0, voice: 'surface', pair: coinOnCoin };
+      }
       if (metal) b.hitWindow.voice = 'peg';
     }
   });
@@ -1694,6 +2029,10 @@ function soundCollisions() {
     const impact = impactOf(it);
     if (impact > win.peak) win.peak = impact;
 
+    /* The fastest this coin has been through the window, so the test sees the
+       approach rather than whatever it is doing after the bounce. */
+    if ((it.runUp || 0) > (win.runUp || 0)) win.runUp = it.runUp || 0;
+
     /* A hard hit does not wait - it would be audibly late. Only the ones that
        start softly and bloom are held for the window to close. */
     const done = win.peak >= A.surfaceImmediateImpact ||
@@ -1702,6 +2041,26 @@ function soundCollisions() {
 
     it.hitWindow = null;
     if (win.peak < A.surfaceMinImpact) continue;
+    /* Recorded whether or not it passes, so the two populations can be
+       compared when this is tuned. */
+    if (M.runUps.length < 4000) {
+      M.runUps.push({ r: +(win.runUp || 0).toFixed(4), pair: !!win.pair });
+    }
+    if ((win.runUp || 0) < A.surfaceMinRunUp) { M.hushed++; continue; }
+
+    /* COIN ON COIN ONLY WHILE SOMEBODY IS PLAYING.
+
+       A resting pile is never quite still, and the contacts that survive
+       every other filter are almost all coin against coin - measured, 96 per
+       cent of them while the machine idles. Rather than hunt a threshold that
+       tells a nudge from a landing, this asks whether anyone is listening
+       for it: between turns, with no team lit, two coins touching is not an
+       event and does not sound. Coin against a surface is unaffected, and so
+       is everything during a turn. */
+    if (win.pair && A.coinOnCoinNeedsTurn && teamHighlight < 0) {
+      M.hushed++;
+      continue;
+    }
     ready.push({ handle: it.body.handle, speed: win.peak,
                  voice: win.voice || 'surface',
                  x: it.body.translation().x });
@@ -1762,6 +2121,10 @@ function frame(now) {
   syncMeshes();
   updateScoreboards();
   updateHud();
+  /* Wall-clock, not the physics clock: the backdrop is decoration and should
+     keep breathing while the machine is paused. */
+  if (backdrop) backdrop.update(now / 1000, renderer.domElement.clientWidth,
+                                             renderer.domElement.clientHeight);
   renderer.render(scene, camera);
 }
 
@@ -1999,13 +2362,31 @@ function makeRightColumn() {
 
        overflow:hidden stays as a belt-and-braces guard: if a name somehow got
        past the fitting, it would be clipped rather than escape the panel. */
+    /* THE CLIP LIVES HERE, not on the name.
+
+       It is the guard that stops a name escaping through the bezel if the
+       fitting ever fails. But a clip tight to the text also cut the shadow
+       off in a straight line under the descenders, so the box is padded top
+       and bottom and the padding taken straight back off as a negative
+       margin: the clip grows, the space occupied does not.
+
+       Padding the WRAPPER rather than the name matters. fitName measures the
+       name's scrollHeight, and scrollHeight includes padding - padding the
+       name would inflate every measurement the fitting makes and shrink text
+       that did not need shrinking. */
+    const pad = ((S.nameShadowPad || 0.06) * 100).toFixed(2);
     const nameWrap = document.createElement('div');
-    nameWrap.style.cssText = 'width:100%;';
+    nameWrap.style.cssText =
+      'width:100%;overflow:hidden;' +
+      'padding:' + pad + 'cqh 0;margin:-' + pad + 'cqh 0;';
 
     const name = document.createElement('div');
     name.style.cssText =
       'letter-spacing:0.06em;text-align:center;text-shadow:' + shadow + ';' +
-      'width:100%;overflow-wrap:anywhere;overflow:hidden;' +
+      'width:100%;overflow-wrap:anywhere;' +
+      /* Its own line height, tall enough to contain the descenders that the
+         block's line-height:1 was cutting off. See scoreboard.nameLineHeight. */
+      'line-height:' + (S.nameLineHeight || 1.18) + ';' +
       'font-size:' + (S.nameSize * 100).toFixed(2) + 'cqh;';
     nameWrap.appendChild(name);
 
@@ -2017,9 +2398,49 @@ function makeRightColumn() {
     inner.appendChild(nameWrap);
     inner.appendChild(score);
     box.appendChild(inner);
+
+    /* The doubling chip: the token itself, tilted, in the screen's top-right
+       corner while the turn is doubled.
+
+       A sibling of the centred text block rather than a part of it. Inside
+       'inner' it would join the space-evenly column and shove the name and
+       score off centre every time a token landed, which is the opposite of
+       what a status light should do. Out here it appears and disappears
+       without moving anything.
+
+       The image comes from itemFaceImage, which is the same drawing routine
+       that paints the coin's 3D face - so this is the coin, not a picture of
+       one, and it follows the config.
+
+       The tilt cannot push the disc into the bezel however steep it is set:
+       the rotation is about the element's centre and the artwork is a circle,
+       so the visible disc does not move at all. The element's own bounding
+       box DOES grow - a square rotated 55 degrees measures about 1.39 times
+       its side - but it is absolutely positioned, so nothing is laid out
+       against it and the extra is empty corner. */
+    const D = CFG.multiplier;
+    const mult = document.createElement('div');
+    const coin = D && D.enabled ? itemFaceImage(D.typeId, 192) : null;
+    mult.style.cssText =
+      'position:absolute;pointer-events:none;border-radius:50%;' +
+      'right:' + (S.screenInsetX * 100 + 1.6).toFixed(3) + '%;' +
+      'top:'   + (S.screenInsetY * 100 + 1.4).toFixed(3) + '%;' +
+      'width:'  + ((D ? D.indicatorSize : 0.2) * 100).toFixed(2) + 'cqh;' +
+      'height:' + ((D ? D.indicatorSize : 0.2) * 100).toFixed(2) + 'cqh;' +
+      'background:center/100% 100% no-repeat' + (coin ? ' url(' + coin + ')' : '') + ';' +
+      'transform:rotate(' + (D ? D.indicatorAngle : 0) + 'deg);' +
+      'filter:drop-shadow(0 ' + (S.shadowDy * 100).toFixed(2) + 'cqh ' +
+        (S.shadowBlur * 140).toFixed(2) + 'cqh rgba(4,7,14,.75));';
+    mult.hidden = true;
+    box.appendChild(mult);
+
     row.appendChild(box);
-    const board = { box: box, name: name, score: score,
-                    shownName: null, shownScore: null };
+    /* A colour chosen on the title screen was picked before this panel
+       existed, so it is applied here rather than only when it is chosen. */
+    if (teamPanelUrl[i]) box.style.backgroundImage = 'url("' + teamPanelUrl[i] + '")';
+
+    const board = { box: box, name: name, score: score, mult: mult,
+                    shownName: null, shownScore: null, shownMult: false };
     boards.push(board);
 
     /* Clicking a panel lights the machine in that team's colour. The event is
@@ -2082,7 +2503,7 @@ function makePointsBox() {
     'position:fixed;z-index:10;' +
     'width:min(' + (P.widthFraction * 100).toFixed(2) + 'vw,' +
                    (P.maxHeightFraction * 100).toFixed(2) + 'vh);' +
-    'aspect-ratio:' + S.aspect + ';' +
+    'aspect-ratio:' + P.aspect + ';' +
     'right:' + (P.rightFraction * 100).toFixed(3) + '%;' +
     'bottom:' + (P.bottomFraction * 100).toFixed(3) + '%;' +
     'pointer-events:auto;' +
@@ -2093,10 +2514,10 @@ function makePointsBox() {
   inner.style.cssText =
     'position:absolute;display:flex;flex-direction:column;' +
     'align-items:center;justify-content:space-evenly;' +
-    'left:'   + (S.screenInsetX * 100).toFixed(3) + '%;' +
-    'right:'  + (S.screenInsetX * 100).toFixed(3) + '%;' +
-    'top:'    + (S.screenInsetY * 100).toFixed(3) + '%;' +
-    'bottom:' + (S.screenInsetY * 100).toFixed(3) + '%;' +
+    'left:'   + (P.screenInsetX * 100).toFixed(3) + '%;' +
+    'right:'  + (P.screenInsetX * 100).toFixed(3) + '%;' +
+    'top:'    + (P.screenInsetY * 100).toFixed(3) + '%;' +
+    'bottom:' + (P.screenInsetY * 100).toFixed(3) + '%;' +
     'font-family:' + S.font + ';font-weight:bold;color:#fff;line-height:1;';
 
   const shadow =
@@ -2153,6 +2574,11 @@ function makePointsBox() {
 function setTeamHighlight(i) {
   if (teamHighlight === i) return;
   teamHighlight = i;
+  /* A new turn starts un-doubled, and the turn that just ended keeps whatever
+     it scored. Clicking off and back on to the SAME team is a new turn too -
+     it has to be, or a doubler would carry over a break in play. */
+  turnMultiplier = 1;
+  turnSubtotal = 0;
   paintZones();
 }
 
@@ -2276,7 +2702,1321 @@ function updateScoreboards() {
       b.score.textContent = String(team.score);
       b.shownScore = team.score;
     }
+
+    /* Shown only on the team whose turn it is, and only once something has
+       actually doubled it. It is a light, not a counter: the same coin
+       whether the turn is running at x2 or x4. x1 is the normal state and
+       does not need saying at all. */
+    const D = CFG.multiplier;
+    const on = !!(D && D.enabled && D.showIndicator &&
+                  i === teamHighlight && turnMultiplier > 1);
+    if (b.shownMult !== on) {
+      b.mult.hidden = !on;
+      b.shownMult = on;
+    }
   }
+}
+
+/* ===========================================================================
+   PRESENTS
+
+   A present cannot come down the chute - see itemTypes.present - so the host
+   places them. The button arms placement; the next click on the machine puts
+   one just above whatever was clicked and lets it drop the last fraction of
+   an inch. Clicking the button again cancels.
+
+   Placing ON the pile is deliberately supported: the ray is tested against
+   the decks AND every item, so clicking a heap of coins puts the present on
+   top of the heap rather than inside it.
+   ========================================================================= */
+/* Which type the next click on the machine will put down, or null. One
+   variable rather than one per button: arming the second has to disarm the
+   first, and two booleans would let both be true at once. */
+let placingType = null;
+const placeButtons = [];        // { typeId, el, cap, glow }
+
+/* The ones the game starts with, dropped at random across the top deck. Not
+   part of startingLayout: that queue is laid out in tidy rows and a present
+   is four times a coin's footprint, so it would carve a hole in the pile.
+   Dropped in from just above instead, and left to settle where it lands. */
+function seedPresents() {
+  const P = CFG.presents;
+  if (!P || !P.enabled || !(P.startingCount > 0)) return;
+  const d = DIMS.itemDims(P.typeId);
+  const tier = DIMS.tierLast;
+  const lim = DIMS.width / 2 - d.hx - DIMS.D * 0.5;
+  const back = Math.min(tier.backZ, tier.lipZ), front = Math.max(tier.backZ, tier.lipZ);
+  for (let i = 0; i < P.startingCount; i++) {
+    placePresent((Math.random() * 2 - 1) * lim,
+                 tier.y + DIMS.deckStep + DIMS.D * 1.2,
+                 back + (front - back) * (0.3 + Math.random() * 0.4));
+  }
+}
+
+function countOnBoard(typeId) {
+  let n = 0;
+  for (let i = 0; i < ctx.items.length; i++) {
+    if (ctx.items[i].typeId === typeId) n++;
+  }
+  return n;
+}
+
+function setPlacing(typeId) {
+  if (typeId) {
+    const b = placeButtons.find(function (x) { return x.typeId === typeId; });
+    /* cap 0 means no limit - the jackpot token has none. */
+    if (b && b.cap > 0 && countOnBoard(typeId) >= b.cap) return;
+  }
+  placingType = typeId || null;
+  for (let i = 0; i < placeButtons.length; i++) {
+    const b = placeButtons[i];
+    b.el.style.filter = (placingType === b.typeId)
+      ? 'brightness(1.25) drop-shadow(0 0 10px ' + b.glow + ')'
+      : 'none';
+  }
+}
+
+/* Where a click lands, as a point to stand a present on.
+
+   Solid things first - the moving deck and every item - so clicking a heap of
+   coins puts the present ON the heap rather than inside it. The fixed floor
+   below the deck is not one of the meshes the machine hands out, so anything
+   that misses falls back to a horizontal plane at that floor's height, which
+   is the same answer without needing the geometry.
+
+   Either way the result is clamped into the machine, so a click that clips
+   the cabinet edge or the room behind it cannot drop a present into a wall.
+   ------------------------------------------------------------------------- */
+const placePlane = new THREE.Plane();
+const placeHit = new THREE.Vector3();
+
+function placementPoint(ray) {
+  const targets = ctx.machine.shelves.map(function (s) { return s.mesh; })
+    .concat(ctx.items.map(function (i) { return i.mesh; }));
+  const hits = ray.intersectObjects(targets, true);
+  let pt = hits.length ? hits[0].point.clone() : null;
+
+  if (!pt) {
+    placePlane.set(new THREE.Vector3(0, 1, 0), -DIMS.tierLast.y);
+    if (!ray.ray.intersectPlane(placePlane, placeHit)) return null;
+    pt = placeHit.clone();
+  }
+
+  const tier = DIMS.tierLast;
+  const back = Math.min(tier.backZ, tier.lipZ), front = Math.max(tier.backZ, tier.lipZ);
+  if (pt.z < back - DIMS.D * 3 || pt.z > front + DIMS.D * 3) return null;
+  pt.z = Math.max(back + DIMS.D * 0.6, Math.min(front - DIMS.D * 0.6, pt.z));
+  return pt;
+}
+
+/* Put one down at a world point, sitting just above whatever is there. */
+function placeItem(typeId, x, y, z, dropInCoins) {
+  const type = CFG.itemTypes[typeId];
+  const d = DIMS.itemDims(typeId);
+  /* Clamped inside the machine so a click that clips the cabinet edge does
+     not drop a present into the wall. */
+  /* A disc reports its size differently from a box, and the jackpot token is
+     a disc while a present is a box. */
+  const half = d.shape === 'box' ? d.hx : d.footprint / 2;
+  const up   = d.shape === 'box' ? d.hy : d.halfHeight;
+  const lim = DIMS.width / 2 - half - DIMS.D * 0.1;
+  x = Math.max(-lim, Math.min(lim, x));
+  return createItem(ctx, typeId, x, y + up + DIMS.D * dropInCoins, z,
+                    (type.spawnYawDeg || 0) * Math.PI / 180);
+}
+
+/* How far above the click a thing starts, in coins. Asked by type rather
+   than decided at the call site, because there are now three answers and the
+   click handler should not have to know which is which. */
+function dropHeightFor(typeId) {
+  const P = CFG.presents, J = CFG.jackpot, C = CFG.placeCoin;
+  if (J && typeId === J.typeId) return J.dropHeightInCoins;
+  if (P && typeId === P.typeId) return P.dropHeightInCoins;
+  return (C && C.dropHeightInCoins != null) ? C.dropHeightInCoins : 0.35;
+}
+
+function placePresent(x, y, z) {
+  return placeItem(CFG.presents.typeId, x, y, z,
+                   CFG.presents.dropHeightInCoins);
+}
+
+/* The placement buttons, in a row beside the points-per-coin box: jackpot
+   token, then present, then the box. Each is the same size and each is a
+   picture of the thing it puts down.
+
+   Positioned by counting outwards from the right edge - every button is one
+   button-width plus a gap further left than the last - so adding a third
+   later is one more entry in the list rather than a new sum. */
+function makeButtonRow() {
+  const pts = CFG.pointsBox;
+  const P = CFG.presents, J = CFG.jackpot;
+  if (!P || !P.enabled) return;
+  const B = P.button;
+
+  const size = 'min(' + (B.sizeFraction * 100) + 'vw, ' +
+                        (B.maxHeightFraction * 100) + 'vh)';
+  const boxW = 'min(' + (pts.widthFraction * 100) + 'vw, ' +
+                        (pts.maxHeightFraction * 100) + 'vh)';
+
+  /* Right to left: the present sits against the points box, the jackpot
+     token sits left of the present. */
+  const list = [
+    { typeId: P.typeId, icon: presentIcon(96), cap: P.maxOnBoard,
+      glow: B.armedGlow, title: 'Place a present' }
+  ];
+  if (J && J.enabled) {
+    list.push({ typeId: J.typeId, icon: itemFaceImage(J.typeId, 128),
+                cap: J.maxOnBoard, glow: B.armedGlow,
+                title: 'Place a jackpot token',
+                gap: J.button && J.button.gapFraction });
+  }
+
+  let offset = 'calc(' + (pts.rightFraction * 100) + 'vw + ' + boxW + ')';
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i];
+    const gap = (item.gap != null ? item.gap : B.gapFraction) * 100;
+    offset = 'calc(' + offset.slice(5, -1) + ' + ' + gap + 'vw)';
+
+    const btn = document.createElement('div');
+    btn.title = item.title;
+    btn.style.cssText =
+      'position:fixed;z-index:22;cursor:pointer;border-radius:50%;' +
+      'width:' + size + ';height:' + size + ';' +
+      'bottom:' + (pts.bottomFraction * 100) + 'vh;' +
+      'right:' + offset + ';' +
+      'background:center/contain no-repeat url(' + item.icon + ');' +
+      'transition:filter .12s;';
+    (function (typeId) {
+      btn.addEventListener('pointerdown', function (e) {
+        e.stopPropagation();
+        setPlacing(placingType === typeId ? null : typeId);
+      });
+    })(item.typeId);
+    document.body.appendChild(btn);
+    placeButtons.push({ typeId: item.typeId, el: btn, cap: item.cap,
+                        glow: item.glow });
+
+    /* The next one along starts a full button further left. */
+    offset = 'calc(' + offset.slice(5, -1) + ' + ' + size + ')';
+  }
+}
+
+/* The present icon, drawn rather than shipped: the same box-and-ribbon idea
+   as the 3D present, flat, in the first palette entry so the button looks
+   like the thing it makes. The jackpot token needs no such thing - its face
+   IS a flat drawing already, so the button borrows the coin's own. */
+function presentIcon(px) {
+  const W = CFG.itemTypes[CFG.presents.typeId].wrap;
+  const c = W.palette[0];
+  const hex = (v) => '#' + (v >>> 0).toString(16).padStart(6, '0');
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = px;
+  const g = cv.getContext('2d');
+  const m = px * 0.10, s = px - m * 2, band = s * 0.19;
+  g.fillStyle = hex(c.box);
+  g.fillRect(m, m + s * 0.13, s, s - s * 0.13);
+  g.fillStyle = hex(c.ribbon);
+  g.fillRect(m + s / 2 - band / 2, m + s * 0.13, band, s - s * 0.13);  // down
+  g.fillRect(m, m + s * 0.13, s, band * 0.9);                          // lid band
+  /* Two loops and a knot, enough of a bow at button size. */
+  g.beginPath();
+  g.ellipse(m + s * 0.34, m + s * 0.12, s * 0.16, s * 0.10, 0, 0, 7);
+  g.ellipse(m + s * 0.66, m + s * 0.12, s * 0.16, s * 0.10, 0, 0, 7);
+  g.fill();
+  return cv.toDataURL('image/png');
+}
+
+/* ===========================================================================
+   THE VOLUME CONTROL
+
+   A vertical slider with a speaker under it, bottom left. Built by hand
+   rather than from an <input type=range>: a range input has to be rotated to
+   stand up, and a rotated input's hit box no longer agrees with where it is
+   drawn, which makes it miss clicks near the ends. A track and a handle with
+   pointer capture is less code than fighting that.
+
+   Both halves write through setVolume, which is the only place the audio is
+   actually touched - so muting and dragging cannot disagree about the level.
+   ========================================================================= */
+let volumeLevel = 1;
+let volumeMuted = false;
+let volumeParts = null;         // { fill, handle, icon, hw }
+/* What the slider is currently showing. Mirrors the innermost light tube -
+   see the volume block in config for why that one rule covers flashing with
+   the machine, going red while a zone is armed, and carrying a team's colour,
+   without any of them being written out separately. White is the tube's own
+   resting colour, so it is also the slider's. */
+let volumeTint = 0xFFFFFF;
+
+function tintCss(hex, alpha) {
+  return 'rgba(' + ((hex >> 16) & 255) + ',' + ((hex >> 8) & 255) + ',' +
+         (hex & 255) + ',' + alpha + ')';
+}
+
+function setVolumeTint(hex) {
+  if (hex === volumeTint) return;      // the tubes only move on a transition
+  volumeTint = hex;
+  paintVolumeTint();
+}
+
+function paintVolumeTint() {
+  if (!volumeParts) return;
+  const V = CFG.volume;
+  volumeParts.fill.style.background   = tintCss(volumeTint, V.tintAlpha);
+  volumeParts.handle.style.background = tintCss(volumeTint, V.handleAlpha);
+  /* The speaker takes it too. Colouring a MASK rather than redrawing the
+     icon: the tint changes on almost every step of a flash, and redrawing a
+     canvas and re-encoding it to a data url sixty times a second to recolour
+     a 30-pixel picture would be absurd. The masks are generated once; from
+     then on this is one CSS property. */
+  volumeParts.body.style.background  = tintCss(volumeTint, V.iconAlpha);
+  volumeParts.waves.style.background = tintCss(volumeTint, V.iconAlpha);
+  /* The cog is part of the same column and takes the same colour. It is
+     registered by makeSettings rather than built here, so it may not exist
+     yet - this runs from the very first frame, the cog arrives a moment
+     later. */
+  if (volumeParts.cog) {
+    volumeParts.cog.style.background = tintCss(volumeTint, V.iconAlpha);
+  }
+}
+
+function applyVolume() {
+  /* Both, and the config one matters: audio.js reads masterVolume when the
+     AudioContext is built, which happens on START. Without this line, a level
+     set on the title screen would be forgotten the moment the game began. */
+  if (CFG.audio) CFG.audio.masterVolume = volumeLevel;
+  setMasterVolume(volumeMuted ? 0 : volumeLevel);
+  /* And the title track, which is a plain <audio> element outside the game's
+     mixer. Without this the slider would be visible on the title screen and
+     do nothing to the only sound playing, which reads as broken. */
+  if (titleMusic) titleMusic.volume = titleMusicLevel();
+  if (introVideo) introVideo.volume = introLevel();
+
+  if (!volumeParts) return;
+  const pct = (volumeLevel * 100).toFixed(1) + '%';
+  volumeParts.fill.style.height = pct;
+  volumeParts.handle.style.bottom = 'calc(' + pct + ' - ' + volumeParts.hw + ')';
+  volumeParts.fill.style.opacity = volumeMuted ? '0.25' : '1';
+  volumeParts.waves.hidden = volumeMuted;
+  volumeParts.cross.hidden = !volumeMuted;
+  paintVolumeTint();
+}
+
+function setVolume(v, mute) {
+  /* Reject anything that is not a number BEFORE it reaches the level.
+
+     Math.min and Math.max propagate NaN rather than clamping it, so one bad
+     value poisons volumeLevel, then CFG.audio.masterVolume, and then throws
+     out of the AudioParam - which silences the whole game with nothing on
+     screen to say why. A slider measured while its panel is hidden has zero
+     width, and a divide by zero is all it takes. */
+  if (!isFinite(v)) v = volumeLevel;
+  volumeLevel = Math.max(0, Math.min(1, v));
+  if (mute !== undefined) volumeMuted = !!mute;
+  applyVolume();
+  /* The LEVEL is remembered, the mute is not - see the volume block in
+     config. Wrapped because storage throws outright in a few contexts rather
+     than just coming back empty. */
+  try {
+    if (CFG.volume.storageKey) {
+      localStorage.setItem(CFG.volume.storageKey, String(volumeLevel));
+    }
+  } catch (e) { /* private window, or site data blocked - carry on */ }
+}
+
+function makeVolumeControl() {
+  const V = CFG.volume;
+  if (!V || !V.enabled) return;
+
+  const icon = 'min(' + (V.iconFraction * 100) + 'vw, ' +
+                        (V.iconMaxHeight * 100) + 'vh)';
+  const trackH = (V.trackHeightFraction * 100) + 'vh';
+  const trackW = 'min(' + (V.trackWidthFraction * 100) + 'vw, ' +
+                          (V.trackWidthFraction * 200) + 'vh)';
+  const knobSize = 'calc(' + trackW + ' * 2.6)';
+  const half     = 'calc(' + knobSize + ' / 2)';
+
+  const wrap = document.createElement('div');
+  /* ABOVE the title screen, which is z-index 50 in index.html. This control
+     is on screen before the game is, so it has to outrank the overlay it sits
+     on - at 22 it was built, positioned and coloured correctly and then
+     covered by a black panel, which looks exactly like it not being there. */
+  wrap.style.cssText =
+    'position:fixed;z-index:60;display:flex;flex-direction:column;' +
+    'align-items:center;gap:' + (V.gapFraction * 100) + 'vh;' +
+    'left:' + (V.leftFraction * 100) + 'vw;' +
+    'bottom:' + (V.bottomFraction * 100) + 'vh;';
+
+  /* The track sits inside a wider invisible column, so the whole strip is
+     grabbable - a seven pixel wide track is a cruel target with a mouse. */
+  const grab = document.createElement('div');
+  grab.style.cssText =
+    'position:relative;cursor:pointer;touch-action:none;' +
+    'height:' + trackH + ';width:' + icon + ';' +
+    'display:flex;justify-content:center;';
+
+  const track = document.createElement('div');
+  track.style.cssText =
+    'position:relative;height:100%;width:' + trackW + ';border-radius:999px;' +
+    'background:' + V.trackColour + ';';
+
+  const fill = document.createElement('div');
+  fill.style.cssText =
+    'position:absolute;left:0;right:0;bottom:0;border-radius:999px;' +
+    'transition:opacity .12s;';
+
+  const knob = document.createElement('div');
+  knob.style.cssText =
+    'position:absolute;left:50%;transform:translateX(-50%);' +
+    'width:' + knobSize + ';height:' + knobSize + ';border-radius:50%;' +
+    'box-shadow:0 1px 4px rgba(0,0,0,.55);pointer-events:none;';
+
+  track.appendChild(fill);
+  track.appendChild(knob);
+  grab.appendChild(track);
+
+  /* The speaker is three stacked masks rather than one picture: the body and
+     the sound waves take the machine's colour, the cross stays red. A single
+     tinted image could not do that - the cross would flash with everything
+     else and stop reading as "muted" at exactly the moment it matters. */
+  const speaker = document.createElement('div');
+  speaker.title = 'Mute';
+  speaker.style.cssText =
+    'position:relative;width:' + icon + ';height:' + icon + ';cursor:pointer;';
+
+  const masks = speakerMasks(128);
+  function layer(url) {
+    const d = document.createElement('div');
+    d.style.cssText =
+      'position:absolute;inset:0;pointer-events:none;' +
+      '-webkit-mask-image:url(' + url + ');mask-image:url(' + url + ');' +
+      '-webkit-mask-size:contain;mask-size:contain;' +
+      '-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;' +
+      '-webkit-mask-position:center;mask-position:center;';
+    speaker.appendChild(d);
+    return d;
+  }
+  const body  = layer(masks.body);
+  const waves = layer(masks.waves);
+  const cross = layer(masks.cross);
+  cross.style.background = V.mutedColour;
+  cross.hidden = true;
+
+  wrap.appendChild(grab);
+  wrap.appendChild(speaker);
+  document.body.appendChild(wrap);
+  volumeParts = { fill: fill, handle: knob, icon: speaker, hw: half, wrap: wrap,
+                  body: body, waves: waves, cross: cross };
+
+  /* Dragging. Pointer capture means a drag that wanders off the track still
+     controls it, which is what anyone expects from a slider. */
+  function fromEvent(e) {
+    const r = track.getBoundingClientRect();
+    if (!r.height) return;           // hidden, or not laid out yet
+    /* Dragging always unmutes: reaching for the slider means you want to hear
+       something, and leaving it silent while the bar moves looks broken. */
+    setVolume(1 - (e.clientY - r.top) / r.height, false);
+  }
+  grab.addEventListener('pointerdown', function (e) {
+    e.stopPropagation();
+    /* In a try: it throws on a pointer id the browser does not recognise, and
+       an unguarded throw aborts the handler before the click is read - the
+       slider simply does not respond. Same guard as the settings one. */
+    try { grab.setPointerCapture(e.pointerId); } catch (err) { /* no capture */ }
+    fromEvent(e);
+  });
+  grab.addEventListener('pointermove', function (e) {
+    if (grab.hasPointerCapture(e.pointerId)) fromEvent(e);
+  });
+
+  speaker.addEventListener('pointerdown', function (e) {
+    e.stopPropagation();          // do not clear whose turn it is
+    setVolume(volumeLevel, !volumeMuted);
+  });
+
+  /* Start from what was stored, falling back to the config's own level. */
+  let start = CFG.audio ? CFG.audio.masterVolume : 1;
+  try {
+    const saved = localStorage.getItem(V.storageKey);
+    if (saved !== null && isFinite(parseFloat(saved))) start = parseFloat(saved);
+  } catch (e) { /* nothing stored, or storage unavailable */ }
+  setVolume(start, false);
+}
+
+/* The speaker as three separate MASKS - body, waves, cross - so each can be
+   coloured independently in CSS afterwards. Drawn in solid black because a
+   mask only reads alpha; the colour comes from the element behind it.
+
+   Generated once and cached. Everything after that is a style change. */
+let speakerMaskCache = null;
+
+function speakerMasks(px) {
+  if (speakerMaskCache) return speakerMaskCache;
+
+  function sheet(draw) {
+    const c = document.createElement('canvas');
+    c.width = c.height = px;
+    const g = c.getContext('2d');
+    g.fillStyle = '#000';
+    g.strokeStyle = '#000';
+    g.lineCap = 'round';
+    draw(g, px / 100);
+    return c.toDataURL('image/png');
+  }
+
+  speakerMaskCache = {
+    body: sheet(function (g, u) {
+      g.beginPath();
+      g.moveTo(16 * u, 38 * u);
+      g.lineTo(32 * u, 38 * u);
+      g.lineTo(50 * u, 18 * u);
+      g.lineTo(50 * u, 82 * u);
+      g.lineTo(32 * u, 62 * u);
+      g.lineTo(16 * u, 62 * u);
+      g.closePath();
+      g.fill();
+    }),
+    waves: sheet(function (g, u) {
+      for (let i = 0; i < 2; i++) {
+        g.lineWidth = 7 * u;
+        g.beginPath();
+        g.arc(54 * u, 50 * u, (15 + i * 15) * u, -Math.PI / 3.4, Math.PI / 3.4);
+        g.stroke();
+      }
+    }),
+    cross: sheet(function (g, u) {
+      g.lineWidth = 10 * u;
+      g.beginPath();
+      g.moveTo(60 * u, 34 * u); g.lineTo(92 * u, 66 * u);
+      g.moveTo(92 * u, 34 * u); g.lineTo(60 * u, 66 * u);
+      g.stroke();
+    })
+  };
+  return speakerMaskCache;
+}
+
+/* ===========================================================================
+   THE INTRO
+
+   Full screen the moment START is pressed, with the game building behind it.
+   Any key or click skips straight through.
+
+   Nothing here blocks the build: this only puts a black sheet with a video on
+   it over the top and takes it away again. The world is being assembled
+   underneath the whole time, so by the time the video ends - or is skipped -
+   the machine is already there.
+   ========================================================================= */
+let introVideo = null, introOverlay = null;
+
+function introLevel() {
+  const V = CFG.intro;
+  const v = (volumeMuted ? 0 : volumeLevel) * (V ? V.volume : 1);
+  return Math.max(0, Math.min(1, v));
+}
+
+/* Made on the title screen so it is buffered before anyone presses START -
+   otherwise the first thing the intro does is stall on a black screen. */
+function prepareIntro() {
+  const V = CFG.intro;
+  if (!V || !V.enabled || introVideo) return;
+  const el = document.createElement('video');
+  el.src = V.src;
+  el.preload = 'auto';
+  el.playsInline = true;
+  el.volume = introLevel();
+  introVideo = el;
+}
+
+function playIntro() {
+  const V = CFG.intro;
+  if (!V || !V.enabled) return;
+  prepareIntro();
+  if (!introVideo) return;
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:100;background:#000;' +
+    'display:flex;align-items:center;justify-content:center;';
+  introVideo.style.cssText =
+    'width:100%;height:100%;object-fit:contain;background:#000;';
+  overlay.appendChild(introVideo);
+  document.body.appendChild(overlay);
+  introOverlay = overlay;
+
+  let done = false;
+  function finish() {
+    if (done) return;
+    done = true;
+    window.removeEventListener('keydown', finish, true);
+    window.removeEventListener('pointerdown', finish, true);
+    if (introVideo) { try { introVideo.pause(); } catch (e) { /* already gone */ } }
+    if (introOverlay && introOverlay.parentNode) {
+      introOverlay.parentNode.removeChild(introOverlay);
+    }
+    introOverlay = null;
+  }
+
+  introVideo.addEventListener('ended', finish);
+  /* A file that will not load or will not play must cost nothing worse than
+     no intro. It must never hang on a black screen with no way forward. */
+  introVideo.addEventListener('error', finish);
+  const p = introVideo.play();
+  if (p && p.catch) p.catch(finish);
+
+  /* Armed late, so the click that pressed START cannot skip its own video. */
+  setTimeout(function () {
+    if (done) return;
+    window.addEventListener('keydown', finish, true);
+    window.addEventListener('pointerdown', finish, true);
+  }, V.skipArmMs);
+}
+
+/* ===========================================================================
+   THE TITLE MUSIC
+
+   Loops behind the team-name screen and stops when the game begins.
+
+   A plain <audio> element rather than the game's own audio graph, because of
+   timing: that graph needs an AudioContext, an AudioContext needs a user
+   gesture, and the gesture is the START click - by which point the title
+   screen is over. An <audio> element carries the same restriction but its
+   play() returns a promise that REJECTS rather than throwing, so it can be
+   tried at once and started on the first click or keypress if the browser
+   says no. The host types two team names before pressing START, so in
+   practice it is running long before then.
+
+   The level is scaled by whatever the volume slider was last set to. Without
+   that, a host who turned the game down last week gets the title music at
+   full blast this week, which is precisely the sort of thing that happens in
+   front of a room full of people.
+   ========================================================================= */
+let titleMusic = null;
+
+/* What the title track should be playing at right now: its own trim, scaled
+   by the volume slider, and silenced by the mute. One expression, used both
+   when it starts and every time the slider moves. */
+function titleMusicLevel() {
+  const T = CFG.titleMusic;
+  const v = (volumeMuted ? 0 : volumeLevel) * (T ? T.volume : 1);
+  return Math.max(0, Math.min(1, v));
+}
+
+function startTitleMusic() {
+  const T = CFG.titleMusic;
+  if (!T || !T.enabled || titleMusic) return;
+
+  const el = document.createElement('audio');
+  el.src = T.src;
+  el.loop = true;
+  /* T.volume is this track's own trim; the slider does the rest. Set through
+     the same expression applyVolume uses, so the level the music starts at
+     and the level a drag produces cannot disagree. */
+  el.volume = titleMusicLevel();
+  el.id = 'titleMusic';
+  /* In the document, though an <audio> element plays perfectly well outside
+     it. Being findable is worth the one line: a title track that will not
+     start is exactly the sort of thing that needs looking at from a console
+     rather than guessed at. */
+  document.body.appendChild(el);
+  titleMusic = el;
+
+  /* Try immediately; if the browser refuses for want of a gesture, wait for
+     one. The listeners are on the window with capture so they see the click
+     wherever it lands - including on the team-name fields, which is the first
+     thing the host touches. */
+  function attempt() {
+    const p = el.play();
+    if (p && p.catch) p.catch(function () { /* still no gesture - wait */ });
+  }
+  function onGesture() {
+    attempt();
+    window.removeEventListener('pointerdown', onGesture, true);
+    window.removeEventListener('keydown', onGesture, true);
+  }
+  attempt();
+  window.addEventListener('pointerdown', onGesture, true);
+  window.addEventListener('keydown', onGesture, true);
+}
+
+/* Faded rather than cut. A loop that vanishes mid-bar sounds like a fault. */
+function stopTitleMusic() {
+  const el = titleMusic;
+  if (!el) return;
+  titleMusic = null;
+
+  const T = CFG.titleMusic;
+  const steps = Math.max(1, Math.round((T.fadeOutSeconds || 0) * 30));
+  const from = el.volume;
+  let i = 0;
+  const timer = setInterval(function () {
+    i++;
+    el.volume = Math.max(0, from * (1 - i / steps));
+    if (i >= steps) {
+      clearInterval(timer);
+      el.pause();
+      el.src = '';          // let the decoder go
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }
+  }, 1000 / 30);
+}
+
+/* ===========================================================================
+   THE SETTINGS MENU
+
+   A cog under the volume mixer - added to the SAME column, which is what
+   pushes the mixer up to make room for it - opening a panel built from the
+   same generator as the scoreboards. Real chrome, dark screen, the same
+   condensed bold, so it reads as part of the machine rather than as a dialog.
+
+   The machine keeps running while it is open, deliberately: a host adjusting
+   the speed wants to see what the speed does.
+   ========================================================================= */
+let settingsPanel = null, settingsOpen = false;
+let speedIndex = 4, multiplierOn = true, basePeriodMs = 0;
+
+/* Remove every item the test picks out. Used by the four delete buttons, all
+   of which differ only in the test. */
+function removeItems(test) {
+  if (!ctx) return 0;
+  let n = 0;
+  for (let i = ctx.items.length - 1; i >= 0; i--) {
+    const it = ctx.items[i];
+    if (!test(it)) continue;
+    scene.remove(it.mesh);
+    ctx.world.removeRigidBody(it.body);
+    ctx.items.splice(i, 1);
+    n++;
+  }
+  return n;
+}
+
+/* Anything wedged behind the glass among the pegs.
+
+   BY POSITION, not by the in-the-chute flag. dropStep is cleared after 600
+   steps as a give-up guard, so a coin stuck longer than ten seconds has
+   already lost it - which is exactly the coin somebody reaches for this
+   button to clear. trackChute makes the same point about a different pass. */
+function inChute(it) {
+  const t = it.body.translation();
+  /* DEPTH does the discriminating, not height.
+
+     Two earlier versions got this wrong from opposite ends. The first allowed
+     a coin's diameter below the chute's floor and swept six coins off the
+     shelf when one was stuck. The second raised the floor to chuteBottom
+     exactly - which fixed that, and then failed to clear a coin wedged in the
+     chute's MOUTH, half in and half out, because it sits below that line. It
+     is not "leaving anyway" if it is jammed.
+
+     Measured instead: a coin resting anywhere below the chute sits at least
+     0.084 from the glass on a fresh pile, and 0.419 once the machine has been
+     running - while a coin in the chute is within about 0.05 of it, because
+     the slot is only 0.052 deep. So the z window separates them on its own,
+     and the height only has to reach down far enough to include the mouth.
+     Down to the deck's surface does that with room to spare. */
+  return Math.abs(t.z - DIMS.panelZ) < DIMS.chuteDepth * 1.2 &&
+         t.y > DIMS.tierTop.y + DIMS.deckStep - DIMS.D * 0.5 &&
+         t.y < DIMS.chuteTop + DIMS.D;
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem(CFG.settings.storageKey, JSON.stringify({
+      speed: speedIndex, multiplier: multiplierOn
+    }));
+  } catch (e) { /* private window, or site data blocked */ }
+}
+
+function applySpeed() {
+  const S = CFG.settings;
+  const mult = S.speedSteps[speedIndex] || 1;
+  /* Off the ORIGINAL period, never off the current one, or every change
+     compounds with the last. */
+  CFG.shelf.periodMs = basePeriodMs / mult;
+}
+
+function applyMultiplier(deleteExisting) {
+  CFG.multiplier.enabled = multiplierOn;
+  if (!multiplierOn && deleteExisting) {
+    removeItems(function (it) { return it.typeId === CFG.multiplier.typeId; });
+  }
+}
+
+function speedLabel(m) {
+  if (m === 1) return 'NORMAL';
+  if (m > 1) return 'x' + (Math.round(m * 10) / 10);
+  return '/' + (Math.round((1 / m) * 10) / 10);
+}
+
+function makeSettings() {
+  const S = CFG.settings, SB = CFG.scoreboard, V = CFG.volume;
+  if (!S || !S.enabled) return;
+
+  basePeriodMs = CFG.shelf.periodMs;
+  try {
+    const saved = JSON.parse(localStorage.getItem(S.storageKey) || 'null');
+    if (saved) {
+      if (saved.speed >= 0 && saved.speed < S.speedSteps.length) speedIndex = saved.speed;
+      if (typeof saved.multiplier === 'boolean') multiplierOn = saved.multiplier;
+    }
+  } catch (e) { /* nothing stored */ }
+  applySpeed();
+  applyMultiplier(false);
+
+  /* ---- the cog, joining the volume column ---- */
+  const size = 'min(' + (V.cogFraction * 100) + 'vw, ' +
+                        (V.cogMaxHeight * 100) + 'vh)';
+  const cog = document.createElement('div');
+  cog.title = 'Settings';
+  cog.style.cssText =
+    'width:' + size + ';height:' + size + ';cursor:pointer;' +
+    '-webkit-mask-image:url(' + cogMask(128) + ');mask-image:url(' + cogMask(128) + ');' +
+    '-webkit-mask-size:contain;mask-size:contain;' +
+    '-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;' +
+    '-webkit-mask-position:center;mask-position:center;' +
+    'background:rgba(255,255,255,0.82);';
+  cog.addEventListener('pointerdown', function (e) {
+    e.stopPropagation();
+    toggleSettings();
+  });
+  if (volumeParts && volumeParts.wrap) {
+    volumeParts.wrap.appendChild(cog);
+    /* Hand it to the volume control so it takes the machine's colour with
+       everything else in that corner - the tint is pushed from tickLights,
+       and this is what puts the cog on the list. */
+    volumeParts.cog = cog;
+    paintVolumeTint();
+  }
+
+  /* ---- the panel ---- */
+  const shadow =
+    '0 ' + (SB.shadowDy * 100).toFixed(2) + 'cqh ' +
+    (SB.shadowBlur * 100).toFixed(2) + 'cqh rgba(4,7,14,.72), ' +
+    '0 0 4cqh rgba(190,220,255,.5)';
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    'position:fixed;z-index:70;left:50%;top:50%;transform:translate(-50%,-50%);' +
+    'width:min(' + (S.widthFraction * 100) + 'vw, ' +
+                   (S.maxHeightFraction * 100) + 'vh);' +
+    'aspect-ratio:' + S.aspect + ';' +
+    'background:url(' + S.src + ') center/100% 100% no-repeat;' +
+    'container-type:size;';
+  box.hidden = true;
+  box.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+
+  const inner = document.createElement('div');
+  inner.style.cssText =
+    'position:absolute;display:flex;flex-direction:column;' +
+    'left:'   + (S.screenInsetX * 100).toFixed(3) + '%;' +
+    'right:'  + (S.screenInsetX * 100).toFixed(3) + '%;' +
+    'top:'    + (S.screenInsetY * 100).toFixed(3) + '%;' +
+    'bottom:' + (S.screenInsetY * 100).toFixed(3) + '%;' +
+    'padding:2.2cqh 4cqw;box-sizing:border-box;gap:1.5cqh;' +
+    'font-family:' + SB.font + ';font-weight:bold;color:#fff;line-height:1;';
+
+  const title = document.createElement('div');
+  title.textContent = 'SETTINGS';
+  title.style.cssText =
+    'text-align:center;letter-spacing:0.08em;text-shadow:' + shadow + ';' +
+    'font-size:' + (S.titleSize * 100).toFixed(2) + 'cqh;margin-bottom:0.6cqh;';
+  inner.appendChild(title);
+
+  function labelStyle() {
+    return 'font-size:' + (S.labelSize * 100).toFixed(2) + 'cqh;' +
+           'letter-spacing:0.05em;text-shadow:' + shadow + ';';
+  }
+
+  /* A label with a control beside it. */
+  function row(text) {
+    const r = document.createElement('div');
+    r.style.cssText = 'display:flex;align-items:center;gap:3cqw;';
+    const l = document.createElement('div');
+    l.textContent = text;
+    l.style.cssText = labelStyle() + 'flex:0 0 34%;';
+    r.appendChild(l);
+    inner.appendChild(r);
+    return r;
+  }
+
+  /* A horizontal slider. onPick gets 0..1. */
+  function slider(parent, initial, onPick) {
+    const track = document.createElement('div');
+    track.style.cssText =
+      'position:relative;flex:1 1 auto;height:1.6cqh;border-radius:999px;' +
+      'background:rgba(255,255,255,0.18);cursor:pointer;touch-action:none;';
+    const fill = document.createElement('div');
+    fill.style.cssText =
+      'position:absolute;left:0;top:0;bottom:0;border-radius:999px;' +
+      'background:rgba(255,255,255,0.72);';
+    const knob = document.createElement('div');
+    knob.style.cssText =
+      'position:absolute;top:50%;transform:translate(-50%,-50%);' +
+      'width:3.4cqh;height:3.4cqh;border-radius:50%;background:#F2F7FF;' +
+      'box-shadow:0 1px 4px rgba(0,0,0,.55);pointer-events:none;';
+    track.appendChild(fill);
+    track.appendChild(knob);
+    parent.appendChild(track);
+
+    function paint(v) {
+      fill.style.width = (v * 100).toFixed(1) + '%';
+      knob.style.left  = (v * 100).toFixed(1) + '%';
+    }
+    function from(e) {
+      const r = track.getBoundingClientRect();
+      if (!r.width) return;          // hidden, or not laid out yet
+      paint(onPick(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width))));
+    }
+    track.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+      /* Capture so a drag that wanders off the track still controls it. In a
+         try: it throws on a pointer id the browser does not recognise, and an
+         unguarded throw here would abort the handler before the click was
+         even read - the slider would simply not respond. */
+      try { track.setPointerCapture(e.pointerId); } catch (err) { /* no capture */ }
+      from(e);
+    });
+    track.addEventListener('pointermove', function (e) {
+      if (track.hasPointerCapture(e.pointerId)) from(e);
+    });
+    paint(initial);
+    return paint;
+  }
+
+  /* A full-width button. */
+  function button(text, onClick) {
+    const b = document.createElement('div');
+    b.textContent = text;
+    b.style.cssText =
+      'text-align:center;cursor:pointer;border-radius:1cqh;' +
+      'padding:1.5cqh 0;background:rgba(255,255,255,0.10);' +
+      'border:0.35cqh solid rgba(255,255,255,0.22);' +
+      labelStyle() + 'transition:background .12s;';
+    b.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+      onClick(b);
+    });
+    b.addEventListener('pointerenter', function () {
+      b.style.background = 'rgba(255,255,255,0.20)';
+    });
+    b.addEventListener('pointerleave', function () {
+      b.style.background = 'rgba(255,255,255,0.10)';
+    });
+    inner.appendChild(b);
+    return b;
+  }
+
+  /* Say what a button did, then put its name back - a delete that removes
+     nothing looks broken otherwise. */
+  function flash(b, text, revert) {
+    b.textContent = text;
+    setTimeout(function () { b.textContent = revert; }, 900);
+  }
+
+  /* ---- volume ---- */
+  const volRow = row('VOLUME');
+  const volPaint = slider(volRow, volumeLevel, function (v) {
+    setVolume(v, false);
+    return v;
+  });
+
+  /* ---- x2 coins ---- */
+  const multRow = row('x2 COINS');
+  const multBtn = document.createElement('div');
+  multBtn.style.cssText =
+    'flex:1 1 auto;text-align:center;cursor:pointer;border-radius:1cqh;' +
+    'padding:1.2cqh 0;border:0.35cqh solid rgba(255,255,255,0.22);' +
+    labelStyle();
+  function paintMult() {
+    multBtn.textContent = multiplierOn ? 'ON' : 'OFF';
+    multBtn.style.background = multiplierOn
+      ? 'rgba(155,92,255,0.45)' : 'rgba(255,255,255,0.08)';
+  }
+  multBtn.addEventListener('pointerdown', function (e) {
+    e.stopPropagation();
+    multiplierOn = !multiplierOn;
+    applyMultiplier(true);
+    paintMult();
+    saveSettings();
+  });
+  paintMult();
+  multRow.appendChild(multBtn);
+
+  /* ---- speed ---- */
+  const speedRow = row('SPEED');
+  const speedVal = document.createElement('div');
+  speedVal.style.cssText = labelStyle() + 'flex:0 0 18%;text-align:right;';
+  const steps = S.speedSteps;
+  const speedPaint = slider(speedRow, speedIndex / (steps.length - 1), function (v) {
+    speedIndex = Math.round(v * (steps.length - 1));
+    applySpeed();
+    speedVal.textContent = speedLabel(steps[speedIndex]);
+    saveSettings();
+    return speedIndex / (steps.length - 1);
+  });
+  speedVal.textContent = speedLabel(steps[speedIndex]);
+  speedRow.appendChild(speedVal);
+
+  /* ---- the actions ---- */
+  /* First, and above the destructive ones, because this is the only action
+     here you would reach for DURING a round rather than between them. */
+  button('PLACE COIN', function () {
+    if (!ctx) return;
+    toggleSettings(false);
+    /* The colour is decided now rather than on the click. Cancelling with
+       Escape therefore skips one place in the rotation - which nobody can
+       see, and is cheaper than a second piece of state to carry it. */
+    setPlacing(nextCoinType());
+  });
+
+  button('RESET BOARD', function (b) {
+    if (!ctx) return;
+    resetPile();
+    flash(b, 'BOARD RESET', 'RESET BOARD');
+  });
+  button('RESET SCORES', function (b) {
+    if (!ctx || !ctx.teams) return;
+    ctx.teams.forEach(function (t) { t.score = 0; if (t.log) t.log.length = 0; });
+    M.awarded = 0; M.prizes = 0;
+    updateScoreboards();
+    flash(b, 'SCORES RESET', 'RESET SCORES');
+  });
+  button('CLEAR CHUTE', function (b) {
+    const n = removeItems(inChute);
+    flash(b, n ? 'CLEARED ' + n : 'NOTHING STUCK', 'CLEAR CHUTE');
+  });
+  button('DELETE PRESENTS', function (b) {
+    const id = CFG.presents ? CFG.presents.typeId : null;
+    const n = id ? removeItems(function (it) { return it.typeId === id; }) : 0;
+    flash(b, n ? 'DELETED ' + n : 'NONE ON BOARD', 'DELETE PRESENTS');
+  });
+  button('DELETE JACKPOTS', function (b) {
+    const id = CFG.jackpot ? CFG.jackpot.typeId : null;
+    const n = id ? removeItems(function (it) { return it.typeId === id; }) : 0;
+    flash(b, n ? 'DELETED ' + n : 'NONE ON BOARD', 'DELETE JACKPOTS');
+  });
+
+  const close = button('CLOSE', function () { toggleSettings(false); });
+  close.style.marginTop = 'auto';
+
+  box.appendChild(inner);
+  document.body.appendChild(box);
+  settingsPanel = { box: box, volPaint: volPaint, speedPaint: speedPaint };
+
+  /* Clicking anywhere else shuts it. The panel itself stops the event, so
+     this only ever sees clicks outside. */
+  document.addEventListener('pointerdown', function () {
+    if (settingsOpen) toggleSettings(false);
+  });
+}
+
+function toggleSettings(force) {
+  if (!settingsPanel) return;
+  settingsOpen = force === undefined ? !settingsOpen : !!force;
+  settingsPanel.box.hidden = !settingsOpen;
+  /* The corner mixer and the one in here are the same value; re-paint on open
+     so a change made outside is reflected in here. */
+  if (settingsOpen) settingsPanel.volPaint(volumeLevel);
+}
+
+/* The cog, as a mask so it can be coloured in CSS like the speaker is. */
+function cogMask(px) {
+  const c = document.createElement('canvas');
+  c.width = c.height = px;
+  const g = c.getContext('2d');
+  const R = px / 2, teeth = 8;
+  g.fillStyle = '#000';
+  g.beginPath();
+  for (let i = 0; i < teeth * 2; i++) {
+    const r = (i % 2) ? px * 0.33 : px * 0.46;
+    const a = (i * Math.PI) / teeth;
+    const x = R + Math.sin(a) * r, y = R - Math.cos(a) * r;
+    if (i) g.lineTo(x, y); else g.moveTo(x, y);
+  }
+  g.closePath();
+  g.fill();
+  /* The hole. destination-out cuts it rather than painting over it, which
+     matters for a mask - a filled circle would be opaque, not empty. */
+  g.globalCompositeOperation = 'destination-out';
+  g.beginPath();
+  g.arc(R, R, px * 0.16, 0, Math.PI * 2);
+  g.fill();
+  return c.toDataURL('image/png');
+}
+
+/* ===========================================================================
+   TEAM COLOURS THE CONTESTANTS PICK
+
+   A swatch either side of the two name fields opens the browser's own colour
+   picker, and what comes back becomes that team's colour - in the light
+   tubes, on the score panel, and on the name field itself.
+
+   The two panels are pre-rendered SVGs with the colour baked in. Rather than
+   port the whole generator into the browser, the colour is changed where it
+   actually lives: seven gradient stops derived from one base by the same two
+   formulas the generator uses. Everything else in the file is left alone, so
+   the panels cannot drift away from the ones the build script makes.
+   ========================================================================= */
+let teamColours = [];
+let teamPanelUrl = [null, null];
+const teamSwatch = [], teamPicker = [];
+const svgTextCache = {};
+
+const cssHex = (v) => '#' + (v >>> 0).toString(16).padStart(6, '0').toUpperCase();
+
+/* The generator's own two, ported exactly - see shade() and lighten() in
+   tools/build-scoreboard.py. */
+function shadeHex(base, f) {
+  const p = [(base >> 16) & 255, (base >> 8) & 255, base & 255]
+    .map(function (c) { return Math.min(255, Math.round(c * f)); });
+  return '#' + p.map(function (c) { return c.toString(16).padStart(2, '0'); })
+                .join('').toUpperCase();
+}
+function lightenHex(base, t) {
+  const p = [(base >> 16) & 255, (base >> 8) & 255, base & 255]
+    .map(function (c) { return Math.round(c + (255 - c) * t); });
+  return '#' + p.map(function (c) { return c.toString(16).padStart(2, '0'); })
+                .join('').toUpperCase();
+}
+
+/* Pull a colour's LIGHTNESS into the readable band, leaving its hue and
+   saturation alone. The name and score are white: too pale and they vanish,
+   too dark and the panel swallows itself. */
+function clampLightness(hex) {
+  const T = CFG.teamColour;
+  const r = ((hex >> 16) & 255) / 255, g = ((hex >> 8) & 255) / 255,
+        b = (hex & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  let h = 0, sat = 0;
+  const l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn;
+    sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+    else if (mx === g) h = ((b - r) / d + 2) / 6;
+    else h = ((r - g) / d + 4) / 6;
+  }
+  const want = Math.max(T.minLightness, Math.min(T.maxLightness, l));
+  if (Math.abs(want - l) < 1e-6) return hex;
+
+  const q = want < 0.5 ? want * (1 + sat) : want + sat - want * sat;
+  const pp = 2 * want - q;
+  const hue = function (t) {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return pp + (q - pp) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return pp + (q - pp) * (2 / 3 - t) * 6;
+    return pp;
+  };
+  const out = sat === 0
+    ? [want, want, want]
+    : [hue(h + 1 / 3), hue(h), hue(h - 1 / 3)];
+  return out.reduce(function (acc, v) {
+    return (acc << 8) | Math.max(0, Math.min(255, Math.round(v * 255)));
+  }, 0) >>> 0;
+}
+
+function loadSvgText(src) {
+  if (!svgTextCache[src]) {
+    svgTextCache[src] = fetch(src).then(function (r) { return r.text(); });
+  }
+  return svgTextCache[src];
+}
+
+/* Re-tint one panel. Parsed as a document rather than string-replaced: the
+   stops are found by what they ARE, not by the hex that happens to be in
+   them, so this keeps working if the build script's colours ever change. */
+function recolourPanel(src, base) {
+  const T = CFG.teamColour;
+  return loadSvgText(src).then(function (text) {
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const screen = doc.querySelector('linearGradient[id^="screen"]');
+    const sheen  = doc.querySelector('linearGradient[id^="sheen"]');
+    if (screen) {
+      const stops = screen.querySelectorAll('stop');
+      for (let i = 0; i < stops.length && i < T.ramp.length; i++) {
+        stops[i].setAttribute('stop-color', shadeHex(base, T.ramp[i]));
+      }
+    }
+    if (sheen) {
+      const st = sheen.querySelectorAll('stop');
+      /* Two lightened and one shaded, matching the generator. */
+      if (st[0]) st[0].setAttribute('stop-color', lightenHex(base, T.sheen[0]));
+      if (st[1]) st[1].setAttribute('stop-color', lightenHex(base, T.sheen[1]));
+      if (st[2]) st[2].setAttribute('stop-color', shadeHex(base, T.sheen[2]));
+    }
+    return 'data:image/svg+xml;charset=utf-8,' +
+           encodeURIComponent(new XMLSerializer().serializeToString(doc.documentElement));
+  });
+}
+
+function setTeamColour(i, hex) {
+  const T = CFG.teamColour;
+  if (!T || !T.enabled) return;
+
+  hex = clampLightness(hex >>> 0);
+  teamColours[i] = hex;
+  CFG.scoreboard.teamColours[i] = hex;
+
+  /* The swatch is a rainbow button now, not a readout - the name field beside
+     it already shows the team's colour. Only the picker is kept in step, so
+     it opens on the colour actually in use. */
+  if (teamPicker[i]) teamPicker[i].value = cssHex(hex);
+
+  recolourPanel(T.fieldSrcs[i], hex).then(function (url) {
+    const el = document.getElementById(i ? 'teamB' : 'teamA');
+    if (el) el.style.backgroundImage = 'url("' + url + '")';
+  });
+  recolourPanel(T.panelSrcs[i], hex).then(function (url) {
+    teamPanelUrl[i] = url;
+    if (boards[i]) boards[i].box.style.backgroundImage = 'url("' + url + '")';
+  });
+
+  /* The tubes read scoreboard.teamColours, so a repaint is all they need. */
+  if (lights) paintZones();
+}
+
+function makeTeamColourPickers() {
+  const T = CFG.teamColour;
+  if (!T || !T.enabled) return;
+
+  /* ALWAYS the defaults at startup, never a remembered choice.
+
+     These were persisted at first, like the volume and the settings are. That
+     was wrong for this one: the colours belong to whoever is playing tonight,
+     and a pair chosen by last week's contestants coming back up is a puzzle
+     rather than a convenience. A colour lasts for the session it was picked
+     in and no longer.
+
+     Any value stored by the earlier version is removed rather than merely
+     ignored, so it cannot sit in a browser resurrecting itself if this is
+     ever changed back. */
+  teamColours = T.defaults.slice();
+  try { localStorage.removeItem(T.storageKey); } catch (e) { /* fine */ }
+
+  const row = document.querySelector('#setup .row');
+  const fields = [document.getElementById('teamA'), document.getElementById('teamB')];
+  if (!row || !fields[0]) {
+    /* No title screen - the game was started straight into. Still push the
+       stored colours through so the tubes and panels are right. */
+    teamColours.forEach(function (hex, i) { setTeamColour(i, hex); });
+    return;
+  }
+
+  /* 67px is the name field's height, set in index.html. align-self:stretch
+     would match it automatically, but the swatch also needs a WIDTH, and
+     taking both from the same number keeps the pair square to each other. */
+  const H = 67;
+  for (let i = 0; i < 2; i++) {
+    const swatch = document.createElement('div');
+    swatch.title = 'Choose this team\'s colour';
+    /* Pulled in toward its own field by the difference between the row's gap
+       and the gap wanted here - the row's 22px is right between the two name
+       fields and too far for a button that belongs to one of them. */
+    const pull = -(22 - T.swatchGapPx);
+    swatch.style.cssText =
+      'align-self:stretch;flex:0 0 auto;cursor:pointer;box-sizing:border-box;' +
+      'width:' + Math.round(T.swatchWidth * H) + 'px;border-radius:6px;' +
+      'border:2px solid rgba(255,255,255,0.75);' +
+      'box-shadow:0 2px 6px rgba(0,0,0,.55);' +
+      'background:linear-gradient(180deg,' + T.swatchGradient.join(',') + ');' +
+      (i === 0 ? 'margin-right:' : 'margin-left:') + pull + 'px;';
+
+    /* The browser's own picker: a wheel and a square, on every platform,
+       for no code. It is an OS window rather than part of the machine, which
+       is the trade - this is a setup control used once a session. */
+    const picker = document.createElement('input');
+    picker.type = 'color';
+    picker.style.cssText =
+      'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+    picker.addEventListener('input', function () {
+      setTeamColour(i, parseInt(picker.value.slice(1), 16));
+    });
+    swatch.addEventListener('pointerdown', function (e) {
+      e.stopPropagation();
+      picker.click();
+    });
+
+    teamSwatch[i] = swatch;
+    teamPicker[i] = picker;
+    row.appendChild(picker);
+    /* Outside edges: before the first field, after the second. */
+    if (i === 0) row.insertBefore(swatch, fields[0]);
+    else row.appendChild(swatch);
+  }
+
+  teamColours.forEach(function (hex, i) { setTeamColour(i, hex); });
+}
+
+/* ===========================================================================
+   THE MOUSE POINTER
+
+   The arrow becomes a white hand. See CFG.cursor for why this is code rather
+   than a line of CSS: a cursor is drawn by the operating system, not by the
+   page, so neither its SIZE nor its SHADOW can be reached from a stylesheet.
+   Both have to be inside the image, which means building the image here.
+
+   The hand is applied with !important, deliberately. Nearly every control in
+   this file sets cursor:pointer in its own inline style, and an inline style
+   beats an ordinary rule in a stylesheet - but not an important one. Without
+   it the pointer would flip between this hand and the browser's own hand
+   depending on what it happened to be over, which looks like a bug.
+   ========================================================================= */
+function applyCursor() {
+  const C = CFG.cursor;
+  if (!C || !C.enabled) return;
+
+  loadSvgText(C.src).then(function (text) {
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const svg = doc.documentElement;
+
+    /* Chrome ignores anything larger than 128 and silently gives you the
+       ordinary arrow back, which looks like the cursor simply failed. */
+    const size = Math.max(8, Math.min(128, Math.round(C.size)));
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+
+    const S = C.shadow;
+    const drop = doc.querySelector('feDropShadow');
+    if (!S || S.enabled === false) {
+      /* The FILTER REFERENCE comes off, not the feDropShadow inside it. A
+         filter left with no primitives in it renders nothing at all, so
+         removing the wrong one would produce an invisible cursor. */
+      const g = doc.querySelector('g[filter]');
+      if (g) g.removeAttribute('filter');
+    } else if (drop) {
+      drop.setAttribute('dx', S.dx);
+      drop.setAttribute('dy', S.dy);
+      drop.setAttribute('stdDeviation', S.blur);
+      drop.setAttribute('flood-opacity', S.opacity);
+    }
+
+    /* Double quotes are the one thing encodeURIComponent escapes that matters
+       here, which is what makes url("...") safe to build by hand. */
+    const url = 'data:image/svg+xml;charset=utf-8,' +
+                encodeURIComponent(new XMLSerializer().serializeToString(svg));
+
+    const hx = Math.round(C.hotspotX * size);
+    const hy = Math.round(C.hotspotY * size);
+    const hand = 'url("' + url + '") ' + hx + ' ' + hy + ', auto';
+
+    let tag = document.getElementById('cursorStyle');
+    if (!tag) {
+      tag = document.createElement('style');
+      tag.id = 'cursorStyle';
+      document.head.appendChild(tag);
+    }
+    /* The two name fields keep their text beam. It is not the arrow being
+       replaced - it is the one cursor on the screen that says "you can type
+       in here", and a hand over a text box reads as a button. */
+    tag.textContent =
+      '*, *::before, *::after { cursor: ' + hand + ' !important; }' +
+      'input:not([type]), input[type="text"], textarea' +
+      ' { cursor: text !important; }';
+  }).catch(function () {
+    /* A missing or unreadable file must cost nothing worse than the ordinary
+       arrow. There is no sensible half-measure to fall back to. */
+  });
 }
 
 function makeHud() {
@@ -2298,6 +4038,13 @@ function onResize() {
 
 window.startCoinPusher = function (teamA, teamB) {
 
+  /* The title screen is over. */
+  stopTitleMusic();
+
+  /* And the intro goes up NOW, not after the world is ready - everything
+     below this line runs behind it. */
+  playIntro();
+
   /* The START click is the user gesture the browser demands before a page is
      allowed to make any noise at all. There is no second chance at this: an
      AudioContext created anywhere else starts suspended and stays that way
@@ -2311,6 +4058,7 @@ window.startCoinPusher = function (teamA, teamB) {
     buildScene();
     makeRightColumn();
     makePointsBox();
+    makeButtonRow();
     makeHud();
 
     ctx = {
@@ -2378,6 +4126,19 @@ window.startCoinPusher = function (teamA, teamB) {
         -((e.clientY - r.top) / r.height) * 2 + 1
       );
       ray.setFromCamera(ndc, camera);
+
+      /* Placement first: while it is armed, a click on the machine puts a
+         present down rather than doing whatever it would normally do. */
+      if (placingType) {
+        const pt = placementPoint(ray);
+        if (pt) {
+          e.stopPropagation();
+          placeItem(placingType, pt.x, pt.y, pt.z, dropHeightFor(placingType));
+          setPlacing(null);
+          return;
+        }
+      }
+
       const hits = ray.intersectObjects(ctx.machine.panels, false);
       if (hits.length) {
         /* A drop zone is not "somewhere else". Letting this bubble would hit
@@ -2407,12 +4168,22 @@ window.startCoinPusher = function (teamA, teamB) {
       /* Audition every voice at three strengths, for judging the sounds by
          ear without having to coax the machine into producing each one. */
       else if (e.key === 'z' || e.key === 'Z') auditionAll();
+      /* The way out of an armed placement. The present and jackpot buttons
+         glow while they are waiting and can be pressed again to cancel;
+         PLACE COIN closes the menu behind it and leaves nothing to press, so
+         without this there would be no way to change your mind short of
+         putting a coin somewhere you did not want one. */
+      else if (e.key === 'Escape') setPlacing(null);
     });
 
     /* Live tuning from the browser console, as the 2D build had. */
     window.CP = {
       ctx: ctx, DIMS: DIMS, TIERS: TIERS, CFG: CFG, M: M,
       camera: camera, aimCamera: aimCamera, resetPile: resetPile,
+      /* A getter, not a value: the backdrop module is fetched
+         asynchronously and may not have arrived when CP is built. */
+      get backdrop() { return backdrop; },
+      renderer: renderer, scene: scene,
 
       /* Rebuild the pile from a fixed seed, so a measurement can be repeated.
 
@@ -2432,6 +4203,19 @@ window.startCoinPusher = function (teamA, teamB) {
         try { resetPile(); } finally { Math.random = real; }
       },
       step: physicsStep,
+
+      /* The turn's doubling, and a way to exercise the scoring without
+         waiting for physics. Same spirit as setScore above: award() is the
+         real function, so a test here is testing what the game runs, and the
+         arithmetic that makes order irrelevant can be checked in a second
+         rather than by dropping coins for ten minutes. */
+      get turnMultiplier() { return turnMultiplier; },
+      get turnSubtotal()   { return turnSubtotal; },
+      selectTeam: setTeamHighlight,
+      awardItem: function (typeId) { award({ typeId: typeId }); },
+      nextDropType: nextDropType,
+      startFlash: startDoublerFlash,
+      get flashLeft() { return flashSeq.length - flashIndex; },
       setTubeColour: function (i, hex) { return setTubeColour(ctx, i, hex); },
       /* Set a team's score and redraw its panel at once. The panels are
          normally refreshed by the render loop, which is no use for testing
@@ -2471,3 +4255,35 @@ window.startCoinPusher = function (teamA, teamB) {
     requestAnimationFrame(frame);
   });
 };
+
+/* The title screen is already on screen by the time this module finishes
+   loading - index.html imports it before anyone can press START - so both of
+   these belong here rather than in the game's own setup.
+
+   ORDER MATTERS. makeVolumeControl reads the stored level into volumeLevel,
+   and startTitleMusic scales itself by exactly that; the other way round and
+   the music would come in at full and only settle when the slider was next
+   touched. The music will not actually sound until the browser has seen a
+   gesture - see startTitleMusic for how that is handled. */
+applyCursor();
+makeVolumeControl();
+makeSettings();
+makeTeamColourPickers();
+startTitleMusic();
+prepareIntro();
+
+/* The background, behind the title screen. The game's renderer does not exist
+   yet - it is built on START - so this runs on a canvas of its own until the
+   real one takes over.
+
+   The setup panel paints itself black in index.html, which would hide it. It
+   is cleared here rather than there because index.html is the file the
+   cache-buster cannot reach: changed there, a stale copy would leave a black
+   panel over a background that is running perfectly well underneath. */
+backdropModule.then(function (mod) {
+  const setup = document.getElementById('setup');
+  if (setup) setup.style.background = 'transparent';
+  titleBackdrop = mod.createBackdropCanvas(CFG.backdrop);
+}).catch(function (err) {
+  console.warn('[backdrop] title screen not loaded:', err);
+});
